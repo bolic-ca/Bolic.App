@@ -1,10 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { useColorScheme, Platform, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -12,24 +13,55 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarShowLabel: false, // hides the text labels
+        tabBarBackground: () =>
+          Platform.OS === 'ios' ? (
+            <BlurView
+              intensity={80}
+              tint={colorScheme === 'dark' ? 'dark' : 'light'}
+              style={styles.blur}
+            />
+          ) : (
+            <View style={[styles.blur, { backgroundColor: Colors[colorScheme ?? 'light'].background }]} />
+          ),
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="play-circle" size={28} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="programs"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="code" size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          tabBarIcon: ({ color }) => <Ionicons name="stats-chart" size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={28} color={color} />,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  blur: {
+    flex: 1,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    overflow: 'hidden',
+  },
+});
