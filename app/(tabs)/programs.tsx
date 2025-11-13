@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { mockTrainingDay, mockFullPrograms } from '@/data/mock-data';
 import type { TrainingExercise, Program, Mesocycle } from '@/types/training';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 
 const muscleCategoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   Chest: 'fitness',
@@ -31,6 +32,7 @@ const muscleCategoryColors: Record<string, string> = {
 export default function ProgramsPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { customColors } = useThemeCustomization();
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function ProgramsPage() {
         style={[
           styles.programCard,
           { backgroundColor: theme.card, borderColor: theme.cardBorder },
-          program.isActive && { borderColor: theme.tint, borderWidth: 2 },
+          program.isActive && { borderColor: customColors.primaryButton, borderWidth: 2 },
         ]}
         onPress={() => setExpandedProgram(isExpanded ? null : program.id)}
         activeOpacity={0.7}
@@ -53,18 +55,18 @@ export default function ProgramsPage() {
         {/* Program Header */}
         <View style={styles.programHeader}>
           <View style={styles.programHeaderLeft}>
-            <View style={[styles.programIconContainer, { backgroundColor: `${theme.tint}15` }]}>
+            <View style={[styles.programIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons
                 name={isSimple ? 'repeat' : 'calendar'}
                 size={24}
-                color={theme.tint}
+                color={customColors.primaryButton}
               />
             </View>
             <View style={styles.programInfo}>
               <View style={styles.programTitleRow}>
                 <Text style={[styles.programName, { color: theme.text }]}>{program.name}</Text>
                 {program.isActive && (
-                  <View style={[styles.activeBadge, { backgroundColor: theme.tint }]}>
+                  <View style={[styles.activeBadge, { backgroundColor: customColors.primaryButton }]}>
                     <Text style={styles.activeBadgeText}>Active</Text>
                   </View>
                 )}
@@ -147,7 +149,7 @@ export default function ProgramsPage() {
                         <Ionicons
                           name={expandedMeso === meso.id ? 'remove-circle-outline' : 'add-circle-outline'}
                           size={24}
-                          color={theme.tint}
+                          color={customColors.primaryButton}
                         />
                       </View>
                       {meso.description && (
@@ -157,15 +159,15 @@ export default function ProgramsPage() {
                       )}
                       <View style={styles.mesocycleMeta}>
                         {meso.goal && (
-                          <View style={[styles.mesoMetaItem, { backgroundColor: `${theme.tint}10` }]}>
-                            <Ionicons name="flag-outline" size={14} color={theme.tint} />
-                            <Text style={[styles.mesoMetaText, { color: theme.tint }]}>{meso.goal}</Text>
+                          <View style={[styles.mesoMetaItem, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                            <Ionicons name="flag-outline" size={14} color={customColors.primaryButton} />
+                            <Text style={[styles.mesoMetaText, { color: customColors.primaryButton }]}>{meso.goal}</Text>
                           </View>
                         )}
                         {meso.durationWeeks && (
-                          <View style={[styles.mesoMetaItem, { backgroundColor: `${theme.tint}10` }]}>
-                            <Ionicons name="time-outline" size={14} color={theme.tint} />
-                            <Text style={[styles.mesoMetaText, { color: theme.tint }]}>
+                          <View style={[styles.mesoMetaItem, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                            <Ionicons name="time-outline" size={14} color={customColors.primaryButton} />
+                            <Text style={[styles.mesoMetaText, { color: customColors.primaryButton }]}>
                               {meso.durationWeeks} weeks
                             </Text>
                           </View>
@@ -229,7 +231,7 @@ export default function ProgramsPage() {
           {/* Training Day Header */}
           <View style={styles.trainingDayHeader}>
             <View style={styles.trainingDayHeaderLeft}>
-              <Ionicons name="calendar-outline" size={20} color={theme.tint} />
+              <Ionicons name="calendar-outline" size={20} color={customColors.primaryButton} />
               <View>
                 <Text style={[styles.trainingDayName, { color: theme.text }]}>{mockTrainingDay.name}</Text>
                 {mockTrainingDay.description && (
@@ -239,8 +241,8 @@ export default function ProgramsPage() {
                 )}
               </View>
             </View>
-            <View style={[styles.exerciseCountBadge, { backgroundColor: `${theme.tint}15` }]}>
-              <Text style={[styles.exerciseCountText, { color: theme.tint }]}>
+            <View style={[styles.exerciseCountBadge, { backgroundColor: `${customColors.primaryButton}15` }]}>
+              <Text style={[styles.exerciseCountText, { color: customColors.primaryButton }]}>
                 {mockTrainingDay.exercises?.length || 0}
               </Text>
             </View>
@@ -319,15 +321,15 @@ export default function ProgramsPage() {
                       {(exercise.equipment || exercise.targetPosition) && (
                         <View style={styles.tagsContainer}>
                           {exercise.equipment && (
-                            <View style={[styles.tag, { backgroundColor: `${theme.tint}10` }]}>
-                              <Ionicons name="barbell-outline" size={14} color={theme.tint} />
-                              <Text style={[styles.tagText, { color: theme.tint }]}>{exercise.equipment}</Text>
+                            <View style={[styles.tag, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                              <Ionicons name="barbell-outline" size={14} color={customColors.primaryButton} />
+                              <Text style={[styles.tagText, { color: customColors.primaryButton }]}>{exercise.equipment}</Text>
                             </View>
                           )}
                           {exercise.targetPosition && (
-                            <View style={[styles.tag, { backgroundColor: `${theme.tint}10` }]}>
-                              <Ionicons name="resize-outline" size={14} color={theme.tint} />
-                              <Text style={[styles.tagText, { color: theme.tint }]}>{exercise.targetPosition}</Text>
+                            <View style={[styles.tag, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                              <Ionicons name="resize-outline" size={14} color={customColors.primaryButton} />
+                              <Text style={[styles.tagText, { color: customColors.primaryButton }]}>{exercise.targetPosition}</Text>
                             </View>
                           )}
                         </View>
@@ -356,7 +358,7 @@ export default function ProgramsPage() {
                                 </Text>
                               )}
                               {set.rateOfPerceivedExertion && (
-                                <Text style={[styles.setRPE, { color: theme.tint }]}>
+                                <Text style={[styles.setRPE, { color: customColors.primaryButton }]}>
                                   RPE {set.rateOfPerceivedExertion}
                                 </Text>
                               )}

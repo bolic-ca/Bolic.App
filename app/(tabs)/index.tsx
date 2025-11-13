@@ -39,7 +39,7 @@ export default function HomePage() {
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Next on the menu</Text>
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <View style={styles.cardHeader}>
-            <Ionicons name="barbell" size={24} color={theme.tint} />
+            <Ionicons name="barbell" size={24} color={customColors.primaryButton} />
             <View style={styles.cardHeaderText}>
               <Text style={[styles.cardTitle, { color: theme.text }]}>{mockTrainingDay.name}</Text>
               <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>
@@ -48,8 +48,8 @@ export default function HomePage() {
             </View>
           </View>
           <TouchableOpacity style={[styles.cardButton, { backgroundColor: theme.background }]}>
-            <Text style={[styles.cardButtonText, { color: theme.tint }]}>View Details</Text>
-            <Ionicons name="chevron-forward" size={18} color={theme.tint} />
+            <Text style={[styles.cardButtonText, { color: customColors.primaryButton }]}>View Details</Text>
+            <Ionicons name="chevron-forward" size={18} color={customColors.primaryButton} />
           </TouchableOpacity>
         </View>
       </View>

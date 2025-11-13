@@ -6,17 +6,19 @@ import { BlurView } from 'expo-blur';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { customColors } = useThemeCustomization();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarActiveTintColor: theme.tint,
+        tabBarActiveTintColor: customColors.primaryButton,
         tabBarInactiveTintColor: theme.icon,
         tabBarShowLabel: false,
         tabBarStyle: {
@@ -47,7 +49,7 @@ export default function TabLayout() {
         name="index"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: `${theme.tint}15` }]}>
+            <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
             </View>
           ),
@@ -57,7 +59,7 @@ export default function TabLayout() {
         name="programs"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: `${theme.tint}15` }]}>
+            <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons name={focused ? 'barbell' : 'barbell-outline'} size={24} color={color} />
             </View>
           ),
@@ -67,7 +69,7 @@ export default function TabLayout() {
         name="stats"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: `${theme.tint}15` }]}>
+            <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={24} color={color} />
             </View>
           ),
@@ -77,7 +79,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: `${theme.tint}15` }]}>
+            <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
             </View>
           ),

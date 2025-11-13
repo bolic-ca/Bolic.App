@@ -38,7 +38,7 @@ export default function ProfilePage() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
       {/* Profile Header */}
       <View style={styles.header}>
-        <View style={[styles.avatarContainer, { backgroundColor: theme.tint }]}>
+        <View style={[styles.avatarContainer, { backgroundColor: customColors.primaryButton }]}>
           <Ionicons name="person" size={48} color="white" />
         </View>
         <Text style={[styles.name, { color: theme.text }]}>John Doe</Text>
@@ -47,8 +47,8 @@ export default function ProfilePage() {
           style={[styles.editButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
           onPress={() => console.log('Edit profile')}
         >
-          <Ionicons name="create-outline" size={18} color={theme.tint} />
-          <Text style={[styles.editButtonText, { color: theme.tint }]}>Edit Profile</Text>
+          <Ionicons name="create-outline" size={18} color={customColors.primaryButton} />
+          <Text style={[styles.editButtonText, { color: customColors.primaryButton }]}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
 
@@ -84,8 +84,8 @@ export default function ProfilePage() {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemLeft}>
-                  <View style={[styles.menuIconContainer, { backgroundColor: `${theme.tint}15` }]}>
-                    <Ionicons name={item.icon} size={22} color={theme.tint} />
+                  <View style={[styles.menuIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
+                    <Ionicons name={item.icon} size={22} color={customColors.primaryButton} />
                   </View>
                   <View style={styles.menuItemText}>
                     <Text style={[styles.menuItemTitle, { color: theme.text }]}>{item.title}</Text>
@@ -193,8 +193,8 @@ export default function ProfilePage() {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemLeft}>
-                  <View style={[styles.menuIconContainer, { backgroundColor: `${theme.tint}15` }]}>
-                    <Ionicons name={item.icon} size={22} color={theme.tint} />
+                  <View style={[styles.menuIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
+                    <Ionicons name={item.icon} size={22} color={customColors.primaryButton} />
                   </View>
                   <View style={styles.menuItemText}>
                     <Text style={[styles.menuItemTitle, { color: theme.text }]}>{item.title}</Text>

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { mockWorkoutStats, mockPersonalRecords, mockWeeklyActivity } from '@/data/mock-data';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 
 interface StatCard {
   title: string;
@@ -23,6 +24,7 @@ const stats: StatCard[] = [
 export default function StatsPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { customColors } = useThemeCustomization();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -66,8 +68,8 @@ export default function StatsPage() {
                   style={[
                     styles.dayCircle,
                     {
-                      backgroundColor: item.completed ? theme.tint : theme.background,
-                      borderColor: item.completed ? theme.tint : theme.cardBorder,
+                      backgroundColor: item.completed ? customColors.primaryButton : theme.background,
+                      borderColor: item.completed ? customColors.primaryButton : theme.cardBorder,
                     },
                   ]}
                 >
@@ -102,7 +104,7 @@ export default function StatsPage() {
                   <Ionicons name="trophy" size={20} color="#ffd700" />
                   <Text style={[styles.prExercise, { color: theme.text }]}>{record.exerciseName}</Text>
                 </View>
-                <Text style={[styles.prValue, { color: theme.tint }]}>
+                <Text style={[styles.prValue, { color: customColors.primaryButton }]}>
                   {record.value} {record.unit}
                 </Text>
               </View>
