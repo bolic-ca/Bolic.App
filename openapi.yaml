@@ -1,0 +1,475 @@
+openapi: 3.0.3
+info:
+  title: Bolic Training API
+  description: Science-based fitness training platform API for managing training programs, exercises, and sessions
+  version: 1.0.0
+servers:
+  - url: http://localhost:7071/api
+    description: Local development
+
+paths:
+  /training-days:
+    post:
+      summary: Create a new training day
+      operationId: createTraini1ngDay
+      tags:
+        - Training Days
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingDay'
+      responses:
+        '201':
+          description: Training day created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingDay'
+
+    put:
+      summary: Update an existing training day
+      operationId: updateTrainingDay
+      tags:
+        - Training Days
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TrainingDay'
+                - required:
+                    - id
+      responses:
+        '200':
+          description: Training day updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingDay'
+
+    get:
+      summary: Get a training day by ID
+      operationId: getTrainingDay
+      tags:
+        - Training Days
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - userId
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Training day retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingDay'
+
+    patch:
+      summary: Partially update a training day
+      operationId: patchTrainingDay
+      tags:
+        - Training Days
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TrainingDay'
+                - required:
+                    - id
+      responses:
+        '201':
+          description: Training day patched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingDay'
+
+  /exercises:
+    post:
+      summary: Create a new training exercise
+      operationId: createTrainingExercise
+      tags:
+        - Exercises
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingExercise'
+      responses:
+        '201':
+          description: Exercise created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingExercise'
+
+    put:
+      summary: Update an existing training exercise
+      operationId: updateTrainingExercise
+      tags:
+        - Exercises
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TrainingExercise'
+                - required:
+                    - id
+      responses:
+        '200':
+          description: Exercise updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingExercise'
+
+    get:
+      summary: Get a training exercise by ID
+      operationId: getTrainingExercise
+      tags:
+        - Exercises
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Exercise retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingExercise'
+
+    patch:
+      summary: Partially update a training exercise
+      operationId: patchTrainingExercise
+      tags:
+        - Exercises
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TrainingExercise'
+                - required:
+                    - id
+      responses:
+        '201':
+          description: Exercise patched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingExercise'
+
+  /training-session:
+    post:
+      summary: Create a new training session
+      operationId: createTrainingSession
+      tags:
+        - Training Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingDay'
+      responses:
+        '201':
+          description: Training session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingDay'
+
+    get:
+      summary: Get a training session by ID
+      operationId: getTrainingSession
+      tags:
+        - Training Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - userId
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Training session retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingDay'
+
+components:
+  schemas:
+    TrainingDay:
+      type: object
+      required:
+        - userId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the training day
+        userId:
+          type: string
+          format: uuid
+          description: User who owns this training day
+        microcycleId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent microcycle ID
+        trainingDayId:
+          type: string
+          format: uuid
+          nullable: true
+        number:
+          type: integer
+          nullable: true
+          description: Day number in the training cycle
+        createdDate:
+          type: string
+          format: date-time
+          nullable: true
+        name:
+          type: string
+          nullable: true
+          description: Name of the training day
+        description:
+          type: string
+          nullable: true
+          description: Description of the training day
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        exercises:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingExercise'
+          default: []
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        userId: "123e4567-e89b-12d3-a456-426614174001"
+        name: "Upper Body Push"
+        description: "Chest and shoulders focus"
+        exercises: []
+
+    TrainingExercise:
+      type: object
+      required:
+        - userId
+        - trainingDayId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the exercise
+        userId:
+          type: string
+          format: uuid
+          description: User who owns this exercise
+        trainingDayId:
+          type: string
+          format: uuid
+          description: Training day this exercise belongs to
+        name:
+          type: string
+          nullable: true
+          description: Name of the exercise
+        targetRepetitions:
+          type: string
+          nullable: true
+          description: Target number of repetitions
+        targetRepetitionsInReserve:
+          type: string
+          nullable: true
+          description: Target RIR (Repetitions In Reserve)
+        targetPosition:
+          type: string
+          nullable: true
+          description: Target muscle position (lengthened, shortened, etc.)
+        muscleCategory:
+          type: string
+          nullable: true
+          description: Primary muscle group targeted
+          enum:
+            - Quads
+            - Glutes
+            - Hamstrings
+            - Calves
+            - Abs
+            - Chest
+            - Delts
+            - Back
+        muscleSubcategory:
+          type: string
+          nullable: true
+          description: Specific muscle subdivision (only valid for certain categories)
+          example: "Upper"
+        equipment:
+          type: string
+          nullable: true
+          description: Equipment required for the exercise
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the exercise
+        sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingSet'
+          default: []
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174002"
+        userId: "123e4567-e89b-12d3-a456-426614174001"
+        trainingDayId: "123e4567-e89b-12d3-a456-426614174000"
+        name: "Incline Barbell Press"
+        muscleCategory: "Chest"
+        muscleSubcategory: "Upper"
+        targetRepetitions: "8-12"
+        targetRepetitionsInReserve: "2-3"
+        equipment: "Barbell"
+        sets: []
+
+    TrainingSet:
+      type: object
+      required:
+        - userId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the set
+        userId:
+          type: string
+          format: uuid
+          description: User who owns this set
+        trainingExerciseId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Exercise this set belongs to
+        type:
+          type: string
+          nullable: true
+          description: Type of set (working set, warmup, etc.)
+        weight:
+          type: number
+          format: float
+          description: Weight used for the set
+        weightType:
+          type: string
+          nullable: true
+          description: Type of weight measurement
+        repetitions:
+          type: number
+          format: float
+          description: Number of repetitions completed
+        repetitionsInReserve:
+          type: number
+          format: float
+          description: RIR (Repetitions In Reserve)
+        rateOfPerceivedExertion:
+          type: number
+          format: float
+          description: RPE score (1-10 scale)
+        quality:
+          type: number
+          format: float
+          description: Quality of execution score
+        averageRepetitionTime:
+          type: number
+          format: float
+          description: Average time per repetition in seconds
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the set
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174003"
+        userId: "123e4567-e89b-12d3-a456-426614174001"
+        trainingExerciseId: "123e4567-e89b-12d3-a456-426614174002"
+        type: "working"
+        weight: 185
+        weightType: "lbs"
+        repetitions: 10
+        repetitionsInReserve: 2
+        rateOfPerceivedExertion: 8
+
+    MuscleSubcategories:
+      type: object
+      description: Valid subcategories for each muscle category
+      properties:
+        Chest:
+          type: array
+          items:
+            type: string
+            enum:
+              - Upper
+              - Middle
+              - Lower
+        Delts:
+          type: array
+          items:
+            type: string
+            enum:
+              - Front
+              - Lateral
+              - Rear
+        Back:
+          type: array
+          items:
+            type: string
+            enum:
+              - Upper Traps
+              - Mid Traps
+              - Lower Traps
+              - Upper Lats
+              - Mid Lats
+              - Lower Lats
