@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Header } from '@/components/ui/header';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -19,14 +18,14 @@ export default function RootLayout() {
         <Stack.Screen
           name="(tabs)"
           options={{
-            header: () => <Header title="Bolic" />, // custom header
+            headerShown: false,
           }}
         />
         <Stack.Screen
           name="modal"
           options={{
             presentation: 'modal',
-            header: () => <Header title="Modal" />,
+            headerShown: false,
           }}
         />
       </Stack>
