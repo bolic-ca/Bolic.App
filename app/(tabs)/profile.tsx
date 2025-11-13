@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { mockWorkoutStats } from '@/data/mock-data';
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -51,17 +52,17 @@ export default function ProfilePage() {
       {/* Stats Summary */}
       <View style={[styles.statsContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>47</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.totalWorkouts}</Text>
           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Workouts</Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>12</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.currentStreak}</Text>
           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>28.5</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.activeTime}</Text>
           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Hours</Text>
         </View>
       </View>

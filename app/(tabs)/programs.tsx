@@ -3,22 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-
-interface Program {
-  id: string;
-  title: string;
-  days: number;
-  exercises: number;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  icon: keyof typeof Ionicons.glyphMap;
-}
-
-const programs: Program[] = [
-  { id: '1', title: 'Full Body Beginner', days: 3, exercises: 12, difficulty: 'Beginner', icon: 'fitness' },
-  { id: '2', title: 'Upper/Lower Split', days: 4, exercises: 16, difficulty: 'Intermediate', icon: 'barbell' },
-  { id: '3', title: 'Push/Pull/Legs', days: 5, exercises: 20, difficulty: 'Intermediate', icon: 'body' },
-  { id: '4', title: 'Strength Builder', days: 4, exercises: 18, difficulty: 'Advanced', icon: 'flash' },
-];
+import { mockPrograms } from '@/data/mock-data';
 
 const difficultyColors = {
   Beginner: '#4ecdc4',
@@ -41,7 +26,7 @@ export default function ProgramsPage() {
         Choose a program that fits your goals
       </Text>
 
-      {programs.map((program) => (
+      {mockPrograms.map((program) => (
         <TouchableOpacity
           key={program.id}
           style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
@@ -52,7 +37,7 @@ export default function ProgramsPage() {
         >
           <View style={styles.cardHeader}>
             <View style={[styles.iconContainer, { backgroundColor: `${theme.tint}15` }]}>
-              <Ionicons name={program.icon} size={24} color={theme.tint} />
+              <Ionicons name={program.icon as keyof typeof Ionicons.glyphMap} size={24} color={theme.tint} />
             </View>
             <View style={styles.cardHeaderText}>
               <Text style={[styles.title, { color: theme.text }]}>{program.title}</Text>

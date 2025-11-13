@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { mockWorkoutStats, mockPersonalRecords, mockWeeklyActivity } from '@/data/mock-data';
 
 interface StatCard {
   title: string;
@@ -13,20 +14,10 @@ interface StatCard {
 }
 
 const stats: StatCard[] = [
-  { title: 'Total Workouts', value: 47, subtitle: '+3 this week', icon: 'fitness', color: '#4ecdc4' },
-  { title: 'Current Streak', value: '12 days', subtitle: 'Best: 18 days', icon: 'flame', color: '#ff6b6b' },
-  { title: 'Total Volume', value: '42,580 kg', subtitle: '+2,340 kg this week', icon: 'barbell', color: '#ffd93d' },
-  { title: 'Active Time', value: '28.5 hrs', subtitle: 'Avg: 45 min/session', icon: 'time', color: '#a29bfe' },
-];
-
-const weeklyData = [
-  { day: 'Mon', completed: true },
-  { day: 'Tue', completed: true },
-  { day: 'Wed', completed: false },
-  { day: 'Thu', completed: true },
-  { day: 'Fri', completed: true },
-  { day: 'Sat', completed: false },
-  { day: 'Sun', completed: false },
+  { title: 'Total Workouts', value: mockWorkoutStats.totalWorkouts, subtitle: '+3 this week', icon: 'fitness', color: '#4ecdc4' },
+  { title: 'Current Streak', value: `${mockWorkoutStats.currentStreak} days`, subtitle: 'Best: 18 days', icon: 'flame', color: '#ff6b6b' },
+  { title: 'Total Volume', value: `${mockWorkoutStats.totalVolume.toLocaleString()} kg`, subtitle: '+2,340 kg this week', icon: 'barbell', color: '#ffd93d' },
+  { title: 'Active Time', value: `${mockWorkoutStats.activeTime} hrs`, subtitle: 'Avg: 45 min/session', icon: 'time', color: '#a29bfe' },
 ];
 
 export default function StatsPage() {
@@ -68,7 +59,7 @@ export default function StatsPage() {
         <Text style={[styles.sectionTitle, { color: theme.text }]}>This Week</Text>
         <View style={[styles.weeklyCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <View style={styles.weeklyGrid}>
-            {weeklyData.map((item, index) => (
+            {mockWeeklyActivity.map((item, index) => (
               <View key={index} style={styles.dayContainer}>
                 <Text style={[styles.dayLabel, { color: theme.textSecondary }]}>{item.day}</Text>
                 <View
@@ -103,29 +94,20 @@ export default function StatsPage() {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Personal Records</Text>
         <View style={[styles.prCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <View style={styles.prItem}>
-            <View style={styles.prLeft}>
-              <Ionicons name="trophy" size={20} color="#ffd700" />
-              <Text style={[styles.prExercise, { color: theme.text }]}>Bench Press</Text>
-            </View>
-            <Text style={[styles.prValue, { color: theme.tint }]}>85 kg</Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
-          <View style={styles.prItem}>
-            <View style={styles.prLeft}>
-              <Ionicons name="trophy" size={20} color="#ffd700" />
-              <Text style={[styles.prExercise, { color: theme.text }]}>Squat</Text>
-            </View>
-            <Text style={[styles.prValue, { color: theme.tint }]}>120 kg</Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
-          <View style={styles.prItem}>
-            <View style={styles.prLeft}>
-              <Ionicons name="trophy" size={20} color="#ffd700" />
-              <Text style={[styles.prExercise, { color: theme.text }]}>Deadlift</Text>
-            </View>
-            <Text style={[styles.prValue, { color: theme.tint }]}>140 kg</Text>
-          </View>
+          {mockPersonalRecords.map((record, index) => (
+            <React.Fragment key={index}>
+              {index > 0 && <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />}
+              <View style={styles.prItem}>
+                <View style={styles.prLeft}>
+                  <Ionicons name="trophy" size={20} color="#ffd700" />
+                  <Text style={[styles.prExercise, { color: theme.text }]}>{record.exerciseName}</Text>
+                </View>
+                <Text style={[styles.prValue, { color: theme.tint }]}>
+                  {record.value} {record.unit}
+                </Text>
+              </View>
+            </React.Fragment>
+          ))}
         </View>
       </View>
       </ScrollView>

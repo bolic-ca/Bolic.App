@@ -91,3 +91,30 @@ The app uses `expo-blur` BlurView for glassmorphism effects:
 - Theme colors via useThemeColor or Colors[colorScheme]
 - No inline styles for static values
 - Platform-specific styles via Platform.select() or platform files
+
+## Data Structure & API Integration
+
+### Type System
+TypeScript types defined in `types/training.ts` based on OpenAPI spec (openapi.yaml):
+- **TrainingSet** - Individual set tracking (weight, reps, RIR, RPE, quality)
+- **TrainingExercise** - Exercise details with muscle targeting, equipment, target rep ranges
+- **TrainingDay** - Training day with exercises array
+- **MuscleCategory** enum - Quads, Glutes, Hamstrings, Calves, Abs, Chest, Delts, Back
+- **MuscleSubcategory** types - Chest (Upper/Middle/Lower), Delts (Front/Lateral/Rear), Back (various trap/lat positions)
+
+### Mock Data
+Development mock data in `data/mock-data.ts`:
+- `mockPrograms` - Training program summaries
+- `mockTrainingDay` - Sample training day with exercises and sets
+- `mockWorkoutStats` - User workout statistics
+- `mockPersonalRecords` - PR tracking data
+- `mockWeeklyActivity` - Weekly completion tracking
+
+All mock data structured according to API schema for seamless future integration.
+
+### API Reference
+Backend API spec: `openapi.yaml`
+- Endpoints: `/training-days`, `/exercises`, `/training-session`
+- Science-based metrics: RIR (Reps In Reserve), RPE (Rate of Perceived Exertion)
+- Target position tracking (lengthened, shortened)
+- Muscle-specific subcategories for precise tracking

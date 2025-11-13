@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { mockTrainingDay, mockWorkoutStats } from '@/data/mock-data';
 
 export default function HomePage() {
   const colorScheme = useColorScheme();
@@ -38,8 +39,10 @@ export default function HomePage() {
           <View style={styles.cardHeader}>
             <Ionicons name="barbell" size={24} color={theme.tint} />
             <View style={styles.cardHeaderText}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>Upper Body Strength</Text>
-              <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>6 exercises • 45 min</Text>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{mockTrainingDay.name}</Text>
+              <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>
+                {mockTrainingDay.exercises?.length || 0} exercises • 45 min
+              </Text>
             </View>
           </View>
           <TouchableOpacity style={[styles.cardButton, { backgroundColor: theme.background }]}>
@@ -55,12 +58,12 @@ export default function HomePage() {
         <View style={[styles.statsGrid]}>
           <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <Ionicons name="flame" size={28} color="#ff6b6b" />
-            <Text style={[styles.statValue, { color: theme.text }]}>12</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.totalWorkouts}</Text>
             <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Workouts</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <Ionicons name="calendar" size={28} color="#4ecdc4" />
-            <Text style={[styles.statValue, { color: theme.text }]}>5</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.currentStreak}</Text>
             <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
           </View>
         </View>
