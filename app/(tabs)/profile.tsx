@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { mockWorkoutStats } from '@/data/mock-data';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -29,6 +30,8 @@ const supportMenuItems: MenuItem[] = [
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { customColors, setCustomColors, presetColors } = useThemeCustomization();
+  const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -67,6 +70,8 @@ export default function ProfilePage() {
         </View>
       </View>
 
+      
+
       {/* Profile Options */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
@@ -98,6 +103,81 @@ export default function ProfilePage() {
               )}
             </React.Fragment>
           ))}
+        </View>
+      </View>
+
+      {/* Theme Customization */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
+        <View style={[styles.menuCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => setColorPickerExpanded(!colorPickerExpanded)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.menuIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
+                <Ionicons name="color-palette-outline" size={22} color={customColors.primaryButton} />
+              </View>
+              <View style={styles.menuItemText}>
+                <Text style={[styles.menuItemTitle, { color: theme.text }]}>Button Color</Text>
+                <Text style={[styles.menuItemSubtitle, { color: theme.textSecondary }]}>
+                  Customize your primary action button
+                </Text>
+              </View>
+            </View>
+            <Ionicons
+              name={colorPickerExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={theme.textSecondary}
+            />
+          </TouchableOpacity>
+
+          {/* Color Picker Expanded */}
+          {colorPickerExpanded && (
+            <View style={styles.colorPickerContainer}>
+              <View style={styles.colorGrid}>
+                {presetColors.map((preset) => (
+                  <TouchableOpacity
+                    key={preset.name}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: preset.button },
+                      customColors.primaryButton === preset.button && {
+                        borderColor: theme.text,
+                        borderWidth: 3,
+                      },
+                    ]}
+                    onPress={() => {
+                      setCustomColors({ primaryButton: preset.button, primaryButtonText: preset.text });
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    {customColors.primaryButton === preset.button && (
+                      <Ionicons name="checkmark" size={24} color="white" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.colorLabels}>
+                {presetColors.map((preset) => (
+                  <Text
+                    key={`label-${preset.name}`}
+                    style={[
+                      styles.colorLabel,
+                      { color: theme.textSecondary },
+                      customColors.primaryButton === preset.button && {
+                        color: theme.text,
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {preset.name}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
@@ -291,5 +371,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ff6b6b',
+  },
+  colorPickerContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#00000010',
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  colorOption: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  colorLabels: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  colorLabel: {
+    width: 56,
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

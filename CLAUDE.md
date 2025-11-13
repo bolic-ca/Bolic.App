@@ -44,6 +44,7 @@ Tab bar features:
 ### Theming System
 Theme configuration in constants/theme.ts:
 - **Colors** - Light/dark mode color definitions for text, background, tint, icons
+  - `primaryButton` / `primaryButtonText` - Customizable primary action button colors (independent of tint)
 - **Fonts** - Platform-specific font families (iOS system fonts, web fonts, default)
 - Colors accessed via `Colors[colorScheme].propertyName`
 
