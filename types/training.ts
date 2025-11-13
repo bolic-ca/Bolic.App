@@ -88,6 +88,55 @@ export interface TrainingDay {
 // Training Session (extends TrainingDay for now based on API)
 export type TrainingSession = TrainingDay;
 
+// Microcycle (Week)
+export interface Microcycle {
+  id: string;
+  userId: string;
+  mesocycleId: string;
+  weekNumber: number;
+  name?: string;
+  description?: string;
+  trainingDays: TrainingDay[];
+  volumeTarget?: 'low' | 'moderate' | 'high';
+  intensityTarget?: 'low' | 'moderate' | 'high';
+}
+
+// Mesocycle (Block/Phase)
+export interface Mesocycle {
+  id: string;
+  userId: string;
+  programId?: string;
+  name: string;
+  description?: string;
+  goal?: string; // "Hypertrophy", "Strength", "Deload", "Peaking"
+  startDate?: string;
+  endDate?: string;
+  durationWeeks?: number;
+  microcycles: Microcycle[];
+}
+
+// Program (Top Level)
+export interface Program {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  type: 'simple' | 'periodized';
+
+  // Simple mode: just a rotating list of training days
+  trainingDays?: TrainingDay[];
+  schedule?: 'rotating' | 'weekly'; // rotating = Day 1,2,3 repeat; weekly = specific days
+
+  // Periodized mode: full meso/micro structure
+  mesocycles?: Mesocycle[];
+
+  // Metadata
+  tags?: string[]; // "Beginner", "3x/week", "Upper/Lower"
+  isActive?: boolean;
+  createdDate?: string;
+  lastModified?: string;
+}
+
 // UI-specific types (for display purposes)
 export interface ProgramSummary {
   id: string;

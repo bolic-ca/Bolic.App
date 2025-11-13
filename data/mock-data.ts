@@ -3,7 +3,17 @@
  * Structured according to the API schema
  */
 
-import { TrainingDay, TrainingExercise, MuscleCategory, WorkoutStats, PersonalRecord, ProgramSummary } from '@/types/training';
+import {
+  TrainingDay,
+  TrainingExercise,
+  MuscleCategory,
+  WorkoutStats,
+  PersonalRecord,
+  ProgramSummary,
+  Program,
+  Mesocycle,
+  Microcycle
+} from '@/types/training';
 
 const MOCK_USER_ID = '123e4567-e89b-12d3-a456-426614174001';
 
@@ -151,3 +161,263 @@ export const mockWeeklyActivity = [
   { day: 'Sat', completed: false },
   { day: 'Sun', completed: false },
 ];
+
+// ===== FULL PROGRAM OBJECTS =====
+
+// Simple Program: Push/Pull/Legs (most users)
+export const mockSimpleProgram: Program = {
+  id: 'simple-ppl-1',
+  userId: MOCK_USER_ID,
+  name: 'Push/Pull/Legs',
+  description: 'Classic 3-day rotating split',
+  type: 'simple',
+  schedule: 'rotating', // Just rotate through these 3 days
+  isActive: true,
+  tags: ['Intermediate', '3x/week', 'Hypertrophy'],
+  trainingDays: [
+    {
+      id: 'ppl-push',
+      userId: MOCK_USER_ID,
+      name: 'Push Day',
+      description: 'Chest, shoulders, triceps',
+      exercises: [
+        {
+          id: 'ex-1',
+          userId: MOCK_USER_ID,
+          trainingDayId: 'ppl-push',
+          name: 'Bench Press',
+          muscleCategory: MuscleCategory.Chest,
+          targetRepetitions: '6-8',
+          targetRepetitionsInReserve: '2',
+          equipment: 'Barbell',
+          sets: [],
+        },
+        {
+          id: 'ex-2',
+          userId: MOCK_USER_ID,
+          trainingDayId: 'ppl-push',
+          name: 'Overhead Press',
+          muscleCategory: MuscleCategory.Delts,
+          targetRepetitions: '8-10',
+          targetRepetitionsInReserve: '2',
+          equipment: 'Barbell',
+          sets: [],
+        },
+      ],
+    },
+    {
+      id: 'ppl-pull',
+      userId: MOCK_USER_ID,
+      name: 'Pull Day',
+      description: 'Back, biceps',
+      exercises: [
+        {
+          id: 'ex-3',
+          userId: MOCK_USER_ID,
+          trainingDayId: 'ppl-pull',
+          name: 'Pull-ups',
+          muscleCategory: MuscleCategory.Back,
+          muscleSubcategory: 'Upper Lats',
+          targetRepetitions: '6-10',
+          targetRepetitionsInReserve: '1-2',
+          equipment: 'Bodyweight',
+          sets: [],
+        },
+      ],
+    },
+    {
+      id: 'ppl-legs',
+      userId: MOCK_USER_ID,
+      name: 'Leg Day',
+      description: 'Quads, hamstrings, glutes',
+      exercises: [
+        {
+          id: 'ex-4',
+          userId: MOCK_USER_ID,
+          trainingDayId: 'ppl-legs',
+          name: 'Squat',
+          muscleCategory: MuscleCategory.Quads,
+          targetRepetitions: '6-8',
+          targetRepetitionsInReserve: '2',
+          equipment: 'Barbell',
+          sets: [],
+        },
+      ],
+    },
+  ],
+};
+
+// Periodized Program: 12-Week Hypertrophy (advanced users)
+export const mockPeriodizedProgram: Program = {
+  id: 'periodized-hyp-1',
+  userId: MOCK_USER_ID,
+  name: '12-Week Hypertrophy Block',
+  description: 'Progressive hypertrophy program with accumulation, intensification, and deload phases',
+  type: 'periodized',
+  isActive: false,
+  tags: ['Advanced', '4x/week', 'Periodization', 'Hypertrophy'],
+  mesocycles: [
+    {
+      id: 'meso-1',
+      userId: MOCK_USER_ID,
+      name: 'Accumulation Phase',
+      description: 'High volume, moderate intensity',
+      goal: 'Hypertrophy',
+      durationWeeks: 4,
+      microcycles: [
+        {
+          id: 'micro-1',
+          userId: MOCK_USER_ID,
+          mesocycleId: 'meso-1',
+          weekNumber: 1,
+          name: 'Week 1',
+          volumeTarget: 'high',
+          intensityTarget: 'moderate',
+          trainingDays: [
+            {
+              id: 'w1-upper',
+              userId: MOCK_USER_ID,
+              microcycleId: 'micro-1',
+              name: 'Upper Body',
+              exercises: [
+                {
+                  id: 'w1-ex-1',
+                  userId: MOCK_USER_ID,
+                  trainingDayId: 'w1-upper',
+                  name: 'Incline Bench Press',
+                  muscleCategory: MuscleCategory.Chest,
+                  muscleSubcategory: 'Upper',
+                  targetRepetitions: '8-12',
+                  targetRepetitionsInReserve: '2-3',
+                  equipment: 'Barbell',
+                  sets: [],
+                },
+              ],
+            },
+            {
+              id: 'w1-lower',
+              userId: MOCK_USER_ID,
+              microcycleId: 'micro-1',
+              name: 'Lower Body',
+              exercises: [
+                {
+                  id: 'w1-ex-2',
+                  userId: MOCK_USER_ID,
+                  trainingDayId: 'w1-lower',
+                  name: 'Squat',
+                  muscleCategory: MuscleCategory.Quads,
+                  targetRepetitions: '8-10',
+                  targetRepetitionsInReserve: '2',
+                  equipment: 'Barbell',
+                  sets: [],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'micro-2',
+          userId: MOCK_USER_ID,
+          mesocycleId: 'meso-1',
+          weekNumber: 2,
+          name: 'Week 2',
+          volumeTarget: 'high',
+          intensityTarget: 'moderate',
+          trainingDays: [], // Simplified for brevity
+        },
+      ],
+    },
+    {
+      id: 'meso-2',
+      userId: MOCK_USER_ID,
+      name: 'Intensification Phase',
+      description: 'Moderate volume, higher intensity',
+      goal: 'Strength',
+      durationWeeks: 3,
+      microcycles: [], // Simplified for brevity
+    },
+    {
+      id: 'meso-3',
+      userId: MOCK_USER_ID,
+      name: 'Deload',
+      description: 'Recovery week',
+      goal: 'Deload',
+      durationWeeks: 1,
+      microcycles: [], // Simplified for brevity
+    },
+  ],
+};
+
+// Combined list for the UI
+export const mockFullPrograms: Program[] = [
+  mockSimpleProgram,
+  mockPeriodizedProgram,
+];
+
+// Previous Sessions
+export const mockLastSession: TrainingDay = {
+  id: 'last-session-1',
+  userId: MOCK_USER_ID,
+  name: 'Pull Day',
+  description: 'Back, biceps',
+  startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+  exercises: [
+    {
+      id: 'last-ex-1',
+      userId: MOCK_USER_ID,
+      trainingDayId: 'last-session-1',
+      name: 'Pull-ups',
+      muscleCategory: MuscleCategory.Back,
+      muscleSubcategory: 'Upper Lats',
+      sets: [
+        {
+          id: 'set-1',
+          userId: MOCK_USER_ID,
+          weight: 0,
+          weightType: 'bodyweight',
+          repetitions: 10,
+          repetitionsInReserve: 2,
+          rateOfPerceivedExertion: 7.5,
+        },
+      ],
+    },
+  ],
+};
+
+export const mockPreviousInstanceOfToday: TrainingDay = {
+  id: 'prev-instance-1',
+  userId: MOCK_USER_ID,
+  name: 'Upper Body Push',
+  description: 'Chest, shoulders, and triceps focus',
+  startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // Last week
+  exercises: [
+    {
+      id: 'prev-ex-1',
+      userId: MOCK_USER_ID,
+      trainingDayId: 'prev-instance-1',
+      name: 'Incline Barbell Press',
+      muscleCategory: MuscleCategory.Chest,
+      muscleSubcategory: 'Upper',
+      sets: [
+        {
+          id: 'prev-set-1',
+          userId: MOCK_USER_ID,
+          weight: 180,
+          weightType: 'lbs',
+          repetitions: 10,
+          repetitionsInReserve: 2,
+          rateOfPerceivedExertion: 8,
+        },
+        {
+          id: 'prev-set-2',
+          userId: MOCK_USER_ID,
+          weight: 180,
+          weightType: 'lbs',
+          repetitions: 9,
+          repetitionsInReserve: 2,
+          rateOfPerceivedExertion: 8.5,
+        },
+      ],
+    },
+  ],
+};
