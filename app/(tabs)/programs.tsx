@@ -6,6 +6,7 @@ import { Colors } from '@/constants/theme';
 import { mockTrainingDay, mockFullPrograms } from '@/data/mock-data';
 import type { TrainingExercise, Program, Mesocycle } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { router } from 'expo-router';
 
 const muscleCategoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   Chest: 'fitness',
@@ -226,7 +227,16 @@ export default function ProgramsPage() {
 
       {/* Current Training Day */}
       <View style={styles.trainingDaySection}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
+          <TouchableOpacity
+            style={[styles.newExerciseButton, { backgroundColor: customColors.primaryButton }]}
+            onPress={() => router.push('/exercise-form')}
+          >
+            <Ionicons name="add" size={20} color="white" />
+            <Text style={styles.newExerciseButtonText}>New Exercise</Text>
+          </TouchableOpacity>
+        </View>
         <View style={[styles.trainingDayCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           {/* Training Day Header */}
           <View style={styles.trainingDayHeader}>
@@ -410,10 +420,28 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 12,
+  },
+  newExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  newExerciseButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
   },
   trainingDayCard: {
     borderRadius: 16,

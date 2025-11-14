@@ -113,9 +113,30 @@ Development mock data in `data/mock-data.ts`:
 
 All mock data structured according to API schema for seamless future integration.
 
-### API Reference
+### API Integration
 Backend API spec: `openapi.yaml`
-- Endpoints: `/training-days`, `/exercises`, `/training-session`
+- **Base URL**: `http://localhost:7071/api` (local development)
+- **Endpoints**: `/training-days`, `/exercises`, `/training-session`
 - Science-based metrics: RIR (Reps In Reserve), RPE (Rate of Perceived Exertion)
 - Target position tracking (lengthened, shortened)
 - Muscle-specific subcategories for precise tracking
+
+API Services (`services/api/`):
+- `config.ts` - API configuration and environment variables
+- `client.ts` - Base HTTP client with error handling
+- `training-days.ts` - Training day CRUD operations
+- `exercises.ts` - Exercise management functions
+- `training-sessions.ts` - Training session operations
+- `data-source.ts` - Unified interface with mock/API toggle
+
+React Hooks:
+- `hooks/useTrainingDay.ts` - Hook for fetching training days with loading/error states
+
+Environment Configuration (`.env`):
+```env
+API_BASE_URL=http://localhost:7071/api
+USE_MOCK_DATA=false  # Set to true to use mock data, false for real API
+MOCK_USER_ID=123e4567-e89b-12d3-a456-426614174001
+```
+
+See `services/api/README.md` for detailed usage examples.
