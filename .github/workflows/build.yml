@@ -1,4 +1,4 @@
-name: Build iOS & Android
+name: Build iOS
 
 on:
   push:
