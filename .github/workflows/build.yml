@@ -1,4 +1,4 @@
-name: Build iOS & Android
+name: Build iOS
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [ios, android]
+        platform: [ios]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,19 +24,16 @@ jobs:
           node-version: 18
           cache: 'npm'
 
-      - name: Setup Expo and EAS
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: latest
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
       - name: Build ${{ matrix.platform }}
-        run: |
-          eas build --platform ${{ matrix.platform }} --profile preview --non-interactive
+        run: eas build --platform ${{ matrix.platform }} --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Comment build status
         if: github.event_name == 'pull_request'
