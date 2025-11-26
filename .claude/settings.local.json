@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash([ -f \"eas.json\" ])",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
