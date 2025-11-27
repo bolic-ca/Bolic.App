@@ -11,6 +11,7 @@ jobs:
   build-ios-dev:
     name: Build iOS Development Build
     runs-on: macos-latest
+    environment: development
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
