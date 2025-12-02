@@ -3,7 +3,7 @@ name: Build and Deploy iOS
 on:
   push:
     tags:
-      - 'v*.*.*' # Triggers on version tags like v1.0.0, v1.0.1, etc.
+      - '*.*.*' # Triggers on version tags like v1.0.0, v1.0.1, etc.
   workflow_dispatch: # Manual trigger
 
 jobs:
