@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { mockWorkoutStats, mockPersonalRecords, mockWeeklyActivity } from '@/data/mock-data';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useStats } from '@/hooks/useStats';
 
 interface StatCard {
   title: string;
@@ -14,17 +14,30 @@ interface StatCard {
   color: string;
 }
 
-const stats: StatCard[] = [
-  { title: 'Total Workouts', value: mockWorkoutStats.totalWorkouts, subtitle: '+3 this week', icon: 'fitness', color: '#4ecdc4' },
-  { title: 'Current Streak', value: `${mockWorkoutStats.currentStreak} days`, subtitle: 'Best: 18 days', icon: 'flame', color: '#ff6b6b' },
-  { title: 'Total Volume', value: `${mockWorkoutStats.totalVolume.toLocaleString()} kg`, subtitle: '+2,340 kg this week', icon: 'barbell', color: '#ffd93d' },
-  { title: 'Active Time', value: `${mockWorkoutStats.activeTime} hrs`, subtitle: 'Avg: 45 min/session', icon: 'time', color: '#a29bfe' },
-];
-
 export default function StatsPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+  const { stats: userStats, prs, loading } = useStats();
+
+  // Build stat cards from real data
+  const stats: StatCard[] = [
+    { title: 'Total Workouts', value: userStats?.totalWorkouts || 0, subtitle: 'Keep it up!', icon: 'fitness', color: '#4ecdc4' },
+    { title: 'Current Streak', value: `${userStats?.currentStreak || 0} days`, subtitle: `Best: ${userStats?.longestStreak || 0} days`, icon: 'flame', color: '#ff6b6b' },
+    { title: 'Total Volume', value: `${(userStats?.totalVolume || 0).toLocaleString()} kg`, subtitle: 'Total weight lifted', icon: 'barbell', color: '#ffd93d' },
+    { title: 'Active Time', value: `${userStats?.activeTime || 0} hrs`, subtitle: 'Time spent training', icon: 'time', color: '#a29bfe' },
+  ];
+
+  // Mock weekly activity (this would come from session history in a future implementation)
+  const mockWeeklyActivity = [
+    { day: 'M', completed: true },
+    { day: 'T', completed: false },
+    { day: 'W', completed: true },
+    { day: 'T', completed: true },
+    { day: 'F', completed: false },
+    { day: 'S', completed: true },
+    { day: 'S', completed: false },
+  ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -37,8 +50,16 @@ export default function StatsPage() {
         Track your fitness journey
       </Text>
 
+      {/* Loading State */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={customColors.primaryButton} />
+        </View>
+      )}
+
       {/* Stats Grid */}
-      <View style={styles.statsGrid}>
+      {!loading && (
+        <View style={styles.statsGrid}>
         {stats.map((stat, index) => (
           <View
             key={index}
@@ -54,9 +75,11 @@ export default function StatsPage() {
             )}
           </View>
         ))}
-      </View>
+        </View>
+      )}
 
       {/* Weekly Activity */}
+      {!loading && (
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>This Week</Text>
         <View style={[styles.weeklyCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -91,27 +114,39 @@ export default function StatsPage() {
           </View>
         </View>
       </View>
+      )}
 
       {/* Personal Records */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Personal Records</Text>
-        <View style={[styles.prCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          {mockPersonalRecords.map((record, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />}
-              <View style={styles.prItem}>
-                <View style={styles.prLeft}>
-                  <Ionicons name="trophy" size={20} color="#ffd700" />
-                  <Text style={[styles.prExercise, { color: theme.text }]}>{record.exerciseName}</Text>
-                </View>
-                <Text style={[styles.prValue, { color: customColors.primaryButton }]}>
-                  {record.value} {record.unit}
-                </Text>
-              </View>
-            </React.Fragment>
-          ))}
+      {!loading && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Personal Records</Text>
+          {prs && prs.length > 0 ? (
+            <View style={[styles.prCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              {prs.map((record, index) => (
+                <React.Fragment key={record.id || index}>
+                  {index > 0 && <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />}
+                  <View style={styles.prItem}>
+                    <View style={styles.prLeft}>
+                      <Ionicons name="trophy" size={20} color="#ffd700" />
+                      <Text style={[styles.prExercise, { color: theme.text }]}>{record.exerciseName}</Text>
+                    </View>
+                    <Text style={[styles.prValue, { color: customColors.primaryButton }]}>
+                      {record.weight} {record.unit} × {record.reps}
+                    </Text>
+                  </View>
+                </React.Fragment>
+              ))}
+            </View>
+          ) : (
+            <View style={[styles.prCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No personal records yet</Text>
+              <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
+                Start working out to track your progress!
+              </Text>
+            </View>
+          )}
         </View>
-      </View>
+      )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -271,5 +306,20 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginVertical: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

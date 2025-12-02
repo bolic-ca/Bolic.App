@@ -118,7 +118,7 @@ export async function multiSet(keyValuePairs: [string, any][]): Promise<void> {
  * Get all keys in storage
  * @returns Array of all storage keys
  */
-export async function getAllKeys(): Promise<string[]> {
+export async function getAllKeys(): Promise<readonly string[]> {
   try {
     return await AsyncStorage.getAllKeys();
   } catch (error) {

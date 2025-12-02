@@ -7,8 +7,8 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { useStorage } from '@/contexts/StorageContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 
 export default function OnboardingScreen() {

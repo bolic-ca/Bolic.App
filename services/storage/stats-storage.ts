@@ -14,6 +14,7 @@ export interface UserStats {
   currentStreak: number;
   longestStreak: number;
   totalVolume: number; // Total weight lifted (kg or lbs)
+  activeTime: number; // Total active time in hours
   lastWorkoutDate: string | null;
   weeklyWorkouts: number[];
 }
@@ -34,6 +35,7 @@ export async function getStats(userId: string): Promise<UserStats> {
       currentStreak: 0,
       longestStreak: 0,
       totalVolume: 0,
+      activeTime: 0,
       lastWorkoutDate: null,
       weeklyWorkouts: [0, 0, 0, 0, 0, 0, 0],
     };

@@ -161,7 +161,7 @@ export async function getSessionHistory(
   // Look back up to 3 months
   for (let i = 0; i < 3 && sessions.length < limit; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthSessions = await getSessionsByMonth(date.getFullYear(), date.getMonth() + 1);
+    const monthSessions = await getSessionsByMonth(userId, date.getFullYear(), date.getMonth() + 1);
     sessions.push(...monthSessions);
   }
 

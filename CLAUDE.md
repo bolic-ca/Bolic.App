@@ -93,50 +93,68 @@ The app uses `expo-blur` BlurView for glassmorphism effects:
 - No inline styles for static values
 - Platform-specific styles via Platform.select() or platform files
 
-## Data Structure & API Integration
+## Data Storage & Management
 
 ### Type System
 TypeScript types defined in `types/training.ts` based on OpenAPI spec (openapi.yaml):
 - **TrainingSet** - Individual set tracking (weight, reps, RIR, RPE, quality)
 - **TrainingExercise** - Exercise details with muscle targeting, equipment, target rep ranges
 - **TrainingDay** - Training day with exercises array
+- **Program** - Training program (simple or periodized)
 - **MuscleCategory** enum - Quads, Glutes, Hamstrings, Calves, Abs, Chest, Delts, Back
 - **MuscleSubcategory** types - Chest (Upper/Middle/Lower), Delts (Front/Lateral/Rear), Back (various trap/lat positions)
 
-### Mock Data
-Development mock data in `data/mock-data.ts`:
-- `mockPrograms` - Training program summaries
-- `mockTrainingDay` - Sample training day with exercises and sets
-- `mockWorkoutStats` - User workout statistics
-- `mockPersonalRecords` - PR tracking data
-- `mockWeeklyActivity` - Weekly completion tracking
+Additional storage types in `types/storage.ts`:
+- **StorageItem** - Wrapper for stored data with metadata
+- **StorageConfig** - App configuration and user ID
+- **WorkoutSession** - Active and completed workout sessions
 
-All mock data structured according to API schema for seamless future integration.
+### Local Storage System (Phase A - Implemented)
+The app uses `@react-native-async-storage/async-storage` for offline-first data persistence.
 
-### API Integration
-Backend API spec: `openapi.yaml`
-- **Base URL**: `http://localhost:7071/api` (local development)
-- **Endpoints**: `/training-days`, `/exercises`, `/training-session`
-- Science-based metrics: RIR (Reps In Reserve), RPE (Rate of Perceived Exertion)
-- Target position tracking (lengthened, shortened)
-- Muscle-specific subcategories for precise tracking
+**Storage Services** (`services/storage/`):
+- `storage-client.ts` - AsyncStorage wrapper with error handling
+- `base-storage.ts` - Generic CRUD operations for entities
+- `program-storage.ts` - Program storage and active program tracking
+- `training-day-storage.ts` - Training day storage
+- `exercise-storage.ts` - Exercise management
+- `stats-storage.ts` - User statistics tracking
+- `personal-records-storage.ts` - Personal record tracking
+- `session-storage.ts` - Workout session storage with month partitioning
+- `config.ts` - Storage keys and configuration
 
-API Services (`services/api/`):
-- `config.ts` - API configuration and environment variables
-- `client.ts` - Base HTTP client with error handling
-- `training-days.ts` - Training day CRUD operations
-- `exercises.ts` - Exercise management functions
-- `training-sessions.ts` - Training session operations
-- `data-source.ts` - Unified interface with mock/API toggle
+**Storage Context** (`contexts/StorageContext.tsx`):
+- Initializes storage on app launch
+- Generates anonymous user ID for storage namespacing
+- Manages onboarding state
+- Provides `userId` and `isInitialized` to the app
 
-React Hooks:
-- `hooks/useTrainingDay.ts` - Hook for fetching training days with loading/error states
+**React Hooks** (`hooks/`):
+All hooks use the new storage system:
+- `usePrograms.ts` - Manage training programs
+- `useActiveProgram.ts` - Get/set active program
+- `useTrainingDay.ts` - Fetch specific training day
+- `useWorkoutSession.ts` - Manage active workout sessions
+- `useStats.ts` - User statistics and personal records
 
-Environment Configuration (`.env`):
-```env
-API_BASE_URL=http://localhost:7071/api
-USE_MOCK_DATA=false  # Set to true to use mock data, false for real API
-MOCK_USER_ID=123e4567-e89b-12d3-a456-426614174001
-```
+**Key Features**:
+- **Offline-first**: All data stored locally on device
+- **No network required**: App works completely offline
+- **Namespaced storage**: Each user has isolated data
+- **Type-safe**: Full TypeScript support
+- **Persistent**: Data survives app restarts
 
-See `services/api/README.md` for detailed usage examples.
+**Onboarding Flow**:
+1. App launch → Storage initialization
+2. Generate anonymous user ID if first time
+3. Show onboarding if `onboardingCompleted` is false
+4. Route to main app after onboarding
+
+### Future: Phase B (Planned)
+Phase B will add authentication and cloud sync for premium users:
+- Authentication system (signup/login)
+- Cloud sync for subscribed users
+- Data migration from anonymous to authenticated users
+- Offline queue for syncing changes
+
+See `.claude/plans/mutable-whistling-spring.md` for full implementation plan.

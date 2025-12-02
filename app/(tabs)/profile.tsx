@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { mockWorkoutStats } from '@/data/mock-data';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useStats } from '@/hooks/useStats';
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -31,6 +31,7 @@ export default function ProfilePage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors, setCustomColors, presetColors } = useThemeCustomization();
+  const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
 
   return (
@@ -55,17 +56,17 @@ export default function ProfilePage() {
       {/* Stats Summary */}
       <View style={[styles.statsContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.totalWorkouts}</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{stats?.totalWorkouts || 0}</Text>
           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Workouts</Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.currentStreak}</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{stats?.currentStreak || 0}</Text>
           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.activeTime}</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{stats?.activeTime || 0}</Text>
           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Hours</Text>
         </View>
       </View>

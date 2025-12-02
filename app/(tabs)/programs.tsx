@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { mockTrainingDay } from '@/data/mock-data';
 import type { TrainingExercise, Program, Mesocycle } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
 import { usePrograms } from '@/hooks/usePrograms';
+import { useActiveProgram } from '@/hooks/useActiveProgram';
+import { loadTemplate, getTemplateInfo } from '@/services/storage/template-loader';
+import { useStorage } from '@/contexts/StorageContext';
 
 const muscleCategoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   Chest: 'fitness',
@@ -35,10 +37,52 @@ export default function ProgramsPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
-  const { programs, loading, error } = usePrograms();
+  const { userId } = useStorage();
+  const { programs, loading, error, refetch } = usePrograms();
+  const { program: activeProgram, loading: activeProgramLoading } = useActiveProgram();
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+
+  const templates = getTemplateInfo();
+
+  const handleAddTemplate = async (templateIndex: number) => {
+    try {
+      setLoadingTemplate(true);
+      await loadTemplate(userId, templateIndex);
+      await refetch();
+      Alert.alert('Success', 'Template program added!');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to add template program');
+      console.error('Error adding template:', err);
+    } finally {
+      setLoadingTemplate(false);
+    }
+  };
+
+  // Get current training day from active program
+  const currentTrainingDay = useMemo(() => {
+    if (!activeProgram) return null;
+
+    // Simple program: get first training day
+    if (activeProgram.type === 'simple' && activeProgram.trainingDays?.length > 0) {
+      return activeProgram.trainingDays[0];
+    }
+
+    // Periodized program: get first training day from first microcycle
+    if (activeProgram.type === 'periodized' && activeProgram.mesocycles?.length > 0) {
+      const firstMeso = activeProgram.mesocycles[0];
+      if (firstMeso.microcycles?.length > 0) {
+        const firstMicro = firstMeso.microcycles[0];
+        if (firstMicro.trainingDays?.length > 0) {
+          return firstMicro.trainingDays[0];
+        }
+      }
+    }
+
+    return null;
+  }, [activeProgram]);
 
   const renderProgramCard = (program: Program) => {
     const isExpanded = expandedProgram === program.id;
@@ -238,14 +282,47 @@ export default function ProgramsPage() {
         </View>
       )}
 
-      {/* Empty State */}
-      {!loading && !error && programs.length === 0 && (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="barbell-outline" size={64} color={theme.textSecondary} />
-          <Text style={[styles.emptyText, { color: theme.text }]}>No programs yet</Text>
-          <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
-            Create your first training program to get started
+      {/* Template Programs Section */}
+      {!loading && !error && (
+        <View style={styles.templatesSection}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Program Templates</Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            Start with a pre-built program
           </Text>
+          <View style={styles.templatesGrid}>
+            {templates.map((template, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.templateCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                onPress={() => handleAddTemplate(index)}
+                disabled={loadingTemplate}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.templateIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
+                  <Ionicons
+                    name={template.type === 'simple' ? 'repeat' : 'calendar'}
+                    size={28}
+                    color={customColors.primaryButton}
+                  />
+                </View>
+                <Text style={[styles.templateName, { color: theme.text }]}>{template.name}</Text>
+                <Text style={[styles.templateDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+                  {template.description}
+                </Text>
+                <View style={styles.templateTags}>
+                  {template.tags?.slice(0, 2).map((tag, i) => (
+                    <View key={i} style={[styles.templateTag, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                      <Text style={[styles.templateTagText, { color: customColors.primaryButton }]}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={[styles.addButton, { backgroundColor: customColors.primaryButton }]}>
+                  <Ionicons name="add" size={16} color="white" />
+                  <Text style={styles.addButtonText}>Add Program</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       )}
 
@@ -257,46 +334,47 @@ export default function ProgramsPage() {
       )}
 
       {/* Current Training Day */}
-      <View style={styles.trainingDaySection}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
-          <TouchableOpacity
-            style={[styles.newExerciseButton, { backgroundColor: customColors.primaryButton }]}
-            onPress={() => router.push('/exercise-form')}
-          >
-            <Ionicons name="add" size={20} color="white" />
-            <Text style={styles.newExerciseButtonText}>New Exercise</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={[styles.trainingDayCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          {/* Training Day Header */}
-          <View style={styles.trainingDayHeader}>
-            <View style={styles.trainingDayHeaderLeft}>
-              <Ionicons name="calendar-outline" size={20} color={customColors.primaryButton} />
-              <View>
-                <Text style={[styles.trainingDayName, { color: theme.text }]}>{mockTrainingDay.name}</Text>
-                {mockTrainingDay.description && (
-                  <Text style={[styles.trainingDayDescription, { color: theme.textSecondary }]}>
-                    {mockTrainingDay.description}
-                  </Text>
-                )}
+      {currentTrainingDay && (
+        <View style={styles.trainingDaySection}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
+            <TouchableOpacity
+              style={[styles.newExerciseButton, { backgroundColor: customColors.primaryButton }]}
+              onPress={() => router.push('/exercise-form')}
+            >
+              <Ionicons name="add" size={20} color="white" />
+              <Text style={styles.newExerciseButtonText}>New Exercise</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.trainingDayCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {/* Training Day Header */}
+            <View style={styles.trainingDayHeader}>
+              <View style={styles.trainingDayHeaderLeft}>
+                <Ionicons name="calendar-outline" size={20} color={customColors.primaryButton} />
+                <View>
+                  <Text style={[styles.trainingDayName, { color: theme.text }]}>{currentTrainingDay.name}</Text>
+                  {currentTrainingDay.description && (
+                    <Text style={[styles.trainingDayDescription, { color: theme.textSecondary }]}>
+                      {currentTrainingDay.description}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={[styles.exerciseCountBadge, { backgroundColor: `${customColors.primaryButton}15` }]}>
+                <Text style={[styles.exerciseCountText, { color: customColors.primaryButton }]}>
+                  {currentTrainingDay.exercises?.length || 0}
+                </Text>
               </View>
             </View>
-            <View style={[styles.exerciseCountBadge, { backgroundColor: `${customColors.primaryButton}15` }]}>
-              <Text style={[styles.exerciseCountText, { color: customColors.primaryButton }]}>
-                {mockTrainingDay.exercises?.length || 0}
-              </Text>
-            </View>
-          </View>
 
-          {/* Exercises List */}
-          <View style={styles.exercisesList}>
-            {mockTrainingDay.exercises?.map((exercise, index) => (
+            {/* Exercises List */}
+            <View style={styles.exercisesList}>
+              {currentTrainingDay.exercises?.map((exercise: TrainingExercise, index: number) => (
               <View key={exercise.id}>
                 {index > 0 && <View style={[styles.exerciseDivider, { backgroundColor: theme.cardBorder }]} />}
                 <TouchableOpacity
                   style={styles.exerciseItem}
-                  onPress={() => setExpandedExercise(expandedExercise === exercise.id ? null : exercise.id)}
+                  onPress={() => setExpandedExercise(expandedExercise === exercise.id ? null : (exercise.id ?? null))}
                   activeOpacity={0.7}
                 >
                   {/* Exercise Header */}
@@ -382,7 +460,7 @@ export default function ProgramsPage() {
                           <Text style={[styles.setsTitle, { color: theme.text }]}>
                             Sets ({exercise.sets.length})
                           </Text>
-                          {exercise.sets.map((set, setIndex) => (
+                          {exercise.sets.map((set: any, setIndex: number) => (
                             <View
                               key={set.id}
                               style={[styles.setItem, { backgroundColor: theme.background }]}
@@ -417,10 +495,11 @@ export default function ProgramsPage() {
                   )}
                 </TouchableOpacity>
               </View>
-            ))}
+              ))}
+            </View>
           </View>
         </View>
-      </View>
+      )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -873,5 +952,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 32,
+  },
+  templatesSection: {
+    marginBottom: 32,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  templatesGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  templateCard: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  templateIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  templateDescription: {
+    fontSize: 13,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  templateTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 12,
+  },
+  templateTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  templateTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  addButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -1,15 +1,63 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { mockTrainingDay, mockWorkoutStats, mockLastSession, mockPreviousInstanceOfToday } from '@/data/mock-data';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useActiveProgram } from '@/hooks/useActiveProgram';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useStats } from '@/hooks/useStats';
+import type { TrainingDay } from '@/types/training';
 
 export default function HomePage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+
+  // Fetch data from storage
+  const { program: activeProgram, loading: programLoading } = useActiveProgram();
+  const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
+  const { stats, loading: statsLoading } = useStats();
+
+  // Get next training day from active program
+  const nextTrainingDay = useMemo(() => {
+    if (!activeProgram) return null;
+
+    // Simple program: get first training day
+    if (activeProgram.type === 'simple' && activeProgram.trainingDays?.length > 0) {
+      return activeProgram.trainingDays[0];
+    }
+
+    // Periodized program: get first training day from first microcycle
+    if (activeProgram.type === 'periodized' && activeProgram.mesocycles?.length > 0) {
+      const firstMeso = activeProgram.mesocycles[0];
+      if (firstMeso.microcycles?.length > 0) {
+        const firstMicro = firstMeso.microcycles[0];
+        if (firstMicro.trainingDays?.length > 0) {
+          return firstMicro.trainingDays[0];
+        }
+      }
+    }
+
+    return null;
+  }, [activeProgram]);
+
+  // Get last completed session
+  const lastSession = useMemo(() => {
+    return sessionHistory && sessionHistory.length > 0 ? sessionHistory[0] : null;
+  }, [sessionHistory]);
+
+  // Get previous instance of next training day (if available)
+  const previousInstanceOfToday = useMemo(() => {
+    if (!nextTrainingDay || !sessionHistory) return null;
+
+    // Find most recent session that matches the next training day
+    return sessionHistory.find(
+      (session) => session.trainingDayId === nextTrainingDay.id
+    ) || null;
+  }, [nextTrainingDay, sessionHistory]);
+
+  const loading = programLoading || sessionLoading || statsLoading;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -34,94 +82,132 @@ export default function HomePage() {
         </TouchableOpacity>
       </View>
 
-      {/* Next on the menu */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Next on the menu</Text>
-        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="barbell" size={24} color={customColors.primaryButton} />
-            <View style={styles.cardHeaderText}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>{mockTrainingDay.name}</Text>
-              <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>
-                {mockTrainingDay.exercises?.length || 0} exercises • 45 min
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity style={[styles.cardButton, { backgroundColor: theme.background }]}>
-            <Text style={[styles.cardButtonText, { color: customColors.primaryButton }]}>View Details</Text>
-            <Ionicons name="chevron-forward" size={18} color={customColors.primaryButton} />
-          </TouchableOpacity>
+      {/* Loading State */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={customColors.primaryButton} />
         </View>
-      </View>
+      )}
+
+      {/* Next on the menu */}
+      {!loading && nextTrainingDay && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Next on the menu</Text>
+          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="barbell" size={24} color={customColors.primaryButton} />
+              <View style={styles.cardHeaderText}>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>{nextTrainingDay.name}</Text>
+                <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>
+                  {nextTrainingDay.exercises?.length || 0} exercises • {nextTrainingDay.description || 'No description'}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity style={[styles.cardButton, { backgroundColor: theme.background }]}>
+              <Text style={[styles.cardButtonText, { color: customColors.primaryButton }]}>View Details</Text>
+              <Ionicons name="chevron-forward" size={18} color={customColors.primaryButton} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Empty state for no active program */}
+      {!loading && !nextTrainingDay && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Next on the menu</Text>
+          <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            <Text style={[styles.cardTitle, { color: theme.textSecondary }]}>No active program</Text>
+            <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>
+              Set an active program to see your next workout
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Previous Sessions */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Look back</Text>
+      {!loading && (lastSession || previousInstanceOfToday) && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Look back</Text>
 
-        {/* Last Session */}
-        <View style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <View style={styles.sessionHeader}>
-            <View style={styles.sessionHeaderLeft}>
-              <Ionicons name="checkmark-circle" size={20} color="#4ecdc4" />
-              <View>
-                <Text style={[styles.sessionLabel, { color: theme.textSecondary }]}>Last Session</Text>
-                <Text style={[styles.sessionName, { color: theme.text }]}>{mockLastSession.name}</Text>
+          {/* Last Session */}
+          {lastSession && (
+            <View style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <View style={styles.sessionHeader}>
+                <View style={styles.sessionHeaderLeft}>
+                  <Ionicons name="checkmark-circle" size={20} color="#4ecdc4" />
+                  <View>
+                    <Text style={[styles.sessionLabel, { color: theme.textSecondary }]}>Last Session</Text>
+                    <Text style={[styles.sessionName, { color: theme.text }]}>
+                      {lastSession.exercises?.[0]?.exerciseName || 'Completed workout'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>
+                  {lastSession.completedAt ? new Date(lastSession.completedAt).toLocaleDateString() : 'Recent'}
+                </Text>
               </View>
-            </View>
-            <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>Yesterday</Text>
-          </View>
-          {mockLastSession.exercises && mockLastSession.exercises[0] && (
-            <View style={styles.sessionDetail}>
-              <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
-                {mockLastSession.exercises[0].name} • {mockLastSession.exercises[0].sets?.length || 0} sets
-              </Text>
+              {lastSession.exercises && lastSession.exercises[0] && (
+                <View style={styles.sessionDetail}>
+                  <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
+                    {lastSession.exercises[0].exerciseName} • {lastSession.exercises[0].sets?.length || 0} sets
+                  </Text>
+                </View>
+              )}
             </View>
           )}
-        </View>
 
-        {/* Last Time You Did This */}
-        <View style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <View style={styles.sessionHeader}>
-            <View style={styles.sessionHeaderLeft}>
-              <Ionicons name="repeat" size={20} color="#ffd93d" />
-              <View>
-                <Text style={[styles.sessionLabel, { color: theme.textSecondary }]}>Last time you did this</Text>
-                <Text style={[styles.sessionName, { color: theme.text }]}>{mockPreviousInstanceOfToday.name}</Text>
-              </View>
-            </View>
-            <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>Last week</Text>
-          </View>
-          {mockPreviousInstanceOfToday.exercises && mockPreviousInstanceOfToday.exercises[0] && (
-            <View style={styles.sessionDetail}>
-              <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
-                {mockPreviousInstanceOfToday.exercises[0].name}
-              </Text>
-              {mockPreviousInstanceOfToday.exercises[0].sets && mockPreviousInstanceOfToday.exercises[0].sets[0] && (
-                <Text style={[styles.sessionPerformance, { color: theme.text }]}>
-                  {mockPreviousInstanceOfToday.exercises[0].sets[0].weight} {mockPreviousInstanceOfToday.exercises[0].sets[0].weightType} × {mockPreviousInstanceOfToday.exercises[0].sets[0].repetitions} reps
+          {/* Last Time You Did This */}
+          {previousInstanceOfToday && (
+            <View style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <View style={styles.sessionHeader}>
+                <View style={styles.sessionHeaderLeft}>
+                  <Ionicons name="repeat" size={20} color="#ffd93d" />
+                  <View>
+                    <Text style={[styles.sessionLabel, { color: theme.textSecondary }]}>Last time you did this</Text>
+                    <Text style={[styles.sessionName, { color: theme.text }]}>
+                      {previousInstanceOfToday.exercises?.[0]?.exerciseName || 'Previous session'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>
+                  {previousInstanceOfToday.completedAt ? new Date(previousInstanceOfToday.completedAt).toLocaleDateString() : 'Previous'}
                 </Text>
+              </View>
+              {previousInstanceOfToday.exercises && previousInstanceOfToday.exercises[0] && (
+                <View style={styles.sessionDetail}>
+                  <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
+                    {previousInstanceOfToday.exercises[0].exerciseName}
+                  </Text>
+                  {previousInstanceOfToday.exercises[0].sets && previousInstanceOfToday.exercises[0].sets[0] && (
+                    <Text style={[styles.sessionPerformance, { color: theme.text }]}>
+                      {previousInstanceOfToday.exercises[0].sets[0].weight} kg × {previousInstanceOfToday.exercises[0].sets[0].reps} reps
+                    </Text>
+                  )}
+                </View>
               )}
             </View>
           )}
         </View>
-      </View>
+      )}
 
       {/* Recent Activity */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Recent Activity</Text>
-        <View style={[styles.statsGrid]}>
-          <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            <Ionicons name="flame" size={28} color="#ff6b6b" />
-            <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.totalWorkouts}</Text>
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Workouts</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            <Ionicons name="calendar" size={28} color="#4ecdc4" />
-            <Text style={[styles.statValue, { color: theme.text }]}>{mockWorkoutStats.currentStreak}</Text>
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
+      {!loading && stats && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Recent Activity</Text>
+          <View style={[styles.statsGrid]}>
+            <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <Ionicons name="flame" size={28} color="#ff6b6b" />
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.totalWorkouts || 0}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Workouts</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <Ionicons name="calendar" size={28} color="#4ecdc4" />
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.currentStreak || 0}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
+            </View>
           </View>
         </View>
-      </View>
+      )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -291,5 +377,10 @@ const styles = StyleSheet.create({
   sessionPerformance: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
   },
 });
