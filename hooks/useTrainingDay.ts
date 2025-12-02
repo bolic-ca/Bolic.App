@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getTrainingDay } from '@/services/api';
+import { useStorage } from '@/contexts/StorageContext';
+import { trainingDayStorage } from '@/services/storage/training-day-storage';
 import type { TrainingDay } from '@/types/training';
 
 interface UseTrainingDayOptions {
@@ -23,20 +24,25 @@ export function useTrainingDay(
   options: UseTrainingDayOptions
 ): UseTrainingDayResult {
   const { trainingDayId, enabled = true } = options;
+  const { userId, isInitialized } = useStorage();
 
   const [data, setData] = useState<TrainingDay | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchTrainingDay = async () => {
-    if (!trainingDayId || !enabled) return;
+    if (!trainingDayId || !enabled || !userId) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const result = await getTrainingDay({ id: trainingDayId });
-      setData(result);
+      const item = await trainingDayStorage.getById(userId, trainingDayId);
+      if (item) {
+        setData(item.data);
+      } else {
+        setData(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch training day'));
       setData(null);
@@ -46,8 +52,10 @@ export function useTrainingDay(
   };
 
   useEffect(() => {
-    fetchTrainingDay();
-  }, [trainingDayId, enabled]);
+    if (isInitialized) {
+      fetchTrainingDay();
+    }
+  }, [trainingDayId, enabled, userId, isInitialized]);
 
   return {
     data,
