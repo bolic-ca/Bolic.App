@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { mockTrainingDay, mockFullPrograms } from '@/data/mock-data';
+import { mockTrainingDay } from '@/data/mock-data';
 import type { TrainingExercise, Program, Mesocycle } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
+import { usePrograms } from '@/hooks/usePrograms';
 
 const muscleCategoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   Chest: 'fitness',
@@ -34,6 +35,7 @@ export default function ProgramsPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+  const { programs, loading, error } = usePrograms();
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
@@ -220,10 +222,39 @@ export default function ProgramsPage() {
         Simple or periodized - choose what works for you
       </Text>
 
+      {/* Loading State */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={customColors.primaryButton} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading programs...</Text>
+        </View>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
+          <Text style={[styles.errorText, { color: theme.text }]}>{error.message}</Text>
+        </View>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && programs.length === 0 && (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="barbell-outline" size={64} color={theme.textSecondary} />
+          <Text style={[styles.emptyText, { color: theme.text }]}>No programs yet</Text>
+          <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
+            Create your first training program to get started
+          </Text>
+        </View>
+      )}
+
       {/* Full Programs Section */}
-      <View style={styles.fullProgramsSection}>
-        {mockFullPrograms.map((program) => renderProgramCard(program))}
-      </View>
+      {!loading && !error && programs.length > 0 && (
+        <View style={styles.fullProgramsSection}>
+          {programs.map((program) => renderProgramCard(program))}
+        </View>
+      )}
 
       {/* Current Training Day */}
       <View style={styles.trainingDaySection}>
@@ -805,5 +836,42 @@ const styles = StyleSheet.create({
   },
   microDays: {
     fontSize: 12,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    gap: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 64,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
 });
