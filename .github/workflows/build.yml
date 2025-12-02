@@ -25,7 +25,12 @@ jobs:
         run: npm ci
 
       - name: Set version
-        run: sed -i "s/$APP_VERSION/${{ github.ref_name }}/g" app.json
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "APP_VERSION"
+          replace: ${{ github.ref_name }}
+          include: "app.json"
+          regex: false
         
       - name: Setup EAS CLI
         run: npm install -g eas-cli
