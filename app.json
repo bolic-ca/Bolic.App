@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bolic",
     "slug": "bolic",
-    "version": "1.0.0",
+    "version": "$APP_VERSION",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bolicapp",

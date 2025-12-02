@@ -31,6 +31,7 @@ jobs:
         run: eas build --platform ios --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          APP_VERSION: ${{ github.ref_name }}
 
       - name: Submit to TestFlight
         run: eas submit --platform ios --latest --non-interactive
