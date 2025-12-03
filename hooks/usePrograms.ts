@@ -14,16 +14,22 @@ export function usePrograms() {
   const [error, setError] = useState<Error | null>(null);
 
   async function fetchPrograms() {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
       const items = await programStorage.getAll(userId);
+      console.log('Programs loaded:', items.length);
       setPrograms(items.map(item => ({ ...item.data, id: item.id })));
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load programs'));
-      console.error('Error fetching programs:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load programs';
+      const error = err instanceof Error ? err : new Error('Failed to load programs');
+      setError(error);
+      console.error('Error fetching programs:', errorMessage, err);
     } finally {
       setLoading(false);
     }

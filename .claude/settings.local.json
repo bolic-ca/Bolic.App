@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash([ -f \"eas.json\" ])",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm run lint)",
+      "Bash(tail:*)"
     ],
     "deny": [],
     "ask": []

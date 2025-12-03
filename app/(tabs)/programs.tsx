@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '@/constants/theme';
 import type { TrainingExercise, Program, Mesocycle } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
 import { usePrograms } from '@/hooks/usePrograms';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
+import { useExercises } from '@/hooks/useExercises';
 import { loadTemplate, getTemplateInfo } from '@/services/storage/template-loader';
 import { useStorage } from '@/contexts/StorageContext';
 
@@ -38,8 +40,9 @@ export default function ProgramsPage() {
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
   const { userId } = useStorage();
-  const { programs, loading, error, refetch } = usePrograms();
-  const { program: activeProgram, loading: activeProgramLoading } = useActiveProgram();
+  const { programs, loading, error, refetch: refetchPrograms } = usePrograms();
+  const { program: activeProgram, loading: activeProgramLoading, refetch: refetchActiveProgram } = useActiveProgram();
+  const { exercises, loading: exercisesLoading, refetch: refetchExercises } = useExercises();
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
@@ -47,11 +50,30 @@ export default function ProgramsPage() {
 
   const templates = getTemplateInfo();
 
+  // Refetch data when screen comes into focus (e.g., after adding an exercise)
+  useFocusEffect(
+    useCallback(() => {
+      const refetchData = async () => {
+        try {
+          await Promise.all([
+            refetchPrograms(),
+            refetchActiveProgram(),
+            refetchExercises()
+          ]);
+        } catch (error) {
+          console.error('Error refetching data on focus:', error);
+        }
+      };
+      refetchData();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
   const handleAddTemplate = async (templateIndex: number) => {
     try {
       setLoadingTemplate(true);
       await loadTemplate(userId, templateIndex);
-      await refetch();
+      await refetchPrograms();
       Alert.alert('Success', 'Template program added!');
     } catch (err) {
       Alert.alert('Error', 'Failed to add template program');
@@ -159,10 +181,28 @@ export default function ProgramsPage() {
                 {program.trainingDays?.map((day, index) => (
                   <View key={day.id} style={[styles.dayCard, { backgroundColor: theme.background }]}>
                     <View style={styles.dayCardHeader}>
-                      <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
-                        Day {index + 1}
-                      </Text>
-                      <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
+                      <View>
+                        <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
+                          Day {index + 1}
+                        </Text>
+                        <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={[styles.addExerciseButton, { backgroundColor: customColors.primaryButton }]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          router.push({
+                            pathname: '/exercise-form',
+                            params: {
+                              trainingDayId: day.id,
+                              programId: program.id
+                            }
+                          });
+                        }}
+                      >
+                        <Ionicons name="add-circle" size={20} color="white" />
+                        <Text style={styles.addExerciseButtonText}>Add Exercise</Text>
+                      </TouchableOpacity>
                     </View>
                     <Text style={[styles.dayDescription, { color: theme.textSecondary }]}>
                       {day.description}
@@ -240,6 +280,41 @@ export default function ProgramsPage() {
                               <Text style={[styles.microDays, { color: theme.textSecondary }]}>
                                 {micro.trainingDays.length} training days
                               </Text>
+                              {/* Training Days within Microcycle */}
+                              {micro.trainingDays?.map((day, dayIndex) => (
+                                <View key={day.id} style={[styles.dayCard, { backgroundColor: theme.card, marginTop: 8 }]}>
+                                  <View style={styles.dayCardHeader}>
+                                    <View>
+                                      <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
+                                        Day {dayIndex + 1}
+                                      </Text>
+                                      <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
+                                    </View>
+                                    <TouchableOpacity
+                                      style={[styles.addExerciseButton, { backgroundColor: customColors.primaryButton }]}
+                                      onPress={(e) => {
+                                        e.stopPropagation();
+                                        router.push({
+                                          pathname: '/exercise-form',
+                                          params: {
+                                            trainingDayId: day.id,
+                                            programId: program.id
+                                          }
+                                        });
+                                      }}
+                                    >
+                                      <Ionicons name="add-circle" size={20} color="white" />
+                                      <Text style={styles.addExerciseButtonText}>Add Exercise</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                  <Text style={[styles.dayDescription, { color: theme.textSecondary }]}>
+                                    {day.description}
+                                  </Text>
+                                  <Text style={[styles.dayExerciseCount, { color: theme.textSecondary }]}>
+                                    {day.exercises?.length || 0} exercises
+                                  </Text>
+                                </View>
+                              ))}
                             </View>
                           ))}
                         </View>
@@ -261,10 +336,35 @@ export default function ProgramsPage() {
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
       >
-      <Text style={[styles.heading, { color: theme.text }]}>Training Programs</Text>
-      <Text style={[styles.subheading, { color: theme.textSecondary }]}>
-        Simple or periodized - choose what works for you
-      </Text>
+      <View style={styles.headerSection}>
+        <View>
+          <Text style={[styles.heading, { color: theme.text }]}>Training Programs</Text>
+          <Text style={[styles.subheading, { color: theme.textSecondary }]}>
+            Simple or periodized - choose what works for you
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.quickAddButton, { backgroundColor: customColors.primaryButton }]}
+          onPress={() => {
+            // If there's an active program with a current training day, add to it
+            // Otherwise, create a standalone exercise
+            if (activeProgram && currentTrainingDay) {
+              router.push({
+                pathname: '/exercise-form',
+                params: {
+                  trainingDayId: currentTrainingDay.id,
+                  programId: activeProgram.id
+                }
+              });
+            } else {
+              router.push('/exercise-form');
+            }
+          }}
+        >
+          <Ionicons name="add-circle" size={24} color="white" />
+          <Text style={styles.quickAddButtonText}>Add Exercise</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Loading State */}
       {loading && (
@@ -340,7 +440,13 @@ export default function ProgramsPage() {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
             <TouchableOpacity
               style={[styles.newExerciseButton, { backgroundColor: customColors.primaryButton }]}
-              onPress={() => router.push('/exercise-form')}
+              onPress={() => router.push({
+                pathname: '/exercise-form',
+                params: {
+                  trainingDayId: currentTrainingDay.id,
+                  programId: activeProgram?.id
+                }
+              })}
             >
               <Ionicons name="add" size={20} color="white" />
               <Text style={styles.newExerciseButtonText}>New Exercise</Text>
@@ -500,6 +606,103 @@ export default function ProgramsPage() {
           </View>
         </View>
       )}
+
+      {/* Exercise Library */}
+      <View style={styles.exerciseLibrarySection}>
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Exercise Library</Text>
+            <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+              All your exercises ({exercises.length})
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.addExerciseToLibraryButton, { backgroundColor: customColors.primaryButton }]}
+            onPress={() => {
+              // If there's an active program with a current training day, add to it
+              // Otherwise, create a standalone exercise
+              if (activeProgram && currentTrainingDay) {
+                router.push({
+                  pathname: '/exercise-form',
+                  params: {
+                    trainingDayId: currentTrainingDay.id,
+                    programId: activeProgram.id
+                  }
+                });
+              } else {
+                router.push('/exercise-form');
+              }
+            }}
+          >
+            <Ionicons name="add-circle" size={20} color="white" />
+            <Text style={styles.addExerciseToLibraryButtonText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+
+        {exercisesLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={customColors.primaryButton} />
+          </View>
+        ) : exercises.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="barbell-outline" size={48} color={theme.textSecondary} />
+            <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
+              No exercises yet. Add your first exercise!
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.exerciseLibraryList}>
+            {exercises.map((exercise, index) => (
+              <TouchableOpacity
+                key={exercise.id}
+                style={[styles.exerciseLibraryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.exerciseLibraryCardHeader}>
+                  {exercise.muscleCategory && (
+                    <View
+                      style={[
+                        styles.muscleIconContainer,
+                        { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory]}20` },
+                      ]}
+                    >
+                      <Ionicons
+                        name={muscleCategoryIcons[exercise.muscleCategory] || 'fitness'}
+                        size={18}
+                        color={muscleCategoryColors[exercise.muscleCategory]}
+                      />
+                    </View>
+                  )}
+                  <View style={styles.exerciseLibraryCardInfo}>
+                    <Text style={[styles.exerciseLibraryCardName, { color: theme.text }]}>
+                      {exercise.name}
+                    </Text>
+                    <View style={styles.exerciseLibraryCardMeta}>
+                      {exercise.muscleCategory && (
+                        <Text style={[styles.exerciseLibraryCardMetaText, { color: theme.textSecondary }]}>
+                          {exercise.muscleCategory}
+                          {exercise.muscleSubcategory && ` • ${exercise.muscleSubcategory}`}
+                        </Text>
+                      )}
+                    </View>
+                    {exercise.equipment && (
+                      <View style={styles.exerciseLibraryCardTags}>
+                        <View style={[styles.equipmentTag, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                          <Ionicons name="barbell" size={12} color={customColors.primaryButton} />
+                          <Text style={[styles.equipmentTagText, { color: customColors.primaryButton }]}>
+                            {exercise.equipment}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -516,6 +719,9 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
+  headerSection: {
+    marginBottom: 24,
+  },
   heading: {
     fontSize: 32,
     fontWeight: '700',
@@ -524,7 +730,22 @@ const styles = StyleSheet.create({
   subheading: {
     fontSize: 16,
     fontWeight: '400',
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  quickAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  quickAddButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   trainingDaySection: {
     marginTop: 8,
@@ -820,6 +1041,7 @@ const styles = StyleSheet.create({
   dayCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
     marginBottom: 6,
   },
@@ -837,6 +1059,19 @@ const styles = StyleSheet.create({
   },
   dayExerciseCount: {
     fontSize: 12,
+  },
+  addExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addExerciseButtonText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '600',
   },
   mesocyclesList: {
     gap: 12,
@@ -1021,5 +1256,80 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
+  },
+  exerciseLibrarySection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  addExerciseToLibraryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  addExerciseToLibraryButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  exerciseLibraryList: {
+    gap: 12,
+    marginTop: 16,
+  },
+  exerciseLibraryCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  exerciseLibraryCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  exerciseLibraryCardInfo: {
+    flex: 1,
+  },
+  exerciseLibraryCardName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  exerciseLibraryCardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  exerciseLibraryCardMetaText: {
+    fontSize: 13,
+  },
+  exerciseLibraryCardTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  equipmentTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  equipmentTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
