@@ -62,16 +62,46 @@ function MyComponent() {
 }
 ```
 
-### Using Data Source (Mock/API Toggle)
+### Using Local Storage (Phase A - Current)
 
-The data source manager automatically switches between mock data and real API based on the `USE_MOCK_DATA` flag:
+**Phase A uses local storage** for offline-first functionality. Use React hooks to interact with stored data:
 
 ```typescript
-import { getTrainingDay, getNextTrainingDay } from '@/services/api/data-source';
+import { usePrograms } from '@/hooks/usePrograms';
+import { useActiveProgram } from '@/hooks/useActiveProgram';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useStats } from '@/hooks/useStats';
 
-// This will use mock data if USE_MOCK_DATA=true, otherwise hits the API
-const nextDay = await getNextTrainingDay();
+// Get all programs
+const { programs, loading, createProgram } = usePrograms();
+
+// Get active program
+const { program: activeProgram } = useActiveProgram();
+
+// Manage workout sessions
+const { session, startSession, completeSession } = useWorkoutSession();
+
+// Get user statistics and PRs
+const { stats, prs } = useStats();
 ```
+
+**Note:** Direct API calls (below) will be integrated in Phase B for cloud sync functionality.
+
+### Local Storage Architecture
+
+Phase A implements a complete offline-first storage system:
+
+- **Storage Services**: `services/storage/*` - AsyncStorage wrappers for data persistence
+  - `program-storage.ts` - Training program management
+  - `training-day-storage.ts` - Training day persistence
+  - `session-storage.ts` - Workout session tracking with month partitioning
+  - `stats-storage.ts` - User statistics and progress tracking
+  - `personal-records-storage.ts` - PR tracking
+- **Storage Context**: `contexts/StorageContext.tsx` - App initialization and user ID management
+- **React Hooks**: `hooks/*` - Easy-to-use hooks for components
+- **Template Loader**: `services/storage/template-loader.ts` - Load sample programs
+
+All data is stored locally using `@react-native-async-storage/async-storage` and namespaced by user ID.
 
 ## Development Workflow
 
@@ -134,9 +164,19 @@ try {
 }
 ```
 
-## Next Steps
+## Implementation Status
 
-- [ ] Implement authentication and real user management
-- [ ] Add more endpoints for querying multiple training days
-- [ ] Implement offline support with local caching
-- [ ] Add optimistic updates for better UX
+### ✅ Phase A Complete (Offline-First Storage)
+- [x] Local storage system with AsyncStorage
+- [x] User data isolation and namespacing
+- [x] Offline functionality without authentication
+- [x] React hooks for data access
+- [x] Onboarding flow for new users
+- [x] Template loading for sample programs
+
+### 🔄 Phase B (Planned - Cloud Sync & Auth)
+- [ ] Implement authentication and user management
+- [ ] Add cloud sync for subscribed users
+- [ ] Integrate API endpoints (training days, programs, sessions)
+- [ ] Offline queue for syncing changes
+- [ ] Data migration from anonymous to authenticated users

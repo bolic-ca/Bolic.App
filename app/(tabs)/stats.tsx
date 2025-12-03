@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, useColorScheme, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 
 interface StatCard {
   title: string;
@@ -18,7 +19,10 @@ export default function StatsPage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
-  const { stats: userStats, prs, loading } = useStats();
+  const { stats: userStats, prs, loading: statsLoading } = useStats();
+  const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
+
+  const loading = statsLoading || sessionLoading;
 
   // Build stat cards from real data
   const stats: StatCard[] = [
@@ -28,16 +32,31 @@ export default function StatsPage() {
     { title: 'Active Time', value: `${userStats?.activeTime || 0} hrs`, subtitle: 'Time spent training', icon: 'time', color: '#a29bfe' },
   ];
 
-  // Mock weekly activity (this would come from session history in a future implementation)
-  const mockWeeklyActivity = [
-    { day: 'M', completed: true },
-    { day: 'T', completed: false },
-    { day: 'W', completed: true },
-    { day: 'T', completed: true },
-    { day: 'F', completed: false },
-    { day: 'S', completed: true },
-    { day: 'S', completed: false },
-  ];
+  // Calculate real weekly activity from session history
+  const weeklyActivity = useMemo(() => {
+    const today = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(today);
+      date.setDate(date.getDate() - (6 - i));
+      return date;
+    });
+
+    return last7Days.map(date => {
+      const dayStr = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
+      const dateKey = date.toISOString().split('T')[0];
+      const completed = sessionHistory?.some(session =>
+        session.completedAt?.startsWith(dateKey)
+      ) || false;
+      return { day: dayStr, completed };
+    });
+  }, [sessionHistory]);
+
+  // Calculate weekly stats from real data
+  const weeklyStats = useMemo(() => {
+    const completedCount = weeklyActivity.filter(d => d.completed).length;
+    const completionRate = Math.round((completedCount / 7) * 100);
+    return { completedCount, completionRate };
+  }, [weeklyActivity]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -84,7 +103,7 @@ export default function StatsPage() {
         <Text style={[styles.sectionTitle, { color: theme.text }]}>This Week</Text>
         <View style={[styles.weeklyCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <View style={styles.weeklyGrid}>
-            {mockWeeklyActivity.map((item, index) => (
+            {weeklyActivity.map((item, index) => (
               <View key={index} style={styles.dayContainer}>
                 <Text style={[styles.dayLabel, { color: theme.textSecondary }]}>{item.day}</Text>
                 <View
@@ -103,12 +122,12 @@ export default function StatsPage() {
           </View>
           <View style={styles.weeklyStats}>
             <View style={styles.weeklyStatItem}>
-              <Text style={[styles.weeklyStatValue, { color: theme.text }]}>4/7</Text>
+              <Text style={[styles.weeklyStatValue, { color: theme.text }]}>{weeklyStats.completedCount}/7</Text>
               <Text style={[styles.weeklyStatLabel, { color: theme.textSecondary }]}>Days Completed</Text>
             </View>
             <View style={[styles.separator, { backgroundColor: theme.cardBorder }]} />
             <View style={styles.weeklyStatItem}>
-              <Text style={[styles.weeklyStatValue, { color: theme.text }]}>57%</Text>
+              <Text style={[styles.weeklyStatValue, { color: theme.text }]}>{weeklyStats.completionRate}%</Text>
               <Text style={[styles.weeklyStatLabel, { color: theme.textSecondary }]}>Completion Rate</Text>
             </View>
           </View>

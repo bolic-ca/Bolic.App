@@ -1,6 +1,16 @@
 /**
  * Data Source Manager
- * Switches between mock data and real API based on configuration
+ *
+ * ⚠️ DEPRECATED for Phase A - This file is kept for Phase B API integration.
+ *
+ * Phase A uses local storage system via:
+ * - Storage services: services/storage/*
+ * - React hooks: hooks/usePrograms.ts, useActiveProgram.ts, useWorkoutSession.ts, useStats.ts, etc.
+ * - Storage context: contexts/StorageContext.tsx
+ *
+ * This file will be integrated in Phase B for cloud sync functionality.
+ *
+ * @deprecated Use storage hooks instead for Phase A (see hooks/ directory)
  */
 
 import { USE_MOCK_DATA } from './config';
