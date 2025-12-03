@@ -129,6 +129,11 @@ The app uses `@react-native-async-storage/async-storage` for offline-first data 
 - Manages onboarding state
 - Provides `userId` and `isInitialized` to the app
 
+**Template Loader** (`services/storage/template-loader.ts`):
+- Load sample program templates into user storage
+- Allows users to explore pre-built programs
+- Functions: `loadTemplate()`, `loadAllTemplates()`, `getTemplateInfo()`
+
 **React Hooks** (`hooks/`):
 All hooks use the new storage system:
 - `usePrograms.ts` - Manage training programs
@@ -150,6 +155,9 @@ All hooks use the new storage system:
 3. Show onboarding if `onboardingCompleted` is false
 4. Route to main app after onboarding
 
+**Weekly Activity Tracking**:
+The stats page (`app/(tabs)/stats.tsx`) calculates weekly activity from actual workout session history. The weekly activity grid shows which days in the last 7 days had completed workouts, with real-time completion rate calculation.
+
 ### Future: Phase B (Planned)
 Phase B will add authentication and cloud sync for premium users:
 - Authentication system (signup/login)
@@ -158,3 +166,8 @@ Phase B will add authentication and cloud sync for premium users:
 - Offline queue for syncing changes
 
 See `.claude/plans/mutable-whistling-spring.md` for full implementation plan.
+
+**Note on Legacy Files**:
+- `services/api/data-source.ts` is kept for Phase B API integration (marked as deprecated for Phase A)
+- Current Phase A implementation uses storage hooks exclusively
+- API endpoints documentation in `services/api/README.md` will be integrated in Phase B
