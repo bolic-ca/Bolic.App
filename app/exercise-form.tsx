@@ -72,7 +72,7 @@ export default function ExerciseFormScreen() {
 
       await createExercise({
         userId: MOCK_USER_ID,
-        trainingDayId: mockTrainingDayId,
+        trainingDayIds: [mockTrainingDayId],
         name: name.trim(),
         muscleCategory,
         muscleSubcategory: muscleSubcategory || undefined,

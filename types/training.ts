@@ -55,19 +55,21 @@ export interface TrainingSet {
 }
 
 // Training Exercise
+// Can be used as a template (empty sets) or in a session (populated sets)
 export interface TrainingExercise {
   id?: string;
   userId: string;
-  trainingDayId: string;
+  trainingDayIds: string[]; // Can belong to multiple training days
   name?: string | null;
   targetRepetitions?: string | null;
   targetRepetitionsInReserve?: string | null;
+  targetNumberOfSets?: number | null; // Target number of sets to perform
   targetPosition?: string | null;
   muscleCategory?: MuscleCategory | null;
   muscleSubcategory?: string | null;
   equipment?: string | null;
   notes?: string | null;
-  sets?: TrainingSet[];
+  sets?: TrainingSet[]; // Populated in training sessions, empty in templates
 }
 
 // Training Day

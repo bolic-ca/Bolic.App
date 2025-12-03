@@ -304,7 +304,6 @@ components:
       type: object
       required:
         - userId
-        - trainingDayId
       properties:
         id:
           type: string
@@ -314,10 +313,13 @@ components:
           type: string
           format: uuid
           description: User who owns this exercise
-        trainingDayId:
-          type: string
-          format: uuid
-          description: Training day this exercise belongs to
+        trainingDayIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          default: []
+          description: Training days this exercise belongs to (can appear in multiple days)
         name:
           type: string
           nullable: true
@@ -330,6 +332,10 @@ components:
           type: string
           nullable: true
           description: Target RIR (Repetitions In Reserve)
+        targetNumberOfSets:
+          type: integer
+          nullable: true
+          description: Target number of sets to perform
         targetPosition:
           type: string
           nullable: true
@@ -365,15 +371,19 @@ components:
           items:
             $ref: '#/components/schemas/TrainingSet'
           default: []
+          description: Actual sets performed (populated in training sessions, empty in templates)
       example:
         id: "123e4567-e89b-12d3-a456-426614174002"
         userId: "123e4567-e89b-12d3-a456-426614174001"
-        trainingDayId: "123e4567-e89b-12d3-a456-426614174000"
+        trainingDayIds:
+          - "123e4567-e89b-12d3-a456-426614174000"
+          - "123e4567-e89b-12d3-a456-426614174003"
         name: "Incline Barbell Press"
         muscleCategory: "Chest"
         muscleSubcategory: "Upper"
         targetRepetitions: "8-12"
         targetRepetitionsInReserve: "2-3"
+        targetNumberOfSets: 3
         equipment: "Barbell"
         sets: []
 
