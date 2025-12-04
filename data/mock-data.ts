@@ -65,7 +65,7 @@ export const mockTrainingDay: TrainingDay = {
     {
       id: '123e4567-e89b-12d3-a456-426614174002',
       userId: MOCK_USER_ID,
-      trainingDayId: '123e4567-e89b-12d3-a456-426614174000',
+      trainingDayIds: ['123e4567-e89b-12d3-a456-426614174000'],
       name: 'Incline Barbell Press',
       muscleCategory: MuscleCategory.Chest,
       muscleSubcategory: 'Upper',
@@ -101,7 +101,7 @@ export const mockTrainingDay: TrainingDay = {
     {
       id: '123e4567-e89b-12d3-a456-426614174003',
       userId: MOCK_USER_ID,
-      trainingDayId: '123e4567-e89b-12d3-a456-426614174000',
+      trainingDayIds: ['123e4567-e89b-12d3-a456-426614174000'],
       name: 'Dumbbell Lateral Raise',
       muscleCategory: MuscleCategory.Delts,
       muscleSubcategory: 'Lateral',
@@ -125,7 +125,7 @@ export const mockTrainingDay: TrainingDay = {
     {
       id: '123e4567-e89b-12d3-a456-426614174004',
       userId: MOCK_USER_ID,
-      trainingDayId: '123e4567-e89b-12d3-a456-426614174000',
+      trainingDayIds: ['123e4567-e89b-12d3-a456-426614174000'],
       name: 'Cable Tricep Pushdown',
       muscleCategory: MuscleCategory.Back,
       targetRepetitions: '10-12',
@@ -184,7 +184,7 @@ export const mockSimpleProgram: Program = {
         {
           id: 'ex-1',
           userId: MOCK_USER_ID,
-          trainingDayId: 'ppl-push',
+          trainingDayIds: ['ppl-push'],
           name: 'Bench Press',
           muscleCategory: MuscleCategory.Chest,
           targetRepetitions: '6-8',
@@ -195,7 +195,7 @@ export const mockSimpleProgram: Program = {
         {
           id: 'ex-2',
           userId: MOCK_USER_ID,
-          trainingDayId: 'ppl-push',
+          trainingDayIds: ['ppl-push'],
           name: 'Overhead Press',
           muscleCategory: MuscleCategory.Delts,
           targetRepetitions: '8-10',
@@ -214,7 +214,7 @@ export const mockSimpleProgram: Program = {
         {
           id: 'ex-3',
           userId: MOCK_USER_ID,
-          trainingDayId: 'ppl-pull',
+          trainingDayIds: ['ppl-pull'],
           name: 'Pull-ups',
           muscleCategory: MuscleCategory.Back,
           muscleSubcategory: 'Upper Lats',
@@ -234,7 +234,7 @@ export const mockSimpleProgram: Program = {
         {
           id: 'ex-4',
           userId: MOCK_USER_ID,
-          trainingDayId: 'ppl-legs',
+          trainingDayIds: ['ppl-legs'],
           name: 'Squat',
           muscleCategory: MuscleCategory.Quads,
           targetRepetitions: '6-8',
@@ -283,7 +283,7 @@ export const mockPeriodizedProgram: Program = {
                 {
                   id: 'w1-ex-1',
                   userId: MOCK_USER_ID,
-                  trainingDayId: 'w1-upper',
+                  trainingDayIds: ['w1-upper'],
                   name: 'Incline Bench Press',
                   muscleCategory: MuscleCategory.Chest,
                   muscleSubcategory: 'Upper',
@@ -303,7 +303,7 @@ export const mockPeriodizedProgram: Program = {
                 {
                   id: 'w1-ex-2',
                   userId: MOCK_USER_ID,
-                  trainingDayId: 'w1-lower',
+                  trainingDayIds: ['w1-lower'],
                   name: 'Squat',
                   muscleCategory: MuscleCategory.Quads,
                   targetRepetitions: '8-10',
@@ -365,7 +365,7 @@ export const mockLastSession: TrainingDay = {
     {
       id: 'last-ex-1',
       userId: MOCK_USER_ID,
-      trainingDayId: 'last-session-1',
+      trainingDayIds: ['last-session-1'],
       name: 'Pull-ups',
       muscleCategory: MuscleCategory.Back,
       muscleSubcategory: 'Upper Lats',
@@ -394,7 +394,7 @@ export const mockPreviousInstanceOfToday: TrainingDay = {
     {
       id: 'prev-ex-1',
       userId: MOCK_USER_ID,
-      trainingDayId: 'prev-instance-1',
+      trainingDayIds: ['prev-instance-1'],
       name: 'Incline Barbell Press',
       muscleCategory: MuscleCategory.Chest,
       muscleSubcategory: 'Upper',

@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { MuscleCategory } from '@/types/training';
-import { createExercise } from '@/services/api';
-import { MOCK_USER_ID } from '@/services/api/config';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useStorage } from '@/contexts/StorageContext';
+import { useExercises } from '@/hooks/useExercises';
+import { usePrograms } from '@/hooks/usePrograms';
 
 const muscleCategoryOptions = Object.values(MuscleCategory);
 
@@ -33,6 +34,10 @@ export default function ExerciseFormScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+  const { userId } = useStorage();
+  const { createExercise } = useExercises();
+  const { programs, updateProgram } = usePrograms();
+  const params = useLocalSearchParams<{ trainingDayId?: string; programId?: string }>();
 
   // Form state
   const [name, setName] = useState('');
@@ -64,32 +69,100 @@ export default function ExerciseFormScreen() {
       return;
     }
 
+    if (!userId) {
+      Alert.alert('Error', 'User not initialized');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // TODO: Get actual training day ID from navigation params or context
-      const mockTrainingDayId = '123e4567-e89b-12d3-a456-426614174000';
-
-      await createExercise({
-        userId: MOCK_USER_ID,
-        trainingDayId: mockTrainingDayId,
+      // Create the exercise in exercise storage
+      const trainingDayIds = params.trainingDayId ? [params.trainingDayId] : [];
+      const newExercise = await createExercise({
+        userId,
+        trainingDayIds,
         name: name.trim(),
         muscleCategory,
-        muscleSubcategory: muscleSubcategory || undefined,
-        equipment: equipment.trim() || undefined,
-        targetRepetitions: targetRepetitions.trim() || undefined,
-        targetRepetitionsInReserve: targetRIR.trim() || undefined,
-        targetPosition: targetPosition || undefined,
-        notes: notes.trim() || undefined,
+        muscleSubcategory: muscleSubcategory || null,
+        equipment: equipment.trim() || null,
+        targetRepetitions: targetRepetitions.trim() || null,
+        targetRepetitionsInReserve: targetRIR.trim() || null,
+        targetPosition: targetPosition || null,
+        notes: notes.trim() || null,
         sets: [],
       });
 
-      Alert.alert('Success', 'Exercise created successfully', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
+      // If trainingDayId and programId are provided, add exercise to the program
+      if (params.trainingDayId && params.programId) {
+        // Find the program and update it with the new exercise
+        const program = programs.find(p => p.id === params.programId);
+        if (!program) {
+          Alert.alert('Warning', 'Exercise created but could not add to program - program not found');
+          router.back();
+          return;
+        }
+
+        // Deep clone the program to avoid mutation
+        const updatedProgram = JSON.parse(JSON.stringify(program));
+
+        // Find and update the training day with the new exercise
+        let trainingDayFound = false;
+
+        if (updatedProgram.type === 'simple' && updatedProgram.trainingDays) {
+          const dayIndex = updatedProgram.trainingDays.findIndex((d: any) => d.id === params.trainingDayId);
+          if (dayIndex !== -1) {
+            if (!updatedProgram.trainingDays[dayIndex].exercises) {
+              updatedProgram.trainingDays[dayIndex].exercises = [];
+            }
+            updatedProgram.trainingDays[dayIndex].exercises.push(newExercise);
+            trainingDayFound = true;
+          }
+        } else if (updatedProgram.type === 'periodized' && updatedProgram.mesocycles) {
+          for (const meso of updatedProgram.mesocycles) {
+            if (meso.microcycles) {
+              for (const micro of meso.microcycles) {
+                if (micro.trainingDays) {
+                  const dayIndex = micro.trainingDays.findIndex((d: any) => d.id === params.trainingDayId);
+                  if (dayIndex !== -1) {
+                    if (!micro.trainingDays[dayIndex].exercises) {
+                      micro.trainingDays[dayIndex].exercises = [];
+                    }
+                    micro.trainingDays[dayIndex].exercises.push(newExercise);
+                    trainingDayFound = true;
+                    break;
+                  }
+                }
+              }
+            }
+            if (trainingDayFound) break;
+          }
+        }
+
+        if (!trainingDayFound) {
+          Alert.alert('Warning', 'Exercise created but could not add to training day - day not found');
+          router.back();
+          return;
+        }
+
+        // Save the updated program
+        await updateProgram(updatedProgram);
+
+        Alert.alert('Success', 'Exercise added to training day', [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]);
+      } else {
+        // Exercise created as standalone (not attached to a program)
+        Alert.alert('Success', 'Exercise added to library', [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]);
+      }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create exercise');
     } finally {

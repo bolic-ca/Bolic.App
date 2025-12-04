@@ -25,7 +25,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-1',
           userId: '',
-          trainingDayId: 'template-day-1',
+          trainingDayIds: ['template-day-1'],
           name: 'Bench Press',
           muscleCategory: MuscleCategory.Chest,
           muscleSubcategory: 'Middle Chest',
@@ -38,7 +38,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-2',
           userId: '',
-          trainingDayId: 'template-day-1',
+          trainingDayIds: ['template-day-1'],
           name: 'Overhead Press',
           muscleCategory: MuscleCategory.Delts,
           muscleSubcategory: 'Front Delts',
@@ -50,7 +50,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-3',
           userId: '',
-          trainingDayId: 'template-day-1',
+          trainingDayIds: ['template-day-1'],
           name: 'Cable Fly',
           muscleCategory: MuscleCategory.Chest,
           muscleSubcategory: 'Upper Chest',
@@ -63,7 +63,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-4',
           userId: '',
-          trainingDayId: 'template-day-1',
+          trainingDayIds: ['template-day-1'],
           name: 'Lateral Raises',
           muscleCategory: MuscleCategory.Delts,
           muscleSubcategory: 'Lateral Delts',
@@ -75,7 +75,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-5',
           userId: '',
-          trainingDayId: 'template-day-1',
+          trainingDayIds: ['template-day-1'],
           name: 'Tricep Pushdowns',
           muscleCategory: MuscleCategory.Delts,
           equipment: 'Cable',
@@ -94,7 +94,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-6',
           userId: '',
-          trainingDayId: 'template-day-2',
+          trainingDayIds: ['template-day-2'],
           name: 'Squat',
           muscleCategory: MuscleCategory.Quads,
           equipment: 'Barbell',
@@ -106,7 +106,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-7',
           userId: '',
-          trainingDayId: 'template-day-2',
+          trainingDayIds: ['template-day-2'],
           name: 'Romanian Deadlift',
           muscleCategory: MuscleCategory.Hamstrings,
           equipment: 'Barbell',
@@ -118,7 +118,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-8',
           userId: '',
-          trainingDayId: 'template-day-2',
+          trainingDayIds: ['template-day-2'],
           name: 'Leg Press',
           muscleCategory: MuscleCategory.Quads,
           equipment: 'Machine',
@@ -129,7 +129,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-9',
           userId: '',
-          trainingDayId: 'template-day-2',
+          trainingDayIds: ['template-day-2'],
           name: 'Leg Curl',
           muscleCategory: MuscleCategory.Hamstrings,
           equipment: 'Machine',
@@ -141,7 +141,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-10',
           userId: '',
-          trainingDayId: 'template-day-2',
+          trainingDayIds: ['template-day-2'],
           name: 'Calf Raises',
           muscleCategory: MuscleCategory.Calves,
           equipment: 'Machine',
@@ -160,7 +160,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-11',
           userId: '',
-          trainingDayId: 'template-day-3',
+          trainingDayIds: ['template-day-3'],
           name: 'Pull-ups',
           muscleCategory: MuscleCategory.Back,
           muscleSubcategory: 'Lats (Upper)',
@@ -173,7 +173,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-12',
           userId: '',
-          trainingDayId: 'template-day-3',
+          trainingDayIds: ['template-day-3'],
           name: 'Barbell Row',
           muscleCategory: MuscleCategory.Back,
           muscleSubcategory: 'Lats (Mid)',
@@ -185,7 +185,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-13',
           userId: '',
-          trainingDayId: 'template-day-3',
+          trainingDayIds: ['template-day-3'],
           name: 'Face Pulls',
           muscleCategory: MuscleCategory.Delts,
           muscleSubcategory: 'Rear Delts',
@@ -197,7 +197,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-14',
           userId: '',
-          trainingDayId: 'template-day-3',
+          trainingDayIds: ['template-day-3'],
           name: 'Hammer Curls',
           muscleCategory: MuscleCategory.Back,
           equipment: 'Dumbbell',
@@ -208,7 +208,7 @@ export const simpleUpperLowerTemplate: Omit<Program, 'id' | 'userId'> = {
         {
           id: 'ex-15',
           userId: '',
-          trainingDayId: 'template-day-3',
+          trainingDayIds: ['template-day-3'],
           name: 'Cable Curls',
           muscleCategory: MuscleCategory.Back,
           equipment: 'Cable',
@@ -256,7 +256,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-1',
                   userId: '',
-                  trainingDayId: 'pd-day-1',
+                  trainingDayIds: ['pd-day-1'],
                   name: 'Squat',
                   muscleCategory: MuscleCategory.Quads,
                   equipment: 'Barbell',
@@ -268,7 +268,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-2',
                   userId: '',
-                  trainingDayId: 'pd-day-1',
+                  trainingDayIds: ['pd-day-1'],
                   name: 'Bench Press',
                   muscleCategory: MuscleCategory.Chest,
                   muscleSubcategory: 'Middle Chest',
@@ -280,7 +280,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-3',
                   userId: '',
-                  trainingDayId: 'pd-day-1',
+                  trainingDayIds: ['pd-day-1'],
                   name: 'Lat Pulldown',
                   muscleCategory: MuscleCategory.Back,
                   muscleSubcategory: 'Lats (Upper)',
@@ -293,7 +293,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-4',
                   userId: '',
-                  trainingDayId: 'pd-day-1',
+                  trainingDayIds: ['pd-day-1'],
                   name: 'Overhead Press',
                   muscleCategory: MuscleCategory.Delts,
                   muscleSubcategory: 'Front Delts',
@@ -313,7 +313,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-5',
                   userId: '',
-                  trainingDayId: 'pd-day-2',
+                  trainingDayIds: ['pd-day-2'],
                   name: 'Deadlift',
                   muscleCategory: MuscleCategory.Back,
                   equipment: 'Barbell',
@@ -324,7 +324,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-6',
                   userId: '',
-                  trainingDayId: 'pd-day-2',
+                  trainingDayIds: ['pd-day-2'],
                   name: 'Incline Dumbbell Press',
                   muscleCategory: MuscleCategory.Chest,
                   muscleSubcategory: 'Upper Chest',
@@ -337,7 +337,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-7',
                   userId: '',
-                  trainingDayId: 'pd-day-2',
+                  trainingDayIds: ['pd-day-2'],
                   name: 'Barbell Row',
                   muscleCategory: MuscleCategory.Back,
                   muscleSubcategory: 'Lats (Mid)',
@@ -349,7 +349,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-8',
                   userId: '',
-                  trainingDayId: 'pd-day-2',
+                  trainingDayIds: ['pd-day-2'],
                   name: 'Bulgarian Split Squat',
                   muscleCategory: MuscleCategory.Quads,
                   equipment: 'Dumbbell',
@@ -380,7 +380,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-9',
                   userId: '',
-                  trainingDayId: 'pd-day-3',
+                  trainingDayIds: ['pd-day-3'],
                   name: 'Squat',
                   muscleCategory: MuscleCategory.Quads,
                   equipment: 'Barbell',
@@ -392,7 +392,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-10',
                   userId: '',
-                  trainingDayId: 'pd-day-3',
+                  trainingDayIds: ['pd-day-3'],
                   name: 'Bench Press',
                   muscleCategory: MuscleCategory.Chest,
                   muscleSubcategory: 'Middle Chest',
@@ -412,7 +412,7 @@ export const periodizedFullBodyTemplate: Omit<Program, 'id' | 'userId'> = {
                 {
                   id: 'pd-ex-11',
                   userId: '',
-                  trainingDayId: 'pd-day-4',
+                  trainingDayIds: ['pd-day-4'],
                   name: 'Deadlift',
                   muscleCategory: MuscleCategory.Back,
                   equipment: 'Barbell',
