@@ -40,8 +40,8 @@ export default function ProgramsPage() {
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
   const { userId } = useStorage();
-  const { programs, loading, error, refetch: refetchPrograms } = usePrograms();
-  const { program: activeProgram, loading: activeProgramLoading, refetch: refetchActiveProgram } = useActiveProgram();
+  const { programs, loading, error, deleteProgram, refetch: refetchPrograms } = usePrograms();
+  const { program: activeProgram, loading: activeProgramLoading, clearActive, refetch: refetchActiveProgram } = useActiveProgram();
   const { exercises, loading: exercisesLoading, refetch: refetchExercises } = useExercises();
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
@@ -81,6 +81,39 @@ export default function ProgramsPage() {
     } finally {
       setLoadingTemplate(false);
     }
+  };
+
+  const handleDeleteProgram = async (program: Program) => {
+    Alert.alert(
+      'Delete Program',
+      `Are you sure you want to delete "${program.name}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // If this is the active program, clear it first
+              if (program.isActive && activeProgram?.id === program.id) {
+                await clearActive();
+              }
+
+              // Delete the program
+              await deleteProgram(program.id);
+
+              Alert.alert('Success', 'Program deleted successfully');
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete program');
+              console.error('Error deleting program:', err);
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Get current training day from active program
@@ -159,11 +192,27 @@ export default function ProgramsPage() {
               </View>
             </View>
           </View>
-          <Ionicons
-            name={isExpanded ? 'chevron-up' : 'chevron-down'}
-            size={24}
-            color={theme.textSecondary}
-          />
+          <View style={styles.programHeaderActions}>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDeleteProgram(program);
+              }}
+              style={styles.deleteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={22}
+                color="#ff6b6b"
+              />
+            </TouchableOpacity>
+            <Ionicons
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={24}
+              color={theme.textSecondary}
+            />
+          </View>
         </View>
 
         {/* Expanded Content */}
@@ -180,29 +229,11 @@ export default function ProgramsPage() {
                 </Text>
                 {program.trainingDays?.map((day, index) => (
                   <View key={day.id} style={[styles.dayCard, { backgroundColor: theme.background }]}>
-                    <View style={styles.dayCardHeader}>
-                      <View>
-                        <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
-                          Day {index + 1}
-                        </Text>
-                        <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[styles.addExerciseButton, { backgroundColor: customColors.primaryButton }]}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          router.push({
-                            pathname: '/exercise-form',
-                            params: {
-                              trainingDayId: day.id,
-                              programId: program.id
-                            }
-                          });
-                        }}
-                      >
-                        <Ionicons name="add-circle" size={20} color="white" />
-                        <Text style={styles.addExerciseButtonText}>Add Exercise</Text>
-                      </TouchableOpacity>
+                    <View>
+                      <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
+                        Day {index + 1}
+                      </Text>
+                      <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
                     </View>
                     <Text style={[styles.dayDescription, { color: theme.textSecondary }]}>
                       {day.description}
@@ -283,29 +314,11 @@ export default function ProgramsPage() {
                               {/* Training Days within Microcycle */}
                               {micro.trainingDays?.map((day, dayIndex) => (
                                 <View key={day.id} style={[styles.dayCard, { backgroundColor: theme.card, marginTop: 8 }]}>
-                                  <View style={styles.dayCardHeader}>
-                                    <View>
-                                      <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
-                                        Day {dayIndex + 1}
-                                      </Text>
-                                      <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
-                                    </View>
-                                    <TouchableOpacity
-                                      style={[styles.addExerciseButton, { backgroundColor: customColors.primaryButton }]}
-                                      onPress={(e) => {
-                                        e.stopPropagation();
-                                        router.push({
-                                          pathname: '/exercise-form',
-                                          params: {
-                                            trainingDayId: day.id,
-                                            programId: program.id
-                                          }
-                                        });
-                                      }}
-                                    >
-                                      <Ionicons name="add-circle" size={20} color="white" />
-                                      <Text style={styles.addExerciseButtonText}>Add Exercise</Text>
-                                    </TouchableOpacity>
+                                  <View>
+                                    <Text style={[styles.dayNumber, { color: theme.textSecondary }]}>
+                                      Day {dayIndex + 1}
+                                    </Text>
+                                    <Text style={[styles.dayName, { color: theme.text }]}>{day.name}</Text>
                                   </View>
                                   <Text style={[styles.dayDescription, { color: theme.textSecondary }]}>
                                     {day.description}
@@ -337,33 +350,10 @@ export default function ProgramsPage() {
         contentContainerStyle={styles.contentContainer}
       >
       <View style={styles.headerSection}>
-        <View>
-          <Text style={[styles.heading, { color: theme.text }]}>Training Programs</Text>
-          <Text style={[styles.subheading, { color: theme.textSecondary }]}>
-            Simple or periodized - choose what works for you
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.quickAddButton, { backgroundColor: customColors.primaryButton }]}
-          onPress={() => {
-            // If there's an active program with a current training day, add to it
-            // Otherwise, create a standalone exercise
-            if (activeProgram && currentTrainingDay) {
-              router.push({
-                pathname: '/exercise-form',
-                params: {
-                  trainingDayId: currentTrainingDay.id,
-                  programId: activeProgram.id
-                }
-              });
-            } else {
-              router.push('/exercise-form');
-            }
-          }}
-        >
-          <Ionicons name="add-circle" size={24} color="white" />
-          <Text style={styles.quickAddButtonText}>Add Exercise</Text>
-        </TouchableOpacity>
+        <Text style={[styles.heading, { color: theme.text }]}>Training Programs</Text>
+        <Text style={[styles.subheading, { color: theme.textSecondary }]}>
+          Simple or periodized - choose what works for you
+        </Text>
       </View>
 
       {/* Loading State */}
@@ -436,22 +426,7 @@ export default function ProgramsPage() {
       {/* Current Training Day */}
       {currentTrainingDay && (
         <View style={styles.trainingDaySection}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
-            <TouchableOpacity
-              style={[styles.newExerciseButton, { backgroundColor: customColors.primaryButton }]}
-              onPress={() => router.push({
-                pathname: '/exercise-form',
-                params: {
-                  trainingDayId: currentTrainingDay.id,
-                  programId: activeProgram?.id
-                }
-              })}
-            >
-              <Ionicons name="add" size={20} color="white" />
-              <Text style={styles.newExerciseButtonText}>New Exercise</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Current Training Day</Text>
           <View style={[styles.trainingDayCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             {/* Training Day Header */}
             <View style={styles.trainingDayHeader}>
@@ -618,21 +593,7 @@ export default function ProgramsPage() {
           </View>
           <TouchableOpacity
             style={[styles.addExerciseToLibraryButton, { backgroundColor: customColors.primaryButton }]}
-            onPress={() => {
-              // If there's an active program with a current training day, add to it
-              // Otherwise, create a standalone exercise
-              if (activeProgram && currentTrainingDay) {
-                router.push({
-                  pathname: '/exercise-form',
-                  params: {
-                    trainingDayId: currentTrainingDay.id,
-                    programId: activeProgram.id
-                  }
-                });
-              } else {
-                router.push('/exercise-form');
-              }
-            }}
+            onPress={() => router.push('/exercise-form')}
           >
             <Ionicons name="add-circle" size={20} color="white" />
             <Text style={styles.addExerciseToLibraryButtonText}>Add</Text>
@@ -732,21 +693,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginBottom: 16,
   },
-  quickAddButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  quickAddButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   trainingDaySection: {
     marginTop: 8,
     marginBottom: 16,
@@ -760,19 +706,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-  },
-  newExerciseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  newExerciseButtonText: {
-    color: 'white',
-    fontSize: 15,
-    fontWeight: '600',
+    marginBottom: 12,
   },
   trainingDayCard: {
     borderRadius: 16,
@@ -963,6 +897,14 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
+  programHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  deleteButton: {
+    padding: 4,
+  },
   programIconContainer: {
     width: 48,
     height: 48,
@@ -1038,13 +980,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
   },
-  dayCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 6,
-  },
   dayNumber: {
     fontSize: 12,
     fontWeight: '600',
@@ -1052,6 +987,7 @@ const styles = StyleSheet.create({
   dayName: {
     fontSize: 15,
     fontWeight: '600',
+    marginBottom: 4,
   },
   dayDescription: {
     fontSize: 13,
@@ -1059,19 +995,6 @@ const styles = StyleSheet.create({
   },
   dayExerciseCount: {
     fontSize: 12,
-  },
-  addExerciseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addExerciseButtonText: {
-    color: 'white',
-    fontSize: 13,
-    fontWeight: '600',
   },
   mesocyclesList: {
     gap: 12,
