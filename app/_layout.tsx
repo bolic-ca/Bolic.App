@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { StorageProvider } from '@/contexts/StorageContext';
+import { WorkoutUIProvider } from '@/contexts/WorkoutUIContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -17,8 +18,9 @@ export default function RootLayout() {
   return (
     <StorageProvider>
       <CustomThemeProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+        <WorkoutUIProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
             <Stack.Screen
               name="index"
               options={{
@@ -51,9 +53,10 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </WorkoutUIProvider>
       </CustomThemeProvider>
     </StorageProvider>
   );

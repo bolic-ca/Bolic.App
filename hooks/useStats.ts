@@ -45,11 +45,40 @@ export function useStats() {
     if (!stats) return;
 
     try {
+      // Get today's date (without time)
+      const today = new Date().toISOString().split('T')[0];
+      const lastWorkout = stats.lastWorkoutDate
+        ? new Date(stats.lastWorkoutDate).toISOString().split('T')[0]
+        : null;
+
+      // Calculate new streak
+      let newStreak = stats.currentStreak;
+      if (lastWorkout) {
+        const lastDate = new Date(lastWorkout).getTime();
+        const todayDate = new Date(today).getTime();
+        const daysDiff = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff === 0) {
+          // Same day - keep current streak
+          newStreak = stats.currentStreak;
+        } else if (daysDiff === 1) {
+          // Next day - increment streak
+          newStreak = stats.currentStreak + 1;
+        } else {
+          // Streak broken - reset to 1
+          newStreak = 1;
+        }
+      } else {
+        // First workout ever
+        newStreak = 1;
+      }
+
       const updatedStats: UserStats = {
         ...stats,
         totalWorkouts: stats.totalWorkouts + 1,
+        currentStreak: newStreak,
+        longestStreak: Math.max(stats.longestStreak, newStreak),
         lastWorkoutDate: new Date().toISOString(),
-        // TODO: Update streaks based on last workout date
       };
 
       await updateStats(userId, updatedStats);
