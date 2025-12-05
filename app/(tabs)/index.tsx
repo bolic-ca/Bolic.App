@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
@@ -7,17 +7,19 @@ import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
 import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { useStats } from '@/hooks/useStats';
-import type { TrainingDay } from '@/types/training';
+import { useWorkoutUI } from '@/contexts/WorkoutUIContext';
+import WorkoutInterface from '@/components/workout/WorkoutInterface';
 
 export default function HomePage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+  const { isExpanded, minimize } = useWorkoutUI();
 
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading } = useActiveProgram();
-  const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
-  const { stats, loading: statsLoading } = useStats();
+  const { session, sessionHistory, startSession, completeSession, cancelSession, loading: sessionLoading } = useWorkoutSession();
+  const { stats, incrementWorkouts, loading: statsLoading } = useStats();
 
   // Get next training day from active program
   const nextTrainingDay = useMemo(() => {
@@ -42,6 +44,37 @@ export default function HomePage() {
     return null;
   }, [activeProgram]);
 
+  // Find training day for active session from the program structure
+  const activeTrainingDay = useMemo(() => {
+    if (!session || !activeProgram) return null;
+
+    const findTrainingDay = (trainingDayId: string) => {
+      // Search in simple program
+      if (activeProgram.type === 'simple' && activeProgram.trainingDays) {
+        const found = activeProgram.trainingDays.find(td => td.id === trainingDayId);
+        if (found) return found;
+      }
+
+      // Search in periodized program
+      if (activeProgram.type === 'periodized' && activeProgram.mesocycles) {
+        for (const meso of activeProgram.mesocycles) {
+          if (meso.microcycles) {
+            for (const micro of meso.microcycles) {
+              if (micro.trainingDays) {
+                const found = micro.trainingDays.find(td => td.id === trainingDayId);
+                if (found) return found;
+              }
+            }
+          }
+        }
+      }
+
+      return null;
+    };
+
+    return findTrainingDay(session.trainingDayId);
+  }, [session, activeProgram]);
+
   // Get last completed session
   const lastSession = useMemo(() => {
     return sessionHistory && sessionHistory.length > 0 ? sessionHistory[0] : null;
@@ -59,12 +92,94 @@ export default function HomePage() {
 
   const loading = programLoading || sessionLoading || statsLoading;
 
+  const handleStartWorkout = async () => {
+    if (!activeProgram) {
+      Alert.alert(
+        'No Active Program',
+        'Please set an active program in the Programs tab before starting a workout.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (!nextTrainingDay) {
+      Alert.alert(
+        'No Training Day',
+        'Your active program doesn\'t have any training days configured.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      await startSession(activeProgram.id, nextTrainingDay.id);
+      Alert.alert(
+        'Workout Started!',
+        `Starting "${nextTrainingDay.name}". Track your sets and complete when done.`,
+        [{ text: 'Let\'s Go!' }]
+      );
+    } catch (err) {
+      Alert.alert('Error', 'Failed to start workout session');
+      console.error('Error starting workout:', err);
+    }
+  };
+
+  const handleCompleteWorkout = async (notes?: string) => {
+    try {
+      await completeSession(notes);
+
+      // Update stats
+      await incrementWorkouts();
+
+      Alert.alert('Workout Complete!', 'Great job! Your progress has been saved.');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to complete workout');
+      console.error('Error completing workout:', err);
+    }
+  };
+
+  const handleCancelWorkout = async () => {
+    Alert.alert(
+      'Cancel Workout?',
+      'Are you sure? Your progress will be lost.',
+      [
+        { text: 'Keep Training', style: 'cancel' },
+        {
+          text: 'Cancel Workout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelSession();
+              minimize(); // Minimize after canceling
+            } catch {
+              Alert.alert('Error', 'Failed to cancel workout');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleMinimizeWorkout = () => {
+    minimize();
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-      >
+      {session && isExpanded ? (
+        <WorkoutInterface
+          session={session}
+          trainingDay={activeTrainingDay}
+          loading={false}
+          onComplete={handleCompleteWorkout}
+          onCancel={handleCancelWorkout}
+          onMinimize={handleMinimizeWorkout}
+        />
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainer}
+        >
       {/* Welcome Section */}
       <View style={styles.welcomeSection}>
         <Text style={[styles.greeting, { color: theme.textSecondary }]}>Welcome back!</Text>
@@ -75,7 +190,7 @@ export default function HomePage() {
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: customColors.primaryButton }]}
-          onPress={() => console.log('Start workout')}
+          onPress={handleStartWorkout}
         >
           <Ionicons name="play-circle" size={28} color={customColors.primaryButtonText} />
           <Text style={[styles.primaryButtonText, { color: customColors.primaryButtonText }]}>Start Workout</Text>
@@ -208,7 +323,8 @@ export default function HomePage() {
           </View>
         </View>
       )}
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

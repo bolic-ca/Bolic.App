@@ -1,0 +1,199 @@
+/**
+ * WorkoutInterface Component
+ * Main container for the active workout session
+ */
+
+import React, { useState } from 'react';
+import { View, ScrollView, ActivityIndicator, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/theme';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import type { WorkoutSession, SessionSet } from '@/services/storage/session-storage';
+import type { TrainingDay } from '@/types/training';
+import { getWorkoutProgress } from '@/utils/workout-helpers';
+import WorkoutHeader from './WorkoutHeader';
+import WorkoutProgressBar from './WorkoutProgressBar';
+import ExerciseList from './ExerciseList';
+import CompletionModal from './CompletionModal';
+
+interface WorkoutInterfaceProps {
+  session: WorkoutSession;
+  trainingDay: TrainingDay | null;
+  loading: boolean;
+  onComplete: (notes?: string) => void;
+  onCancel: () => void;
+  onMinimize?: () => void;
+}
+
+export default function WorkoutInterface({
+  session,
+  trainingDay,
+  loading,
+  onComplete,
+  onCancel,
+  onMinimize,
+}: WorkoutInterfaceProps) {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'light'];
+  const { customColors } = useThemeCustomization();
+  const { addSet, sessionHistory } = useWorkoutSession();
+  const [completionModalVisible, setCompletionModalVisible] = useState(false);
+
+  // Calculate workout progress
+  const progress = getWorkoutProgress(session, trainingDay);
+
+  // Handle adding a set
+  const handleAddSet = async (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>) => {
+    try {
+      await addSet(exerciseId, exerciseName, set);
+    } catch (err) {
+      console.error('Error adding set:', err);
+    }
+  };
+
+  // Handle completion modal
+  const handleFinish = () => {
+    setCompletionModalVisible(true);
+  };
+
+  const handleCompleteWorkout = (notes?: string) => {
+    setCompletionModalVisible(false);
+    onComplete(notes);
+  };
+
+  const handleCancelCompletion = () => {
+    setCompletionModalVisible(false);
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={customColors.primaryButton} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
+            Loading workout...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Error state - Training day not found
+  if (!trainingDay) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="warning" size={64} color="#ff6b6b" />
+          <Text style={[styles.errorTitle, { color: theme.text }]}>
+            Training day not found
+          </Text>
+          <Text style={[styles.errorText, { color: theme.textSecondary }]}>
+            This workout&apos;s training day may have been deleted.
+          </Text>
+          <TouchableOpacity
+            style={[styles.errorButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+            onPress={onCancel}
+          >
+            <Text style={[styles.errorButtonText, { color: theme.text }]}>
+              Cancel Workout
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header with Timer and Actions */}
+      <WorkoutHeader
+        startedAt={session.startedAt}
+        trainingDayName={trainingDay.name}
+        onCancel={onCancel}
+        onFinish={handleFinish}
+        onMinimize={onMinimize}
+      />
+
+      {/* Progress Bar */}
+      <WorkoutProgressBar
+        completedExercises={progress.completedExercises}
+        totalExercises={progress.totalExercises}
+        totalSets={progress.totalSets}
+      />
+
+      {/* Exercise List */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <ExerciseList
+          trainingDay={trainingDay}
+          session={session}
+          sessionHistory={sessionHistory}
+          onAddSet={handleAddSet}
+        />
+      </ScrollView>
+
+      {/* Completion Modal */}
+      <CompletionModal
+        visible={completionModalVisible}
+        onComplete={handleCompleteWorkout}
+        onCancel={handleCancelCompletion}
+        session={session}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 15,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
+  errorButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  errorButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingVertical: 16,
+    paddingBottom: 100,
+  },
+});

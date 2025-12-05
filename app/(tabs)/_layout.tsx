@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useColorScheme, Platform, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -7,13 +7,67 @@ import { BlurView } from 'expo-blur';
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useActiveProgram } from '@/hooks/useActiveProgram';
+import ActiveWorkoutBanner from '@/components/workout/ActiveWorkoutBanner';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+  const { session } = useWorkoutSession();
+  const { program: activeProgram } = useActiveProgram();
+
+  // Find training day name for banner
+  const trainingDayName = useMemo(() => {
+    if (!session || !activeProgram) return undefined;
+
+    const findTrainingDay = (trainingDayId: string) => {
+      // Search in simple program
+      if (activeProgram.type === 'simple' && activeProgram.trainingDays) {
+        const found = activeProgram.trainingDays.find(td => td.id === trainingDayId);
+        if (found) return found.name;
+      }
+
+      // Search in periodized program
+      if (activeProgram.type === 'periodized' && activeProgram.mesocycles) {
+        for (const meso of activeProgram.mesocycles) {
+          if (meso.microcycles) {
+            for (const micro of meso.microcycles) {
+              if (micro.trainingDays) {
+                const found = micro.trainingDays.find(td => td.id === trainingDayId);
+                if (found) return found.name;
+              }
+            }
+          }
+        }
+      }
+
+      return undefined;
+    };
+
+    return findTrainingDay(session.trainingDayId);
+  }, [session, activeProgram]);
+
+  // Show banner when there's an active session
+  const showBanner = !!session;
+
+  // Debug logging
+  console.log('TabLayout - Session exists:', !!session);
+  console.log('TabLayout - Show banner:', showBanner);
+  if (session) {
+    console.log('TabLayout - Session ID:', session.id);
+    console.log('TabLayout - Training day name:', trainingDayName);
+  }
 
   return (
+    <View style={{ flex: 1 }}>
+      {showBanner && (
+        <ActiveWorkoutBanner
+          startedAt={session!.startedAt}
+          trainingDayName={trainingDayName}
+        />
+      )}
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -60,6 +114,16 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
+              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={24} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="exercises"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons name={focused ? 'barbell' : 'barbell-outline'} size={24} color={color} />
             </View>
           ),
@@ -86,6 +150,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
 
