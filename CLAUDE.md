@@ -23,23 +23,69 @@ Bolic.App is an Expo-based React Native application using Expo Router for naviga
 ### Navigation Structure
 The app uses Expo Router with file-based routing:
 - `app/_layout.tsx` - Root layout with Stack navigator, custom Header component, and theme provider
-- `app/(tabs)/_layout.tsx` - Tab navigation layout with 4 tabs (index, programs, stats, profile)
+- `app/(tabs)/_layout.tsx` - Tab navigation layout with 5 tabs (index, programs, exercises, stats, profile)
 - `app/modal.tsx` - Modal screen example
 - `unstable_settings.anchor` is set to '(tabs)' in app/_layout.tsx:9-11
 
 ### Tab Navigation
-Four main tabs configured in app/(tabs)/_layout.tsx:32-56:
-1. **index** - Home/play screen (play-circle icon)
-2. **programs** - Programs screen (code icon)
-3. **stats** - Statistics screen (stats-chart icon)
-4. **profile** - User profile screen (person-circle icon)
+Five main tabs configured in app/(tabs)/_layout.tsx:
+1. **index** - Home/play screen (home icon)
+2. **programs** - Programs screen (calendar icon)
+3. **exercises** - Exercise library screen (barbell icon)
+4. **stats** - Statistics screen (stats-chart icon)
+5. **profile** - User profile screen (person icon)
 
 Tab bar features:
 - Uses HapticTab component for tactile feedback
 - No text labels (tabBarShowLabel: false)
 - BlurView background on iOS, solid color on Android
-- Rounded top corners (25px radius)
+- Icon containers with rounded backgrounds when active
 - Tint colors from theme system
+
+### Active Program System
+The app implements an active program system for workout management:
+- **Active Program Selection**: Users can set one program as "active" using the play icon button on program cards
+- **Active Program Storage**: Stored via `program-storage.ts` with functions `setActiveProgramId()`, `getActiveProgramId()`, `clearActiveProgramId()`
+- **Active Program Hook**: `useActiveProgram.ts` provides `setActive()`, `clearActive()`, and `program` state
+- **Workout Integration**: The "Start Workout" button on the home tab uses the active program's next training day
+- **UI Behavior**: Active programs display at the top of the Programs tab and are removed from the "All Programs" list
+
+### Programs Page Layout (`app/(tabs)/programs.tsx`)
+The Programs tab displays content in the following order:
+1. **Active Program** - Shows the currently active program (or empty state if none selected)
+2. **Current Training Day** - Displays the next training day from the active program with exercises
+3. **All Programs** - User's programs excluding the active one, each with a "Set Active" button
+4. **Program Templates** - Pre-built program templates that can be added to user's library
+
+Key features:
+- Programs can be simple (rotating training days) or periodized (mesocycles/microcycles)
+- Each non-active program card shows a "Set Active" button (play icon)
+- Active program shows "Active" badge and no "Set Active" button
+- Delete button works on all programs including active
+- Expanding program cards shows full structure including training days and exercises
+
+### Exercises Page Layout (`app/(tabs)/exercises.tsx`)
+Dedicated page for managing the exercise library:
+- Header with exercise count
+- "Add Exercise" button to create new exercises
+- Grid of exercise cards showing:
+  - Muscle category icon with color coding
+  - Exercise name
+  - Muscle category and subcategory
+  - Equipment type
+- Auto-refreshes when navigating back from exercise creation form
+- Empty state prompts user to add first exercise
+
+### Home Page Integration (`app/(tabs)/index.tsx`)
+The home tab integrates with the active program system:
+- **Start Workout Button**: Primary action that starts a workout session using the active program
+  - Validates active program exists before starting
+  - Uses the next training day from the active program
+  - Creates a new workout session via `startSession(programId, trainingDayId)`
+  - Shows appropriate error messages if no active program or training days
+- **Next on the Menu**: Displays preview of the next training day from active program
+- **Look Back**: Shows last completed session and previous instance of the current training day
+- **Recent Activity**: Displays workout count and streak statistics
 
 ### Theming System
 Theme configuration in constants/theme.ts:
@@ -136,10 +182,11 @@ The app uses `@react-native-async-storage/async-storage` for offline-first data 
 
 **React Hooks** (`hooks/`):
 All hooks use the new storage system:
-- `usePrograms.ts` - Manage training programs
-- `useActiveProgram.ts` - Get/set active program
+- `usePrograms.ts` - Manage training programs (CRUD operations)
+- `useActiveProgram.ts` - Get/set active program, provides `setActive()`, `clearActive()`, `refetch()`
+- `useExercises.ts` - Manage exercise library (CRUD operations)
 - `useTrainingDay.ts` - Fetch specific training day
-- `useWorkoutSession.ts` - Manage active workout sessions
+- `useWorkoutSession.ts` - Manage active workout sessions, provides `startSession()`, `addSet()`, `completeSession()`
 - `useStats.ts` - User statistics and personal records
 
 **Key Features**:

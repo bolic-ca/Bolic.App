@@ -139,42 +139,38 @@ export default function ProfilePage() {
             <View style={styles.colorPickerContainer}>
               <View style={styles.colorGrid}>
                 {presetColors.map((preset) => (
-                  <TouchableOpacity
-                    key={preset.name}
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: preset.button },
-                      customColors.primaryButton === preset.button && {
-                        borderColor: theme.text,
-                        borderWidth: 3,
-                      },
-                    ]}
-                    onPress={() => {
-                      setCustomColors({ primaryButton: preset.button, primaryButtonText: preset.text });
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    {customColors.primaryButton === preset.button && (
-                      <Ionicons name="checkmark" size={24} color="white" />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <View style={styles.colorLabels}>
-                {presetColors.map((preset) => (
-                  <Text
-                    key={`label-${preset.name}`}
-                    style={[
-                      styles.colorLabel,
-                      { color: theme.textSecondary },
-                      customColors.primaryButton === preset.button && {
-                        color: theme.text,
-                        fontWeight: '700',
-                      },
-                    ]}
-                  >
-                    {preset.name}
-                  </Text>
+                  <View key={preset.name} style={styles.colorOptionContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: preset.button },
+                        customColors.primaryButton === preset.button && {
+                          borderColor: theme.text,
+                          borderWidth: 3,
+                        },
+                      ]}
+                      onPress={() => {
+                        setCustomColors({ primaryButton: preset.button, primaryButtonText: preset.text });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      {customColors.primaryButton === preset.button && (
+                        <Ionicons name="checkmark" size={24} color="white" />
+                      )}
+                    </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.colorLabel,
+                        { color: theme.textSecondary },
+                        customColors.primaryButton === preset.button && {
+                          color: theme.text,
+                          fontWeight: '700',
+                        },
+                      ]}
+                    >
+                      {preset.name}
+                    </Text>
+                  </View>
                 ))}
               </View>
             </View>
@@ -383,7 +379,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 16,
+  },
+  colorOptionContainer: {
+    alignItems: 'center',
+    gap: 8,
   },
   colorOption: {
     width: 56,
@@ -396,11 +395,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  colorLabels: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
   },
   colorLabel: {
     width: 56,

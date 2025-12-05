@@ -60,6 +60,16 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
+              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={24} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="exercises"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
               <Ionicons name={focused ? 'barbell' : 'barbell-outline'} size={24} color={color} />
             </View>
           ),

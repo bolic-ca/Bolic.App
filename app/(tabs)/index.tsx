@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
@@ -16,7 +16,7 @@ export default function HomePage() {
 
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading } = useActiveProgram();
-  const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
+  const { sessionHistory, startSession, loading: sessionLoading } = useWorkoutSession();
   const { stats, loading: statsLoading } = useStats();
 
   // Get next training day from active program
@@ -59,6 +59,38 @@ export default function HomePage() {
 
   const loading = programLoading || sessionLoading || statsLoading;
 
+  const handleStartWorkout = async () => {
+    if (!activeProgram) {
+      Alert.alert(
+        'No Active Program',
+        'Please set an active program in the Programs tab before starting a workout.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (!nextTrainingDay) {
+      Alert.alert(
+        'No Training Day',
+        'Your active program doesn\'t have any training days configured.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      await startSession(activeProgram.id, nextTrainingDay.id);
+      Alert.alert(
+        'Workout Started!',
+        `Starting "${nextTrainingDay.name}". Track your sets and complete when done.`,
+        [{ text: 'Let\'s Go!' }]
+      );
+    } catch (err) {
+      Alert.alert('Error', 'Failed to start workout session');
+      console.error('Error starting workout:', err);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
       <ScrollView
@@ -75,7 +107,7 @@ export default function HomePage() {
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: customColors.primaryButton }]}
-          onPress={() => console.log('Start workout')}
+          onPress={handleStartWorkout}
         >
           <Ionicons name="play-circle" size={28} color={customColors.primaryButtonText} />
           <Text style={[styles.primaryButtonText, { color: customColors.primaryButtonText }]}>Start Workout</Text>

@@ -9,7 +9,6 @@ import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
 import { usePrograms } from '@/hooks/usePrograms';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
-import { useExercises } from '@/hooks/useExercises';
 import { loadTemplate, getTemplateInfo } from '@/services/storage/template-loader';
 import { useStorage } from '@/contexts/StorageContext';
 
@@ -41,8 +40,7 @@ export default function ProgramsPage() {
   const { customColors } = useThemeCustomization();
   const { userId } = useStorage();
   const { programs, loading, error, deleteProgram, refetch: refetchPrograms } = usePrograms();
-  const { program: activeProgram, loading: activeProgramLoading, clearActive, refetch: refetchActiveProgram } = useActiveProgram();
-  const { exercises, loading: exercisesLoading, refetch: refetchExercises } = useExercises();
+  const { program: activeProgram, loading: activeProgramLoading, setActive, clearActive, refetch: refetchActiveProgram } = useActiveProgram();
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
@@ -50,15 +48,14 @@ export default function ProgramsPage() {
 
   const templates = getTemplateInfo();
 
-  // Refetch data when screen comes into focus (e.g., after adding an exercise)
+  // Refetch data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       const refetchData = async () => {
         try {
           await Promise.all([
             refetchPrograms(),
-            refetchActiveProgram(),
-            refetchExercises()
+            refetchActiveProgram()
           ]);
         } catch (error) {
           console.error('Error refetching data on focus:', error);
@@ -83,6 +80,18 @@ export default function ProgramsPage() {
     }
   };
 
+  const handleSetActiveProgram = async (program: Program) => {
+    try {
+      await setActive(program.id);
+      await refetchPrograms();
+      await refetchActiveProgram();
+      Alert.alert('Success', `"${program.name}" is now your active program!`);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to set active program');
+      console.error('Error setting active program:', err);
+    }
+  };
+
   const handleDeleteProgram = async (program: Program) => {
     Alert.alert(
       'Delete Program',
@@ -98,12 +107,16 @@ export default function ProgramsPage() {
           onPress: async () => {
             try {
               // If this is the active program, clear it first
-              if (program.isActive && activeProgram?.id === program.id) {
+              if (activeProgram?.id === program.id) {
                 await clearActive();
               }
 
               // Delete the program
               await deleteProgram(program.id);
+
+              // Refresh the programs list and active program
+              await refetchPrograms();
+              await refetchActiveProgram();
 
               Alert.alert('Success', 'Program deleted successfully');
             } catch (err) {
@@ -193,6 +206,22 @@ export default function ProgramsPage() {
             </View>
           </View>
           <View style={styles.programHeaderActions}>
+            {!program.isActive && activeProgram?.id !== program.id && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleSetActiveProgram(program);
+                }}
+                style={[styles.setActiveButton, { backgroundColor: `${customColors.primaryButton}15` }]}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons
+                  name="play-circle-outline"
+                  size={22}
+                  color={customColors.primaryButton}
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
@@ -372,54 +401,21 @@ export default function ProgramsPage() {
         </View>
       )}
 
-      {/* Template Programs Section */}
+      {/* Active Program Section - Always at the top */}
       {!loading && !error && (
-        <View style={styles.templatesSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Program Templates</Text>
-          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-            Start with a pre-built program
-          </Text>
-          <View style={styles.templatesGrid}>
-            {templates.map((template, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.templateCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-                onPress={() => handleAddTemplate(index)}
-                disabled={loadingTemplate}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.templateIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
-                  <Ionicons
-                    name={template.type === 'simple' ? 'repeat' : 'calendar'}
-                    size={28}
-                    color={customColors.primaryButton}
-                  />
-                </View>
-                <Text style={[styles.templateName, { color: theme.text }]}>{template.name}</Text>
-                <Text style={[styles.templateDescription, { color: theme.textSecondary }]} numberOfLines={2}>
-                  {template.description}
-                </Text>
-                <View style={styles.templateTags}>
-                  {template.tags?.slice(0, 2).map((tag, i) => (
-                    <View key={i} style={[styles.templateTag, { backgroundColor: `${customColors.primaryButton}10` }]}>
-                      <Text style={[styles.templateTagText, { color: customColors.primaryButton }]}>{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View style={[styles.addButton, { backgroundColor: customColors.primaryButton }]}>
-                  <Ionicons name="add" size={16} color="white" />
-                  <Text style={styles.addButtonText}>Add Program</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Full Programs Section */}
-      {!loading && !error && programs.length > 0 && (
-        <View style={styles.fullProgramsSection}>
-          {programs.map((program) => renderProgramCard(program))}
+        <View style={styles.activeProgramSection}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Active Program</Text>
+          {activeProgram ? (
+            renderProgramCard(activeProgram)
+          ) : (
+            <View style={[styles.noActiveProgramCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <Ionicons name="alert-circle-outline" size={48} color={theme.textSecondary} />
+              <Text style={[styles.noActiveProgramText, { color: theme.text }]}>No active program selected</Text>
+              <Text style={[styles.noActiveProgramSubtext, { color: theme.textSecondary }]}>
+                Choose a program below to get started
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -582,87 +578,57 @@ export default function ProgramsPage() {
         </View>
       )}
 
-      {/* Exercise Library */}
-      <View style={styles.exerciseLibrarySection}>
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Exercise Library</Text>
-            <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-              All your exercises ({exercises.length})
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.addExerciseToLibraryButton, { backgroundColor: customColors.primaryButton }]}
-            onPress={() => router.push('/exercise-form')}
-          >
-            <Ionicons name="add-circle" size={20} color="white" />
-            <Text style={styles.addExerciseToLibraryButtonText}>Add</Text>
-          </TouchableOpacity>
+      {/* All Programs Section */}
+      {!loading && !error && programs.filter(p => p.id !== activeProgram?.id).length > 0 && (
+        <View style={styles.fullProgramsSection}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>All Programs</Text>
+          {programs.filter(p => p.id !== activeProgram?.id).map((program) => renderProgramCard(program))}
         </View>
+      )}
 
-        {exercisesLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={customColors.primaryButton} />
-          </View>
-        ) : exercises.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="barbell-outline" size={48} color={theme.textSecondary} />
-            <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
-              No exercises yet. Add your first exercise!
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.exerciseLibraryList}>
-            {exercises.map((exercise, index) => (
+      {/* Template Programs Section */}
+      {!loading && !error && (
+        <View style={styles.templatesSection}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Program Templates</Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            Start with a pre-built program
+          </Text>
+          <View style={styles.templatesGrid}>
+            {templates.map((template, index) => (
               <TouchableOpacity
-                key={exercise.id}
-                style={[styles.exerciseLibraryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                key={index}
+                style={[styles.templateCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                onPress={() => handleAddTemplate(index)}
+                disabled={loadingTemplate}
                 activeOpacity={0.7}
               >
-                <View style={styles.exerciseLibraryCardHeader}>
-                  {exercise.muscleCategory && (
-                    <View
-                      style={[
-                        styles.muscleIconContainer,
-                        { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory]}20` },
-                      ]}
-                    >
-                      <Ionicons
-                        name={muscleCategoryIcons[exercise.muscleCategory] || 'fitness'}
-                        size={18}
-                        color={muscleCategoryColors[exercise.muscleCategory]}
-                      />
+                <View style={[styles.templateIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
+                  <Ionicons
+                    name={template.type === 'simple' ? 'repeat' : 'calendar'}
+                    size={28}
+                    color={customColors.primaryButton}
+                  />
+                </View>
+                <Text style={[styles.templateName, { color: theme.text }]}>{template.name}</Text>
+                <Text style={[styles.templateDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+                  {template.description}
+                </Text>
+                <View style={styles.templateTags}>
+                  {template.tags?.slice(0, 2).map((tag, i) => (
+                    <View key={i} style={[styles.templateTag, { backgroundColor: `${customColors.primaryButton}10` }]}>
+                      <Text style={[styles.templateTagText, { color: customColors.primaryButton }]}>{tag}</Text>
                     </View>
-                  )}
-                  <View style={styles.exerciseLibraryCardInfo}>
-                    <Text style={[styles.exerciseLibraryCardName, { color: theme.text }]}>
-                      {exercise.name}
-                    </Text>
-                    <View style={styles.exerciseLibraryCardMeta}>
-                      {exercise.muscleCategory && (
-                        <Text style={[styles.exerciseLibraryCardMetaText, { color: theme.textSecondary }]}>
-                          {exercise.muscleCategory}
-                          {exercise.muscleSubcategory && ` • ${exercise.muscleSubcategory}`}
-                        </Text>
-                      )}
-                    </View>
-                    {exercise.equipment && (
-                      <View style={styles.exerciseLibraryCardTags}>
-                        <View style={[styles.equipmentTag, { backgroundColor: `${customColors.primaryButton}10` }]}>
-                          <Ionicons name="barbell" size={12} color={customColors.primaryButton} />
-                          <Text style={[styles.equipmentTagText, { color: customColors.primaryButton }]}>
-                            {exercise.equipment}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
+                  ))}
+                </View>
+                <View style={[styles.addButton, { backgroundColor: customColors.primaryButton }]}>
+                  <Ionicons name="add" size={16} color="white" />
+                  <Text style={styles.addButtonText}>Add Program</Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       </ScrollView>
     </SafeAreaView>
@@ -872,6 +838,28 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontStyle: 'italic',
   },
+  // Active Program Section Styles
+  activeProgramSection: {
+    marginBottom: 24,
+  },
+  noActiveProgramCard: {
+    borderRadius: 16,
+    padding: 32,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  noActiveProgramText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  noActiveProgramSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
   // New Program Structure Styles
   fullProgramsSection: {
     gap: 16,
@@ -901,6 +889,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  setActiveButton: {
+    padding: 8,
+    borderRadius: 8,
   },
   deleteButton: {
     padding: 4,
@@ -1179,80 +1171,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
-  },
-  exerciseLibrarySection: {
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  addExerciseToLibraryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  addExerciseToLibraryButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  exerciseLibraryList: {
-    gap: 12,
-    marginTop: 16,
-  },
-  exerciseLibraryCard: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  exerciseLibraryCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  exerciseLibraryCardInfo: {
-    flex: 1,
-  },
-  exerciseLibraryCardName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  exerciseLibraryCardMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  exerciseLibraryCardMetaText: {
-    fontSize: 13,
-  },
-  exerciseLibraryCardTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  equipmentTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  equipmentTagText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    gap: 12,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    textAlign: 'center',
   },
 });
