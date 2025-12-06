@@ -1,7 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { WorkoutSession } from '@/services/storage/session-storage';
+import type { TrainingDay } from '@/types/training';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
@@ -17,9 +21,17 @@ export default function HomePage() {
   const { isExpanded, expand, minimize } = useWorkoutUI();
 
   // Fetch data from storage
-  const { program: activeProgram, loading: programLoading } = useActiveProgram();
+  const { program: activeProgram, loading: programLoading, refetch: refetchActiveProgram } = useActiveProgram();
   const { session, sessionHistory, startSession, completeSession, cancelSession, loading: sessionLoading } = useWorkoutSession();
   const { stats, incrementWorkouts, loading: statsLoading } = useStats();
+
+  // Refetch active program when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refetchActiveProgram();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   // Get next training day from active program
   const nextTrainingDay = useMemo(() => {
@@ -118,7 +130,7 @@ export default function HomePage() {
     }
 
     try {
-      await startSession(activeProgram.id, nextTrainingDay.id);
+      await startSession(activeProgram.id, nextTrainingDay.id, nextTrainingDay.name);
       expand();
     } catch (err) {
       Alert.alert('Error', 'Failed to start workout session');
@@ -165,6 +177,20 @@ export default function HomePage() {
   const handleMinimizeWorkout = () => {
     minimize();
   };
+
+  const handleViewSession = useCallback((sessionData: WorkoutSession) => {
+    router.push({
+      pathname: '/session-detail',
+      params: { session: JSON.stringify(sessionData) },
+    });
+  }, []);
+
+  const handleViewTrainingDay = useCallback((trainingDay: TrainingDay) => {
+    router.push({
+      pathname: '/training-day-detail',
+      params: { trainingDay: JSON.stringify(trainingDay) },
+    });
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -222,7 +248,10 @@ export default function HomePage() {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity style={[styles.cardButton, { backgroundColor: theme.background }]}>
+            <TouchableOpacity
+              style={[styles.cardButton, { backgroundColor: theme.background }]}
+              onPress={() => handleViewTrainingDay(nextTrainingDay)}
+            >
               <Text style={[styles.cardButtonText, { color: customColors.primaryButton }]}>View Details</Text>
               <Ionicons name="chevron-forward" size={18} color={customColors.primaryButton} />
             </TouchableOpacity>
@@ -250,61 +279,66 @@ export default function HomePage() {
 
           {/* Last Session */}
           {lastSession && (
-            <View style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            <TouchableOpacity
+              style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+              onPress={() => handleViewSession(lastSession)}
+              activeOpacity={0.7}
+            >
               <View style={styles.sessionHeader}>
                 <View style={styles.sessionHeaderLeft}>
                   <Ionicons name="checkmark-circle" size={20} color="#4ecdc4" />
                   <View>
                     <Text style={[styles.sessionLabel, { color: theme.textSecondary }]}>Last Session</Text>
                     <Text style={[styles.sessionName, { color: theme.text }]}>
-                      {lastSession.exercises?.[0]?.exerciseName || 'Completed workout'}
+                      {lastSession.name || 'Workout'}
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>
-                  {lastSession.completedAt ? new Date(lastSession.completedAt).toLocaleDateString() : 'Recent'}
+                <View style={styles.sessionHeaderRight}>
+                  <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>
+                    {lastSession.completedAt ? new Date(lastSession.completedAt).toLocaleDateString() : 'Recent'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
+                </View>
+              </View>
+              <View style={styles.sessionDetail}>
+                <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
+                  {lastSession.exercises?.length || 0} exercises • {lastSession.exercises?.reduce((total, ex) => total + (ex.sets?.length || 0), 0) || 0} sets
                 </Text>
               </View>
-              {lastSession.exercises && lastSession.exercises[0] && (
-                <View style={styles.sessionDetail}>
-                  <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
-                    {lastSession.exercises[0].exerciseName} • {lastSession.exercises[0].sets?.length || 0} sets
-                  </Text>
-                </View>
-              )}
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* Last Time You Did This */}
           {previousInstanceOfToday && (
-            <View style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            <TouchableOpacity
+              style={[styles.sessionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+              onPress={() => handleViewSession(previousInstanceOfToday)}
+              activeOpacity={0.7}
+            >
               <View style={styles.sessionHeader}>
                 <View style={styles.sessionHeaderLeft}>
                   <Ionicons name="repeat" size={20} color="#ffd93d" />
                   <View>
                     <Text style={[styles.sessionLabel, { color: theme.textSecondary }]}>Last time you did this</Text>
                     <Text style={[styles.sessionName, { color: theme.text }]}>
-                      {previousInstanceOfToday.exercises?.[0]?.exerciseName || 'Previous session'}
+                      {previousInstanceOfToday.name || 'Workout'}
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>
-                  {previousInstanceOfToday.completedAt ? new Date(previousInstanceOfToday.completedAt).toLocaleDateString() : 'Previous'}
+                <View style={styles.sessionHeaderRight}>
+                  <Text style={[styles.sessionTime, { color: theme.textSecondary }]}>
+                    {previousInstanceOfToday.completedAt ? new Date(previousInstanceOfToday.completedAt).toLocaleDateString() : 'Previous'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
+                </View>
+              </View>
+              <View style={styles.sessionDetail}>
+                <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
+                  {previousInstanceOfToday.exercises?.length || 0} exercises • {previousInstanceOfToday.exercises?.reduce((total, ex) => total + (ex.sets?.length || 0), 0) || 0} sets
                 </Text>
               </View>
-              {previousInstanceOfToday.exercises && previousInstanceOfToday.exercises[0] && (
-                <View style={styles.sessionDetail}>
-                  <Text style={[styles.sessionExercise, { color: theme.textSecondary }]}>
-                    {previousInstanceOfToday.exercises[0].exerciseName}
-                  </Text>
-                  {previousInstanceOfToday.exercises[0].sets && previousInstanceOfToday.exercises[0].sets[0] && (
-                    <Text style={[styles.sessionPerformance, { color: theme.text }]}>
-                      {previousInstanceOfToday.exercises[0].sets[0].weight} kg × {previousInstanceOfToday.exercises[0].sets[0].reps} reps
-                    </Text>
-                  )}
-                </View>
-              )}
-            </View>
+            </TouchableOpacity>
           )}
         </View>
       )}
@@ -481,6 +515,11 @@ const styles = StyleSheet.create({
   sessionName: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  sessionHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   sessionTime: {
     fontSize: 12,

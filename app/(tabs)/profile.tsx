@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
@@ -33,6 +34,46 @@ export default function ProfilePage() {
   const { customColors, setCustomColors, presetColors } = useThemeCustomization();
   const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
+
+  const handleResetAllData = () => {
+    Alert.alert(
+      'Reset All Data',
+      'This will permanently delete ALL your data including:\n\n• All workout sessions\n• All programs\n• All exercises\n• All statistics\n• All settings\n\nThis action CANNOT be undone. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Everything',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Final Confirmation',
+              'This is your last chance. All data will be permanently deleted.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete All Data',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await AsyncStorage.clear();
+                      Alert.alert(
+                        'Data Cleared',
+                        'All data has been deleted. Please restart the app.',
+                        [{ text: 'OK' }]
+                      );
+                    } catch (error) {
+                      Alert.alert('Error', 'Failed to clear data. Please try again.');
+                      console.error('Error clearing AsyncStorage:', error);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -209,6 +250,31 @@ export default function ProfilePage() {
               )}
             </React.Fragment>
           ))}
+        </View>
+      </View>
+
+      {/* Danger Zone */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: '#ff6b6b' }]}>Danger Zone</Text>
+        <View style={[styles.menuCard, { backgroundColor: theme.card, borderColor: '#ff6b6b40' }]}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handleResetAllData}
+            activeOpacity={0.7}
+          >
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#ff6b6b15' }]}>
+                <Ionicons name="trash-outline" size={22} color="#ff6b6b" />
+              </View>
+              <View style={styles.menuItemText}>
+                <Text style={[styles.menuItemTitle, { color: '#ff6b6b' }]}>Reset All Data</Text>
+                <Text style={[styles.menuItemSubtitle, { color: theme.textSecondary }]}>
+                  Permanently delete all app data
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#ff6b6b" />
+          </TouchableOpacity>
         </View>
       </View>
 

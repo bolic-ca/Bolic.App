@@ -55,6 +55,20 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Stack.Screen
+              name="session-detail"
+              options={{
+                presentation: 'modal',
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="training-day-detail"
+              options={{
+                presentation: 'modal',
+                headerShown: false,
+              }}
+            />
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

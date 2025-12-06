@@ -22,7 +22,7 @@ interface WorkoutSessionContextType {
   sessionHistory: WorkoutSession[];
   loading: boolean;
   error: Error | null;
-  startSession: (programId: string, trainingDayId: string) => Promise<void>;
+  startSession: (programId: string, trainingDayId: string, name?: string) => Promise<void>;
   addSet: (exerciseId: string, exerciseName: string, set: SessionSet) => Promise<void>;
   completeSession: (notes?: string) => Promise<void>;
   cancelSession: () => Promise<void>;
@@ -77,7 +77,7 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, isInitialized, fetchActiveSession, fetchSessionHistory]);
 
-  const startSession = useCallback(async (programId: string, trainingDayId: string): Promise<void> => {
+  const startSession = useCallback(async (programId: string, trainingDayId: string, name?: string): Promise<void> => {
     if (!userId) {
       throw new Error('User not initialized');
     }
@@ -87,6 +87,7 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
         id: generateId(),
         programId,
         trainingDayId,
+        name,
         startedAt: getCurrentTimestamp(),
         completedAt: null,
         exercises: [],
