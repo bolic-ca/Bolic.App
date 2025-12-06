@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
-import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutUI } from '@/contexts/WorkoutUIContext';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
@@ -14,7 +14,7 @@ export default function HomePage() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
-  const { isExpanded, minimize } = useWorkoutUI();
+  const { isExpanded, expand, minimize } = useWorkoutUI();
 
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading } = useActiveProgram();
@@ -92,7 +92,13 @@ export default function HomePage() {
 
   const loading = programLoading || sessionLoading || statsLoading;
 
-  const handleStartWorkout = async () => {
+  const handleWorkoutButtonPress = async () => {
+    // If there's already a session, just expand the interface
+    if (session) {
+      expand();
+      return;
+    }
+
     if (!activeProgram) {
       Alert.alert(
         'No Active Program',
@@ -113,11 +119,7 @@ export default function HomePage() {
 
     try {
       await startSession(activeProgram.id, nextTrainingDay.id);
-      Alert.alert(
-        'Workout Started!',
-        `Starting "${nextTrainingDay.name}". Track your sets and complete when done.`,
-        [{ text: 'Let\'s Go!' }]
-      );
+      expand();
     } catch (err) {
       Alert.alert('Error', 'Failed to start workout session');
       console.error('Error starting workout:', err);
@@ -190,10 +192,12 @@ export default function HomePage() {
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: customColors.primaryButton }]}
-          onPress={handleStartWorkout}
+          onPress={handleWorkoutButtonPress}
         >
-          <Ionicons name="play-circle" size={28} color={customColors.primaryButtonText} />
-          <Text style={[styles.primaryButtonText, { color: customColors.primaryButtonText }]}>Start Workout</Text>
+          <Ionicons name={session ? "play" : "play-circle"} size={28} color={customColors.primaryButtonText} />
+          <Text style={[styles.primaryButtonText, { color: customColors.primaryButtonText }]}>
+            {session ? 'Resume Workout' : 'Start Workout'}
+          </Text>
         </TouchableOpacity>
       </View>
 

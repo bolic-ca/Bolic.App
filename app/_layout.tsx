@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { StorageProvider } from '@/contexts/StorageContext';
 import { WorkoutUIProvider } from '@/contexts/WorkoutUIContext';
+import { WorkoutSessionProvider } from '@/contexts/WorkoutSessionContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -17,9 +18,10 @@ export default function RootLayout() {
 
   return (
     <StorageProvider>
-      <CustomThemeProvider>
-        <WorkoutUIProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <WorkoutSessionProvider>
+        <CustomThemeProvider>
+          <WorkoutUIProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack>
             <Stack.Screen
               name="index"
@@ -58,6 +60,7 @@ export default function RootLayout() {
           </ThemeProvider>
         </WorkoutUIProvider>
       </CustomThemeProvider>
-    </StorageProvider>
+    </WorkoutSessionProvider>
+  </StorageProvider>
   );
 }

@@ -8,7 +8,7 @@ import { View, ScrollView, ActivityIndicator, Text, TouchableOpacity, StyleSheet
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import type { WorkoutSession, SessionSet } from '@/services/storage/session-storage';
 import type { TrainingDay } from '@/types/training';
 import { getWorkoutProgress } from '@/utils/workout-helpers';

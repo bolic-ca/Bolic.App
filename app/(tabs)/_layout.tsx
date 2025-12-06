@@ -7,7 +7,7 @@ import { BlurView } from 'expo-blur';
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
 import ActiveWorkoutBanner from '@/components/workout/ActiveWorkoutBanner';
 
@@ -52,23 +52,9 @@ export default function TabLayout() {
   // Show banner when there's an active session
   const showBanner = !!session;
 
-  // Debug logging
-  console.log('TabLayout - Session exists:', !!session);
-  console.log('TabLayout - Show banner:', showBanner);
-  if (session) {
-    console.log('TabLayout - Session ID:', session.id);
-    console.log('TabLayout - Training day name:', trainingDayName);
-  }
-
   return (
     <View style={{ flex: 1 }}>
-      {showBanner && (
-        <ActiveWorkoutBanner
-          startedAt={session!.startedAt}
-          trainingDayName={trainingDayName}
-        />
-      )}
-    <Tabs
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
@@ -150,6 +136,12 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+      {showBanner && (
+        <ActiveWorkoutBanner
+          startedAt={session!.startedAt}
+          trainingDayName={trainingDayName}
+        />
+      )}
     </View>
   );
 }

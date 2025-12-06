@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
-import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 
 interface StatCard {
   title: string;
