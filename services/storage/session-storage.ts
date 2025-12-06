@@ -15,6 +15,7 @@ export interface WorkoutSession {
   id: string;
   programId: string;
   trainingDayId: string;
+  name?: string;
   startedAt: string;
   completedAt: string | null;
   exercises: SessionExercise[];

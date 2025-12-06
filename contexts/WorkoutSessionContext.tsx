@@ -1,9 +1,9 @@
 /**
- * useWorkoutSession Hook
- * React hook for managing workout sessions
+ * WorkoutSessionContext
+ * Provides shared workout session state across all components
  */
 
-import { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useStorage } from '@/contexts/StorageContext';
 import {
   WorkoutSession,
@@ -17,14 +17,28 @@ import {
 import { StorageItem } from '@/types/storage';
 import { generateId, getCurrentTimestamp } from '@/utils/storage-helpers';
 
-export function useWorkoutSession() {
+interface WorkoutSessionContextType {
+  session: WorkoutSession | null;
+  sessionHistory: WorkoutSession[];
+  loading: boolean;
+  error: Error | null;
+  startSession: (programId: string, trainingDayId: string, name?: string) => Promise<void>;
+  addSet: (exerciseId: string, exerciseName: string, set: SessionSet) => Promise<void>;
+  completeSession: (notes?: string) => Promise<void>;
+  cancelSession: () => Promise<void>;
+  refetch: () => Promise<void>;
+}
+
+const WorkoutSessionContext = createContext<WorkoutSessionContextType | undefined>(undefined);
+
+export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
   const { userId, isInitialized } = useStorage();
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [sessionHistory, setSessionHistory] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  async function fetchActiveSession() {
+  const fetchActiveSession = useCallback(async () => {
     if (!userId) return;
 
     try {
@@ -43,9 +57,9 @@ export function useWorkoutSession() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
-  async function fetchSessionHistory() {
+  const fetchSessionHistory = useCallback(async () => {
     if (!userId) return;
 
     try {
@@ -54,21 +68,26 @@ export function useWorkoutSession() {
     } catch (err) {
       console.error('Error fetching session history:', err);
     }
-  }
+  }, [userId]);
 
   useEffect(() => {
     if (isInitialized && userId) {
       fetchActiveSession();
       fetchSessionHistory();
     }
-  }, [userId, isInitialized]);
+  }, [userId, isInitialized, fetchActiveSession, fetchSessionHistory]);
 
-  async function startSession(programId: string, trainingDayId: string): Promise<void> {
+  const startSession = useCallback(async (programId: string, trainingDayId: string, name?: string): Promise<void> => {
+    if (!userId) {
+      throw new Error('User not initialized');
+    }
+
     try {
       const newSession: WorkoutSession = {
         id: generateId(),
         programId,
         trainingDayId,
+        name,
         startedAt: getCurrentTimestamp(),
         completedAt: null,
         exercises: [],
@@ -89,11 +108,15 @@ export function useWorkoutSession() {
       setError(error);
       throw error;
     }
-  }
+  }, [userId]);
 
-  async function addSet(exerciseId: string, exerciseName: string, set: SessionSet): Promise<void> {
+  const addSet = useCallback(async (exerciseId: string, exerciseName: string, set: SessionSet): Promise<void> => {
     if (!session) {
       throw new Error('No active session');
+    }
+
+    if (!userId) {
+      throw new Error('User not initialized');
     }
 
     try {
@@ -122,7 +145,7 @@ export function useWorkoutSession() {
         id: session.id,
         userId,
         data: updatedSession,
-        createdAt: getCurrentTimestamp(), // Will be preserved by saveSession
+        createdAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       };
 
@@ -133,11 +156,15 @@ export function useWorkoutSession() {
       setError(error);
       throw error;
     }
-  }
+  }, [session, userId]);
 
-  async function completeSession(notes?: string): Promise<void> {
+  const completeSession = useCallback(async (notes?: string): Promise<void> => {
     if (!session) {
       throw new Error('No active session');
+    }
+
+    if (!userId) {
+      throw new Error('User not initialized');
     }
 
     try {
@@ -162,9 +189,13 @@ export function useWorkoutSession() {
       setError(error);
       throw error;
     }
-  }
+  }, [session, userId, fetchSessionHistory]);
 
-  async function cancelSession(): Promise<void> {
+  const cancelSession = useCallback(async (): Promise<void> => {
+    if (!userId) {
+      throw new Error('User not initialized');
+    }
+
     try {
       await clearActiveSession(userId);
       setSession(null);
@@ -173,17 +204,31 @@ export function useWorkoutSession() {
       setError(error);
       throw error;
     }
-  }
+  }, [userId]);
 
-  return {
-    session,
-    sessionHistory,
-    loading,
-    error,
-    startSession,
-    addSet,
-    completeSession,
-    cancelSession,
-    refetch: fetchActiveSession,
-  };
+  return (
+    <WorkoutSessionContext.Provider
+      value={{
+        session,
+        sessionHistory,
+        loading,
+        error,
+        startSession,
+        addSet,
+        completeSession,
+        cancelSession,
+        refetch: fetchActiveSession,
+      }}
+    >
+      {children}
+    </WorkoutSessionContext.Provider>
+  );
+}
+
+export function useWorkoutSession() {
+  const context = useContext(WorkoutSessionContext);
+  if (context === undefined) {
+    throw new Error('useWorkoutSession must be used within a WorkoutSessionProvider');
+  }
+  return context;
 }

@@ -25,12 +25,7 @@ export default function ActiveWorkoutBanner({ startedAt, trainingDayName }: Acti
   const pathname = usePathname();
   const { expand } = useWorkoutUI();
 
-  console.log('ActiveWorkoutBanner - Rendering');
-  console.log('ActiveWorkoutBanner - Training day name:', trainingDayName);
-  console.log('ActiveWorkoutBanner - Started at:', startedAt);
-
   const handlePress = () => {
-    console.log('ActiveWorkoutBanner - Pressed');
     // Expand the workout interface
     expand();
 
@@ -69,6 +64,7 @@ const styles = StyleSheet.create({
     bottom: 85, // Above tab bar (tab bar height)
     left: 0,
     right: 0,
+    zIndex: 100,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopWidth: 1,
