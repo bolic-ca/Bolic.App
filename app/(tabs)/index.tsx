@@ -33,28 +33,53 @@ export default function HomePage() {
     }, [])
   );
 
-  // Get next training day from active program
+  // Get next training day from active program based on session history
   const nextTrainingDay = useMemo(() => {
     if (!activeProgram) return null;
 
-    // Simple program: get first training day
+    // Get all training days for the program
+    let trainingDays: any[] = [];
     if (activeProgram.type === 'simple' && activeProgram.trainingDays?.length > 0) {
-      return activeProgram.trainingDays[0];
-    }
-
-    // Periodized program: get first training day from first microcycle
-    if (activeProgram.type === 'periodized' && activeProgram.mesocycles?.length > 0) {
-      const firstMeso = activeProgram.mesocycles[0];
-      if (firstMeso.microcycles?.length > 0) {
-        const firstMicro = firstMeso.microcycles[0];
-        if (firstMicro.trainingDays?.length > 0) {
-          return firstMicro.trainingDays[0];
+      trainingDays = activeProgram.trainingDays;
+    } else if (activeProgram.type === 'periodized' && activeProgram.mesocycles?.length > 0) {
+      // For periodized, flatten all training days from all microcycles
+      for (const meso of activeProgram.mesocycles) {
+        if (meso.microcycles) {
+          for (const micro of meso.microcycles) {
+            if (micro.trainingDays) {
+              trainingDays.push(...micro.trainingDays);
+            }
+          }
         }
       }
     }
 
-    return null;
-  }, [activeProgram]);
+    if (trainingDays.length === 0) return null;
+
+    // Find last completed session for this program
+    const lastProgramSession = sessionHistory?.find(
+      s => s.programId === activeProgram.id
+    );
+
+    if (!lastProgramSession) {
+      // No previous sessions, start with first training day
+      return trainingDays[0];
+    }
+
+    // Find the index of the last completed training day
+    const lastIndex = trainingDays.findIndex(
+      td => td.id === lastProgramSession.trainingDayId
+    );
+
+    if (lastIndex === -1) {
+      // Last session's training day not found, start with first
+      return trainingDays[0];
+    }
+
+    // Return next training day in rotation (wrap around)
+    const nextIndex = (lastIndex + 1) % trainingDays.length;
+    return trainingDays[nextIndex];
+  }, [activeProgram, sessionHistory]);
 
   // Find training day for active session from the program structure
   const activeTrainingDay = useMemo(() => {
