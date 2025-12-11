@@ -11,11 +11,13 @@ import { useActiveProgram } from '@/hooks/useActiveProgram';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutUI } from '@/contexts/WorkoutUIContext';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
 
 export default function HomePage() {
   const colorScheme = useColorScheme();
   const { isExpanded, expand, minimize } = useWorkoutUI();
+  const { customColors } = useThemeCustomization();
 
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading, refetch: refetchActiveProgram } = useActiveProgram();
@@ -216,15 +218,24 @@ export default function HomePage() {
 
   const isDark = colorScheme === 'dark';
 
-  // Athletic color palette
+  // Helper to convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  // Athletic color palette - uses customColors from settings
+  const accent = customColors.primaryButton;
   const palette = {
     bg: isDark ? '#0A0A0B' : '#FAFAF9',
     cardBg: isDark ? '#141416' : '#FFFFFF',
     cardBorder: isDark ? '#2A2A2E' : '#E8E8E6',
     text: isDark ? '#FAFAFA' : '#0A0A0B',
     textMuted: isDark ? '#71717A' : '#71717A',
-    accent: '#F97316', // Vibrant orange
-    accentGlow: isDark ? 'rgba(249, 115, 22, 0.15)' : 'rgba(249, 115, 22, 0.08)',
+    accent,
+    accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
     success: '#22C55E',
     streak: '#FACC15',
   };
@@ -246,16 +257,24 @@ export default function HomePage() {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Section */}
-          <View style={styles.heroSection}>
-            <View style={styles.heroContent}>
-              <Text style={[styles.heroLabel, { color: palette.textMuted }]}>
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-              </Text>
-              <Text style={[styles.heroTitle, { color: palette.text }]}>
-                {session ? 'Session Active' : 'Ready to\nTrain?'}
+          {/* Header with Day + Status Badge */}
+          <View style={styles.header}>
+            <Text style={[styles.headerDay, { color: palette.textMuted }]}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()}
+            </Text>
+            <View style={[styles.statusBadge, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5', borderColor: palette.cardBorder }]}>
+              <View style={[styles.statusDot, { backgroundColor: session ? palette.success : palette.accent }]} />
+              <Text style={[styles.statusText, { color: palette.textMuted }]}>
+                {session ? 'Active' : 'Ready'}
               </Text>
             </View>
+          </View>
+
+          {/* Hero Section */}
+          <View style={styles.heroSection}>
+            <Text style={[styles.heroTitle, { color: palette.text }]}>
+              {session ? 'Session\nActive' : 'Ready to\nTrain?'}
+            </Text>
 
             {/* Decorative diagonal accent */}
             <View style={[styles.heroAccent, { backgroundColor: palette.accentGlow }]}>
@@ -265,12 +284,12 @@ export default function HomePage() {
 
           {/* Primary Action Button */}
           <TouchableOpacity
-            style={styles.primaryAction}
+            style={[styles.primaryAction, { shadowColor: palette.accent }]}
             onPress={handleWorkoutButtonPress}
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={['#F97316', '#EA580C']}
+              colors={[palette.accent, hexToRgba(palette.accent, 0.85)]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.primaryActionGradient}
@@ -305,7 +324,7 @@ export default function HomePage() {
           {!loading && stats && (
             <View style={styles.statsRow}>
               <View style={[styles.statPill, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-                <View style={[styles.statIconBg, { backgroundColor: 'rgba(249, 115, 22, 0.12)' }]}>
+                <View style={[styles.statIconBg, { backgroundColor: hexToRgba(palette.accent, 0.12) }]}>
                   <Ionicons name="flame" size={18} color={palette.accent} />
                 </View>
                 <View>
@@ -466,22 +485,44 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
+  // Header
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  headerDay: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
   // Hero Section
   heroSection: {
-    paddingTop: 12,
-    paddingBottom: 28,
+    paddingTop: 8,
+    paddingBottom: 24,
     position: 'relative',
     overflow: 'hidden',
-  },
-  heroContent: {
-    zIndex: 1,
-  },
-  heroLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    marginBottom: 8,
   },
   heroTitle: {
     fontSize: 42,
@@ -511,7 +552,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#F97316',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
