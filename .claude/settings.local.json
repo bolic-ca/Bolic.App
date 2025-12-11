@@ -4,7 +4,9 @@
       "Bash([ -f \"eas.json\" ])",
       "Bash(mkdir:*)",
       "Bash(npm run lint)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Skill(frontend-design:frontend-design)",
+      "Bash(npx expo install:*)"
     ],
     "deny": [],
     "ask": []

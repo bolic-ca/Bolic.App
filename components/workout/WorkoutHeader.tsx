@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useColorScheme, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 import WorkoutTimer from './WorkoutTimer';
 
 interface WorkoutHeaderProps {
@@ -26,6 +27,7 @@ export default function WorkoutHeader({
 }: WorkoutHeaderProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { customColors } = useThemeCustomization();
 
   const handleCancelPress = () => {
     Alert.alert(
@@ -68,7 +70,7 @@ export default function WorkoutHeader({
           <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
             {trainingDayName}
           </Text>
-          <WorkoutTimer startedAt={startedAt} color={theme.tint} />
+          <WorkoutTimer startedAt={startedAt} color={customColors.primaryButton} />
         </View>
 
         {/* Finish Button */}
@@ -76,7 +78,7 @@ export default function WorkoutHeader({
           style={styles.actionButton}
           onPress={onFinish}
         >
-          <Ionicons name="checkmark-circle" size={28} color={theme.tint} />
+          <Ionicons name="checkmark-circle" size={28} color={customColors.primaryButton} />
         </TouchableOpacity>
       </View>
     </View>

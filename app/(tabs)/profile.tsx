@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
@@ -30,10 +29,30 @@ const supportMenuItems: MenuItem[] = [
 
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
   const { customColors, setCustomColors, presetColors } = useThemeCustomization();
   const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
+  const isDark = colorScheme === 'dark';
+
+  // Athletic color palette
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const accent = customColors.primaryButton;
+  const palette = {
+    bg: isDark ? '#0A0A0B' : '#FAFAF9',
+    cardBg: isDark ? '#141416' : '#FFFFFF',
+    cardBorder: isDark ? '#2A2A2E' : '#E8E8E6',
+    text: isDark ? '#FAFAFA' : '#0A0A0B',
+    textMuted: isDark ? '#71717A' : '#71717A',
+    accent,
+    accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
+    danger: '#EF4444',
+  };
 
   const handleResetAllData = () => {
     Alert.alert(
@@ -76,396 +95,290 @@ export default function ProfilePage() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-      {/* Profile Header */}
-      <View style={styles.header}>
-        <View style={[styles.avatarContainer, { backgroundColor: customColors.primaryButton }]}>
-          <Ionicons name="person" size={48} color="white" />
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>SETTINGS</Text>
+          <Text style={[styles.headerTitle, { color: palette.text }]}>Profile</Text>
         </View>
-        <Text style={[styles.name, { color: theme.text }]}>John Doe</Text>
-        <Text style={[styles.email, { color: theme.textSecondary }]}>johndoe@example.com</Text>
-        <TouchableOpacity
-          style={[styles.editButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-          onPress={() => console.log('Edit profile')}
-        >
-          <Ionicons name="create-outline" size={18} color={customColors.primaryButton} />
-          <Text style={[styles.editButtonText, { color: customColors.primaryButton }]}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Stats Summary */}
-      <View style={[styles.statsContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{stats?.totalWorkouts || 0}</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Workouts</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{stats?.currentStreak || 0}</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: theme.cardBorder }]} />
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{stats?.activeTime || 0}</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Hours</Text>
-        </View>
-      </View>
-
-      
-
-      {/* Profile Options */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
-        <View style={[styles.menuCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          {profileMenuItems.map((item, index) => (
-            <React.Fragment key={item.title}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => console.log(item.title)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.menuItemLeft}>
-                  <View style={[styles.menuIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
-                    <Ionicons name={item.icon} size={22} color={customColors.primaryButton} />
-                  </View>
-                  <View style={styles.menuItemText}>
-                    <Text style={[styles.menuItemTitle, { color: theme.text }]}>{item.title}</Text>
-                    {item.subtitle && (
-                      <Text style={[styles.menuItemSubtitle, { color: theme.textSecondary }]}>
-                        {item.subtitle}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-              {index < profileMenuItems.length - 1 && (
-                <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
-      </View>
-
-      {/* Theme Customization */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
-        <View style={[styles.menuCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => setColorPickerExpanded(!colorPickerExpanded)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
-                <Ionicons name="color-palette-outline" size={22} color={customColors.primaryButton} />
-              </View>
-              <View style={styles.menuItemText}>
-                <Text style={[styles.menuItemTitle, { color: theme.text }]}>Button Color</Text>
-                <Text style={[styles.menuItemSubtitle, { color: theme.textSecondary }]}>
-                  Customize your primary action button
-                </Text>
-              </View>
-            </View>
-            <Ionicons
-              name={colorPickerExpanded ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color={theme.textSecondary}
-            />
+        {/* Profile Card */}
+        <View style={[styles.profileCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+          <View style={[styles.avatarContainer, { backgroundColor: palette.accent }]}>
+            <Ionicons name="person" size={36} color="#FFF" />
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={[styles.profileName, { color: palette.text }]}>John Doe</Text>
+            <Text style={[styles.profileEmail, { color: palette.textMuted }]}>johndoe@example.com</Text>
+          </View>
+          <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: palette.accentGlow }]}>
+            <Ionicons name="create-outline" size={18} color={palette.accent} />
           </TouchableOpacity>
+        </View>
 
-          {/* Color Picker Expanded */}
-          {colorPickerExpanded && (
-            <View style={styles.colorPickerContainer}>
-              <View style={styles.colorGrid}>
-                {presetColors.map((preset) => (
-                  <View key={preset.name} style={styles.colorOptionContainer}>
+        {/* Quick Stats */}
+        <View style={styles.quickStats}>
+          <View style={[styles.quickStatCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            <View style={[styles.quickStatIcon, { backgroundColor: 'rgba(78, 205, 196, 0.12)' }]}>
+              <Ionicons name="fitness" size={18} color="#4ecdc4" />
+            </View>
+            <Text style={[styles.quickStatValue, { color: palette.text }]}>{stats?.totalWorkouts || 0}</Text>
+            <Text style={[styles.quickStatLabel, { color: palette.textMuted }]}>Workouts</Text>
+          </View>
+          <View style={[styles.quickStatCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            <View style={[styles.quickStatIcon, { backgroundColor: 'rgba(255, 107, 107, 0.12)' }]}>
+              <Ionicons name="flame" size={18} color="#ff6b6b" />
+            </View>
+            <Text style={[styles.quickStatValue, { color: palette.text }]}>{stats?.currentStreak || 0}</Text>
+            <Text style={[styles.quickStatLabel, { color: palette.textMuted }]}>Streak</Text>
+          </View>
+          <View style={[styles.quickStatCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            <View style={[styles.quickStatIcon, { backgroundColor: 'rgba(162, 155, 254, 0.12)' }]}>
+              <Ionicons name="time" size={18} color="#a29bfe" />
+            </View>
+            <Text style={[styles.quickStatValue, { color: palette.text }]}>{stats?.activeTime || 0}</Text>
+            <Text style={[styles.quickStatLabel, { color: palette.textMuted }]}>Hours</Text>
+          </View>
+        </View>
+
+        {/* Appearance Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionBadge, { backgroundColor: palette.accentGlow }]}>
+              <Text style={[styles.sectionBadgeText, { color: palette.accent }]}>APPEARANCE</Text>
+            </View>
+          </View>
+          <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setColorPickerExpanded(!colorPickerExpanded)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="color-palette" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Button Color</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Customize accent color</Text>
+              </View>
+              <View style={[styles.colorPreview, { backgroundColor: palette.accent }]} />
+              <Ionicons name={colorPickerExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={palette.textMuted} />
+            </TouchableOpacity>
+
+            {colorPickerExpanded && (
+              <View style={[styles.colorPicker, { borderTopColor: palette.cardBorder }]}>
+                <View style={styles.colorGrid}>
+                  {presetColors.map((preset) => (
                     <TouchableOpacity
-                      style={[
-                        styles.colorOption,
-                        { backgroundColor: preset.button },
-                        customColors.primaryButton === preset.button && {
-                          borderColor: theme.text,
-                          borderWidth: 3,
-                        },
-                      ]}
-                      onPress={() => {
-                        setCustomColors({ primaryButton: preset.button, primaryButtonText: preset.text });
-                      }}
-                      activeOpacity={0.7}
+                      key={preset.name}
+                      style={styles.colorOption}
+                      onPress={() => setCustomColors({ primaryButton: preset.button, primaryButtonText: preset.text })}
+                      activeOpacity={0.8}
                     >
-                      {customColors.primaryButton === preset.button && (
-                        <Ionicons name="checkmark" size={24} color="white" />
-                      )}
-                    </TouchableOpacity>
-                    <Text
-                      style={[
-                        styles.colorLabel,
-                        { color: theme.textSecondary },
-                        customColors.primaryButton === preset.button && {
-                          color: theme.text,
-                          fontWeight: '700',
-                        },
-                      ]}
-                    >
-                      {preset.name}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Support Options */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Support</Text>
-        <View style={[styles.menuCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          {supportMenuItems.map((item, index) => (
-            <React.Fragment key={item.title}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => console.log(item.title)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.menuItemLeft}>
-                  <View style={[styles.menuIconContainer, { backgroundColor: `${customColors.primaryButton}15` }]}>
-                    <Ionicons name={item.icon} size={22} color={customColors.primaryButton} />
-                  </View>
-                  <View style={styles.menuItemText}>
-                    <Text style={[styles.menuItemTitle, { color: theme.text }]}>{item.title}</Text>
-                    {item.subtitle && (
-                      <Text style={[styles.menuItemSubtitle, { color: theme.textSecondary }]}>
-                        {item.subtitle}
+                      <View
+                        style={[
+                          styles.colorCircle,
+                          { backgroundColor: preset.button },
+                          customColors.primaryButton === preset.button && styles.colorCircleSelected,
+                        ]}
+                      >
+                        {customColors.primaryButton === preset.button && (
+                          <Ionicons name="checkmark" size={18} color="#FFF" />
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.colorName,
+                          { color: palette.textMuted },
+                          customColors.primaryButton === preset.button && { color: palette.text, fontWeight: '600' },
+                        ]}
+                      >
+                        {preset.name}
                       </Text>
-                    )}
-                  </View>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-              {index < supportMenuItems.length - 1 && (
-                <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
-      </View>
-
-      {/* Danger Zone */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: '#ff6b6b' }]}>Danger Zone</Text>
-        <View style={[styles.menuCard, { backgroundColor: theme.card, borderColor: '#ff6b6b40' }]}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={handleResetAllData}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIconContainer, { backgroundColor: '#ff6b6b15' }]}>
-                <Ionicons name="trash-outline" size={22} color="#ff6b6b" />
               </View>
-              <View style={styles.menuItemText}>
-                <Text style={[styles.menuItemTitle, { color: '#ff6b6b' }]}>Reset All Data</Text>
-                <Text style={[styles.menuItemSubtitle, { color: theme.textSecondary }]}>
-                  Permanently delete all app data
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#ff6b6b" />
-          </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity
-        style={[styles.logoutButton, { backgroundColor: theme.card, borderColor: '#ff6b6b' }]}
-        onPress={() => console.log('Logout')}
-      >
-        <Ionicons name="log-out-outline" size={22} color="#ff6b6b" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+        {/* Account Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Account</Text>
+          </View>
+          <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            {profileMenuItems.map((item, index) => (
+              <React.Fragment key={item.title}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.8}>
+                  <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                    <Ionicons name={item.icon} size={20} color={palette.accent} />
+                  </View>
+                  <View style={styles.menuText}>
+                    <Text style={[styles.menuTitle, { color: palette.text }]}>{item.title}</Text>
+                    {item.subtitle && <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>{item.subtitle}</Text>}
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+                </TouchableOpacity>
+                {index < profileMenuItems.length - 1 && <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />}
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+
+        {/* Support Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Support</Text>
+          </View>
+          <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            {supportMenuItems.map((item, index) => (
+              <React.Fragment key={item.title}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.8}>
+                  <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                    <Ionicons name={item.icon} size={20} color={palette.accent} />
+                  </View>
+                  <View style={styles.menuText}>
+                    <Text style={[styles.menuTitle, { color: palette.text }]}>{item.title}</Text>
+                    {item.subtitle && <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>{item.subtitle}</Text>}
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+                </TouchableOpacity>
+                {index < supportMenuItems.length - 1 && <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />}
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+
+        {/* Danger Zone */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: palette.danger }]}>Danger Zone</Text>
+          </View>
+          <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: `${palette.danger}30` }]}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleResetAllData} activeOpacity={0.8}>
+              <View style={[styles.menuIcon, { backgroundColor: `${palette.danger}12` }]}>
+                <Ionicons name="trash-outline" size={20} color={palette.danger} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.danger }]}>Reset All Data</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Permanently delete all app data</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.danger} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity
+          style={[styles.logoutButton, { borderColor: palette.danger }]}
+          onPress={() => console.log('Logout')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="log-out-outline" size={20} color={palette.danger} />
+          <Text style={[styles.logoutText, { color: palette.danger }]}>Logout</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingBottom: 100,
-  },
-  header: {
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
+  contentContainer: { paddingHorizontal: 20, paddingBottom: 100 },
+
+  // Header
+  header: { paddingTop: 8, paddingBottom: 24 },
+  headerLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4 },
+  headerTitle: { fontSize: 32, fontWeight: '800', letterSpacing: -1 },
+
+  // Profile Card
+  profileCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 20,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 20,
+    gap: 14,
   },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 18,
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    fontWeight: '400',
-    marginBottom: 16,
-  },
-  editButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+  },
+  profileInfo: { flex: 1 },
+  profileName: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3, marginBottom: 2 },
+  profileEmail: { fontSize: 13, fontWeight: '500' },
+  editProfileButton: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  editButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statItem: {
+
+  // Quick Stats
+  quickStats: { flexDirection: 'row', gap: 10, marginBottom: 28 },
+  quickStatCard: {
     flex: 1,
     alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  statDivider: {
-    width: 1,
-    height: '100%',
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  menuCard: {
+    padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  menuIconContainer: {
+  quickStatIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  quickStatValue: { fontSize: 20, fontWeight: '800', marginBottom: 2 },
+  quickStatLabel: { fontSize: 11, fontWeight: '500' },
+
+  // Section
+  section: { marginBottom: 24 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  sectionBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  sectionBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
+
+  // Menu Card
+  menuCard: { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  menuIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  menuText: { flex: 1 },
+  menuTitle: { fontSize: 15, fontWeight: '600', letterSpacing: -0.2, marginBottom: 2 },
+  menuSubtitle: { fontSize: 12, fontWeight: '500' },
+  menuDivider: { height: 1, marginLeft: 66 },
+  colorPreview: { width: 24, height: 24, borderRadius: 12, marginRight: 8 },
+
+  // Color Picker
+  colorPicker: { padding: 16, borderTopWidth: 1 },
+  colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  colorOption: { alignItems: 'center', width: 64 },
+  colorCircle: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
+    borderRadius: 22,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
   },
-  menuItemText: {
-    flex: 1,
-  },
-  menuItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  menuItemSubtitle: {
-    fontSize: 13,
-    fontWeight: '400',
-  },
-  divider: {
-    height: 1,
-    marginLeft: 72,
-  },
+  colorCircleSelected: { borderWidth: 3, borderColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
+  colorName: { fontSize: 10, fontWeight: '500', textAlign: 'center' },
+
+  // Logout
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    marginHorizontal: 20,
-    padding: 16,
+    gap: 8,
+    paddingVertical: 16,
     borderRadius: 16,
     borderWidth: 2,
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ff6b6b',
-  },
-  colorPickerContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#00000010',
-  },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  colorOptionContainer: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  colorOption: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  colorLabel: {
-    width: 56,
-    fontSize: 10,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
+  logoutText: { fontSize: 16, fontWeight: '600' },
 });
