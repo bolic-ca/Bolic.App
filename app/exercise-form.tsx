@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Colors } from '@/constants/theme';
 import { MuscleCategory } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStorage } from '@/contexts/StorageContext';
@@ -32,8 +32,27 @@ const targetPositions = ['Lengthened', 'Shortened', 'Neutral'];
 
 export default function ExerciseFormScreen() {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const isDark = colorScheme === 'dark';
   const { customColors } = useThemeCustomization();
+
+  // Athletic color palette
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const accent = customColors.primaryButton;
+  const palette = {
+    bg: isDark ? '#0A0A0B' : '#FAFAF9',
+    cardBg: isDark ? '#141416' : '#FFFFFF',
+    cardBorder: isDark ? '#2A2A2E' : '#E8E8E6',
+    text: isDark ? '#FAFAFA' : '#0A0A0B',
+    textMuted: isDark ? '#71717A' : '#71717A',
+    accent,
+    accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
+  };
   const { userId } = useStorage();
   const { createExercise } = useExercises();
   const { programs, updateProgram } = usePrograms();
@@ -171,24 +190,29 @@ export default function ExerciseFormScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.cardBorder }]}>
+      <View style={[styles.header, { borderBottomColor: palette.cardBorder }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name="close" size={28} color={theme.text} />
+          <View style={[styles.closeButtonInner, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+            <Ionicons name="close" size={22} color={palette.text} />
+          </View>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>New Exercise</Text>
+        <View>
+          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>CREATE</Text>
+          <Text style={[styles.headerTitle, { color: palette.text }]}>New Exercise</Text>
+        </View>
         <View style={styles.closeButton} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Exercise Name */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Exercise Name *</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Exercise Name *</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder }]}
+            style={[styles.input, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
             placeholder="e.g., Barbell Bench Press"
-            placeholderTextColor={theme.textSecondary}
+            placeholderTextColor={palette.textMuted}
             value={name}
             onChangeText={setName}
           />
@@ -196,29 +220,35 @@ export default function ExerciseFormScreen() {
 
         {/* Muscle Category */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Muscle Category *</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Muscle Category *</Text>
           <TouchableOpacity
-            style={[styles.picker, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+            style={[styles.picker, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
             onPress={() => setShowMusclePicker(!showMusclePicker)}
+            activeOpacity={0.8}
           >
-            <Text style={[styles.pickerText, { color: muscleCategory ? theme.text : theme.textSecondary }]}>
+            <Text style={[styles.pickerText, { color: muscleCategory ? palette.text : palette.textMuted }]}>
               {muscleCategory || 'Select muscle category'}
             </Text>
-            <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
+            <Ionicons name={showMusclePicker ? 'chevron-up' : 'chevron-down'} size={20} color={palette.textMuted} />
           </TouchableOpacity>
           {showMusclePicker && (
-            <View style={[styles.pickerOptions, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-              {muscleCategoryOptions.map((option) => (
+            <View style={[styles.pickerOptions, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+              {muscleCategoryOptions.map((option, index) => (
                 <TouchableOpacity
                   key={option}
-                  style={styles.pickerOption}
+                  style={[
+                    styles.pickerOption,
+                    index < muscleCategoryOptions.length - 1 && { borderBottomWidth: 1, borderBottomColor: palette.cardBorder },
+                  ]}
                   onPress={() => {
                     setMuscleCategory(option);
                     setMuscleSubcategory('');
                     setShowMusclePicker(false);
                   }}
+                  activeOpacity={0.8}
                 >
-                  <Text style={[styles.pickerOptionText, { color: theme.text }]}>{option}</Text>
+                  <Text style={[styles.pickerOptionText, { color: palette.text }]}>{option}</Text>
+                  {muscleCategory === option && <Ionicons name="checkmark" size={18} color={palette.accent} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -228,28 +258,34 @@ export default function ExerciseFormScreen() {
         {/* Muscle Subcategory */}
         {availableSubcategories.length > 0 && (
           <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: theme.text }]}>Muscle Subcategory</Text>
+            <Text style={[styles.label, { color: palette.text }]}>Muscle Subcategory</Text>
             <TouchableOpacity
-              style={[styles.picker, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+              style={[styles.picker, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
               onPress={() => setShowSubcategoryPicker(!showSubcategoryPicker)}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.pickerText, { color: muscleSubcategory ? theme.text : theme.textSecondary }]}>
+              <Text style={[styles.pickerText, { color: muscleSubcategory ? palette.text : palette.textMuted }]}>
                 {muscleSubcategory || 'Select subcategory (optional)'}
               </Text>
-              <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
+              <Ionicons name={showSubcategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color={palette.textMuted} />
             </TouchableOpacity>
             {showSubcategoryPicker && (
-              <View style={[styles.pickerOptions, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-                {availableSubcategories.map((option) => (
+              <View style={[styles.pickerOptions, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+                {availableSubcategories.map((option, index) => (
                   <TouchableOpacity
                     key={option}
-                    style={styles.pickerOption}
+                    style={[
+                      styles.pickerOption,
+                      index < availableSubcategories.length - 1 && { borderBottomWidth: 1, borderBottomColor: palette.cardBorder },
+                    ]}
                     onPress={() => {
                       setMuscleSubcategory(option);
                       setShowSubcategoryPicker(false);
                     }}
+                    activeOpacity={0.8}
                   >
-                    <Text style={[styles.pickerOptionText, { color: theme.text }]}>{option}</Text>
+                    <Text style={[styles.pickerOptionText, { color: palette.text }]}>{option}</Text>
+                    {muscleSubcategory === option && <Ionicons name="checkmark" size={18} color={palette.accent} />}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -259,11 +295,11 @@ export default function ExerciseFormScreen() {
 
         {/* Equipment */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Equipment</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Equipment</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder }]}
+            style={[styles.input, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
             placeholder="e.g., Barbell, Dumbbells, Cable"
-            placeholderTextColor={theme.textSecondary}
+            placeholderTextColor={palette.textMuted}
             value={equipment}
             onChangeText={setEquipment}
           />
@@ -271,11 +307,11 @@ export default function ExerciseFormScreen() {
 
         {/* Target Repetitions */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Target Repetitions</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Target Repetitions</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder }]}
+            style={[styles.input, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
             placeholder="e.g., 8-12, 15-20"
-            placeholderTextColor={theme.textSecondary}
+            placeholderTextColor={palette.textMuted}
             value={targetRepetitions}
             onChangeText={setTargetRepetitions}
           />
@@ -283,11 +319,11 @@ export default function ExerciseFormScreen() {
 
         {/* Target RIR */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Target RIR (Reps In Reserve)</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Target RIR (Reps In Reserve)</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder }]}
+            style={[styles.input, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
             placeholder="e.g., 2-3, 1-2"
-            placeholderTextColor={theme.textSecondary}
+            placeholderTextColor={palette.textMuted}
             value={targetRIR}
             onChangeText={setTargetRIR}
           />
@@ -295,28 +331,34 @@ export default function ExerciseFormScreen() {
 
         {/* Target Position */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Target Position</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Target Position</Text>
           <TouchableOpacity
-            style={[styles.picker, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+            style={[styles.picker, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
             onPress={() => setShowPositionPicker(!showPositionPicker)}
+            activeOpacity={0.8}
           >
-            <Text style={[styles.pickerText, { color: targetPosition ? theme.text : theme.textSecondary }]}>
+            <Text style={[styles.pickerText, { color: targetPosition ? palette.text : palette.textMuted }]}>
               {targetPosition || 'Select position (optional)'}
             </Text>
-            <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
+            <Ionicons name={showPositionPicker ? 'chevron-up' : 'chevron-down'} size={20} color={palette.textMuted} />
           </TouchableOpacity>
           {showPositionPicker && (
-            <View style={[styles.pickerOptions, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-              {targetPositions.map((option) => (
+            <View style={[styles.pickerOptions, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+              {targetPositions.map((option, index) => (
                 <TouchableOpacity
                   key={option}
-                  style={styles.pickerOption}
+                  style={[
+                    styles.pickerOption,
+                    index < targetPositions.length - 1 && { borderBottomWidth: 1, borderBottomColor: palette.cardBorder },
+                  ]}
                   onPress={() => {
                     setTargetPosition(option);
                     setShowPositionPicker(false);
                   }}
+                  activeOpacity={0.8}
                 >
-                  <Text style={[styles.pickerOptionText, { color: theme.text }]}>{option}</Text>
+                  <Text style={[styles.pickerOptionText, { color: palette.text }]}>{option}</Text>
+                  {targetPosition === option && <Ionicons name="checkmark" size={18} color={palette.accent} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -325,11 +367,11 @@ export default function ExerciseFormScreen() {
 
         {/* Notes */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>Notes</Text>
+          <Text style={[styles.label, { color: palette.text }]}>Notes</Text>
           <TextInput
-            style={[styles.textArea, { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder }]}
+            style={[styles.textArea, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
             placeholder="Additional notes or instructions"
-            placeholderTextColor={theme.textSecondary}
+            placeholderTextColor={palette.textMuted}
             value={notes}
             onChangeText={setNotes}
             multiline
@@ -340,18 +382,29 @@ export default function ExerciseFormScreen() {
 
         {/* Submit Button */}
         <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: customColors.primaryButton }]}
+          style={[styles.submitButton, { shadowColor: palette.accent }]}
           onPress={handleSubmit}
           disabled={loading}
+          activeOpacity={0.9}
         >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={24} color="white" />
-              <Text style={styles.submitButtonText}>Create Exercise</Text>
-            </>
-          )}
+          <LinearGradient
+            colors={[palette.accent, hexToRgba(palette.accent, 0.85)]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.submitButtonGradient}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <>
+                <View style={styles.submitButtonIcon}>
+                  <Ionicons name="checkmark" size={22} color="#FFF" />
+                </View>
+                <Text style={styles.submitButtonText}>Create Exercise</Text>
+                <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.7)" />
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -371,39 +424,55 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  closeButtonInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   fieldGroup: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 10,
+    letterSpacing: -0.2,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     fontSize: 16,
   },
   textArea: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     fontSize: 16,
     minHeight: 100,
@@ -413,7 +482,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
   },
   pickerText: {
@@ -422,29 +491,48 @@ const styles = StyleSheet.create({
   pickerOptions: {
     marginTop: 8,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   pickerOptionText: {
     fontSize: 16,
   },
   submitButton: {
+    marginTop: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  submitButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 18,
-    borderRadius: 16,
-    marginTop: 20,
-    gap: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+  },
+  submitButtonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
   submitButtonText: {
+    flex: 1,
     color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 });
