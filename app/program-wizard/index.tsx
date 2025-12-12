@@ -69,6 +69,13 @@ export default function MesocycleInfoScreen() {
   };
 
   const handleClose = () => {
+    // In edit mode, just go back without draft dialog
+    if (isEditMode) {
+      router.back();
+      return;
+    }
+
+    // In create mode, show save draft dialog if there's content
     const hasContent = state.name || state.microcycles.some(m => m.trainingDays.length > 0);
     if (hasContent) {
       Alert.alert(
