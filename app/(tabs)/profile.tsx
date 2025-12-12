@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
+import { exportToFile, importFromFile, getStorageStats } from '@/services/storage/storage-export';
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -32,7 +34,20 @@ export default function ProfilePage() {
   const { customColors, setCustomColors, presetColors } = useThemeCustomization();
   const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
+  const [storageStats, setStorageStats] = useState<{ totalKeys: number; totalSize: number } | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const isDark = colorScheme === 'dark';
+
+  // Load storage stats on mount
+  useEffect(() => {
+    loadStorageStats();
+  }, []);
+
+  async function loadStorageStats() {
+    const stats = await getStorageStats();
+    setStorageStats(stats);
+  }
 
   // Athletic color palette
   const hexToRgba = (hex: string, alpha: number) => {
@@ -52,6 +67,85 @@ export default function ProfilePage() {
     accent,
     accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
     danger: '#EF4444',
+  };
+
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+      await exportToFile();
+      Alert.alert(
+        'Export Successful',
+        'Your data has been exported. Keep this file safe to restore your data later.',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      Alert.alert('Export Failed', error instanceof Error ? error.message : 'An unknown error occurred');
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportData = async () => {
+    Alert.alert(
+      'Import Data',
+      'Choose how to import your data:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Merge with Existing',
+          onPress: () => performImport(true),
+        },
+        {
+          text: 'Replace All Data',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Confirm Replace',
+              'This will delete all current data and replace it with the imported data. This cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Replace', style: 'destructive', onPress: () => performImport(false) },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
+  const performImport = async (mergeMode: boolean) => {
+    try {
+      setIsImporting(true);
+
+      // Pick a file
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        setIsImporting(false);
+        return;
+      }
+
+      const fileUri = result.assets[0].uri;
+      await importFromFile(fileUri, mergeMode);
+
+      Alert.alert(
+        'Import Successful',
+        'Your data has been imported. Please restart the app for changes to take effect.',
+        [{ text: 'OK' }]
+      );
+
+      // Reload storage stats
+      await loadStorageStats();
+    } catch (error) {
+      Alert.alert('Import Failed', error instanceof Error ? error.message : 'An unknown error occurred');
+      console.error('Import error:', error);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleResetAllData = () => {
@@ -80,6 +174,7 @@ export default function ProfilePage() {
                         'All data has been deleted. Please restart the app.',
                         [{ text: 'OK' }]
                       );
+                      await loadStorageStats();
                     } catch (error) {
                       Alert.alert('Error', 'Failed to clear data. Please try again.');
                       console.error('Error clearing AsyncStorage:', error);
@@ -252,6 +347,80 @@ export default function ProfilePage() {
           </View>
         </View>
 
+        {/* Data Management */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Data Management</Text>
+          </View>
+
+          {/* Storage Stats Card */}
+          {storageStats && (
+            <View style={[styles.storageStatsCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+              <View style={styles.storageStatsRow}>
+                <View style={styles.storageStatItem}>
+                  <Text style={[styles.storageStatLabel, { color: palette.textMuted }]}>Total Items</Text>
+                  <Text style={[styles.storageStatValue, { color: palette.text }]}>{storageStats.totalKeys}</Text>
+                </View>
+                <View style={styles.storageStatDivider} />
+                <View style={styles.storageStatItem}>
+                  <Text style={[styles.storageStatLabel, { color: palette.textMuted }]}>Storage Size</Text>
+                  <Text style={[styles.storageStatValue, { color: palette.text }]}>
+                    {(storageStats.totalSize / 1024).toFixed(1)} KB
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleExportData}
+              activeOpacity={0.8}
+              disabled={isExporting}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                {isExporting ? (
+                  <ActivityIndicator size="small" color={palette.accent} />
+                ) : (
+                  <Ionicons name="download-outline" size={20} color={palette.accent} />
+                )}
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Export All Data</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>
+                  Backup all workouts, programs & settings
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+            </TouchableOpacity>
+
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleImportData}
+              activeOpacity={0.8}
+              disabled={isImporting}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                {isImporting ? (
+                  <ActivityIndicator size="small" color={palette.accent} />
+                ) : (
+                  <Ionicons name="cloud-upload-outline" size={20} color={palette.accent} />
+                )}
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Import Data</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>
+                  Restore from a previous backup file
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Danger Zone */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -369,6 +538,37 @@ const styles = StyleSheet.create({
   },
   colorCircleSelected: { borderWidth: 3, borderColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
   colorName: { fontSize: 10, fontWeight: '500', textAlign: 'center' },
+
+  // Storage Stats
+  storageStatsCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  storageStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  storageStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  storageStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(113, 113, 122, 0.2)',
+  },
+  storageStatLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+  storageStatValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
 
   // Logout
   logoutButton: {
