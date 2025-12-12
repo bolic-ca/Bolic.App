@@ -1,0 +1,412 @@
+openapi: 3.0.3
+info:
+  title: Bolic Import/Export API
+  description: |
+    API specification for importing and exporting user data in Bolic.App.
+    This API allows users to backup their training data, transfer between devices,
+    and restore from previous backups.
+  version: 1.0.0
+servers:
+  - url: http://localhost:7071/api
+    description: Local development
+  - url: https://api.bolic.app
+    description: Production
+
+paths:
+  /export:
+    post:
+      summary: Export all user data
+      description: |
+        Exports all user data including programs, exercises, training sessions,
+        and configuration. Returns a complete backup file that can be imported later.
+      operationId: exportUserData
+      tags:
+        - Import/Export
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the user whose data to export
+      responses:
+        '200':
+          description: Data exported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageExport'
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error during export
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /import:
+    post:
+      summary: Import user data
+      description: |
+        Imports user data from a previously exported backup file.
+        Can merge with existing data or replace all data.
+      operationId: importUserData
+      tags:
+        - Import/Export
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+      responses:
+        '200':
+          description: Data imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+        '400':
+          description: Invalid import data format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - Data merge conflict detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error during import
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /storage/stats:
+    get:
+      summary: Get storage statistics
+      description: |
+        Returns statistics about the current storage usage including
+        total keys, size, and breakdown by data type.
+      operationId: getStorageStats
+      tags:
+        - Import/Export
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the user
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageStats'
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /validate-export:
+    post:
+      summary: Validate export file
+      description: |
+        Validates an export file before importing to check for format errors,
+        version compatibility, and data integrity.
+      operationId: validateExportFile
+      tags:
+        - Import/Export
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageExport'
+      responses:
+        '200':
+          description: Export file is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          description: Export file is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication
+
+  schemas:
+    StorageExport:
+      type: object
+      required:
+        - exportDate
+        - appVersion
+        - platform
+        - data
+      properties:
+        exportDate:
+          type: string
+          format: date-time
+          description: Timestamp when the export was created
+          example: "2024-12-12T10:30:00.000Z"
+        appVersion:
+          type: string
+          description: Version of the app that created the export
+          pattern: '^\d+\.\d+\.\d+$'
+          example: "1.0.0"
+        platform:
+          type: string
+          description: Platform where the export was created
+          enum:
+            - ios
+            - android
+            - web
+          example: "ios"
+        userId:
+          type: string
+          format: uuid
+          description: User ID (optional, for verification)
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        data:
+          type: object
+          description: Complete storage data as key-value pairs
+          additionalProperties:
+            type: string
+            description: JSON-stringified values for each storage key
+      example:
+        exportDate: "2024-12-12T10:30:00.000Z"
+        appVersion: "1.0.0"
+        platform: "ios"
+        userId: "123e4567-e89b-12d3-a456-426614174001"
+        data:
+          "user:123:config": "{\"userId\":\"123\",\"onboardingCompleted\":true}"
+          "user:123:programs_index": "[\"prog-1\",\"prog-2\"]"
+          "user:123:program:prog-1": "{\"id\":\"prog-1\",\"name\":\"Hypertrophy Block\"}"
+
+    StorageStats:
+      type: object
+      required:
+        - totalKeys
+        - totalSize
+        - keysByPrefix
+        - lastUpdated
+      properties:
+        totalKeys:
+          type: integer
+          description: Total number of keys in storage
+          example: 42
+        totalSize:
+          type: integer
+          description: Approximate total size in bytes
+          example: 125436
+        keysByPrefix:
+          type: object
+          description: Count of keys grouped by prefix
+          additionalProperties:
+            type: integer
+          example:
+            "user": 15
+            "program": 10
+            "exercise": 12
+            "session": 5
+        lastUpdated:
+          type: string
+          format: date-time
+          description: When the stats were last calculated
+          example: "2024-12-12T10:30:00.000Z"
+
+    ImportRequest:
+      type: object
+      required:
+        - data
+        - mergeMode
+      properties:
+        data:
+          $ref: '#/components/schemas/StorageExport'
+        mergeMode:
+          type: boolean
+          description: |
+            If true, merge with existing data (keeping newer items).
+            If false, replace all data (clear first, then import).
+          default: false
+          example: false
+        conflictResolution:
+          type: string
+          description: How to handle conflicts when mergeMode is true
+          enum:
+            - keep_existing
+            - keep_imported
+            - keep_newer
+          default: keep_newer
+          example: "keep_newer"
+      example:
+        data:
+          exportDate: "2024-12-12T10:30:00.000Z"
+          appVersion: "1.0.0"
+          platform: "ios"
+          data:
+            "user:123:config": "{\"userId\":\"123\"}"
+        mergeMode: false
+        conflictResolution: "keep_newer"
+
+    ImportResponse:
+      type: object
+      required:
+        - success
+        - itemsImported
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          description: Whether the import was successful
+          example: true
+        itemsImported:
+          type: integer
+          description: Number of items successfully imported
+          example: 42
+        itemsSkipped:
+          type: integer
+          description: Number of items skipped due to conflicts or errors
+          example: 0
+        itemsUpdated:
+          type: integer
+          description: Number of existing items that were updated
+          example: 5
+        message:
+          type: string
+          description: Human-readable message
+          example: "Successfully imported 42 items from export dated 2024-12-12T10:30:00.000Z"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the import completed
+          example: "2024-12-12T10:35:00.000Z"
+        warnings:
+          type: array
+          description: Any non-fatal warnings during import
+          items:
+            type: string
+          example:
+            - "Skipped 2 items with invalid format"
+            - "Program 'Old Routine' already exists, keeping newer version"
+
+    ValidationResult:
+      type: object
+      required:
+        - valid
+        - version
+        - compatible
+      properties:
+        valid:
+          type: boolean
+          description: Whether the export file is structurally valid
+          example: true
+        compatible:
+          type: boolean
+          description: Whether the export is compatible with current app version
+          example: true
+        version:
+          type: string
+          description: Version of the export file
+          example: "1.0.0"
+        errors:
+          type: array
+          description: Validation errors (if any)
+          items:
+            type: string
+          example: []
+        warnings:
+          type: array
+          description: Validation warnings (non-breaking issues)
+          items:
+            type: string
+          example:
+            - "Export was created on different platform (iOS vs Android)"
+        itemCounts:
+          type: object
+          description: Count of items by type in the export
+          additionalProperties:
+            type: integer
+          example:
+            programs: 5
+            exercises: 25
+            sessions: 100
+            trainingDays: 15
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "INVALID_EXPORT_FORMAT"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The export file format is invalid or corrupted"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+          example:
+            missingFields: ["exportDate", "data"]
+            foundVersion: null
