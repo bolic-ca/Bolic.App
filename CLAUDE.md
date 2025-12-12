@@ -254,3 +254,14 @@ See `.claude/plans/mutable-whistling-spring.md` for full implementation plan.
 - `services/api/data-source.ts` is kept for Phase B API integration (marked as deprecated for Phase A)
 - Current Phase A implementation uses storage hooks exclusively
 - API endpoints documentation in `services/api/README.md` will be integrated in Phase B
+
+Potential TODO:
+- API schema for imports -- have AI generate programs for you, easy import/export
+  - Would probably pair well with a debug/log file in case something goes wrong
+- Create simple program
+- Update RIR, think back to the idea of volume increasing week to week
+  - Same exercise, different set count/RIR
+- Managing Tempo
+- Mesocycle grouping - likely on the bench for a bit
+- Start looking at client server syncing
+- start looking at auth
