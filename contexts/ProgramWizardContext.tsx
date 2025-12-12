@@ -483,10 +483,11 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
       : generateId();
 
     const microcycles: Microcycle[] = state.microcycles.map(micro => {
-      const microcycleId = micro.tempId.includes('-') ? micro.tempId : generateId();
+      // In edit mode, preserve existing IDs; in create mode, generate new ones
+      const microcycleId = state.editProgramId && micro.tempId ? micro.tempId : generateId();
 
       const trainingDays: TrainingDay[] = micro.trainingDays.map((day, dayIndex) => ({
-        id: day.tempId && !day.tempId.includes('temp') ? day.tempId : generateId(),
+        id: state.editProgramId && day.tempId ? day.tempId : generateId(),
         userId: userId || '',
         microcycleId,
         number: dayIndex + 1,
