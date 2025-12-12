@@ -6,7 +6,10 @@
       "Bash(npm run lint)",
       "Bash(tail:*)",
       "Skill(frontend-design:frontend-design)",
-      "Bash(npx expo install:*)"
+      "Bash(npx expo install:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

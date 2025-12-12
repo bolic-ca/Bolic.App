@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
 import type { TrainingExercise, Program } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { usePrograms } from '@/hooks/usePrograms';
@@ -29,6 +30,7 @@ export default function ProgramsPage() {
   const { program: activeProgram, setActive, clearActive, refetch: refetchActiveProgram } = useActiveProgram();
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
 
   const templates = getTemplateInfo();
@@ -204,17 +206,91 @@ export default function ProgramsPage() {
           <View style={[styles.expandedContent, { borderTopColor: palette.cardBorder }]}>
             {isSimple ? (
               <View style={styles.trainingDaysList}>
-                {program.trainingDays?.map((day, index) => (
-                  <View key={day.id} style={[styles.dayCard, { backgroundColor: isDark ? '#1F1F23' : '#F9F9F8' }]}>
-                    <View style={styles.dayHeader}>
-                      <Text style={[styles.dayNumber, { color: palette.textMuted }]}>Day {index + 1}</Text>
-                      <Text style={[styles.dayExercises, { color: palette.textMuted }]}>
-                        {day.exercises?.length || 0} exercises
-                      </Text>
-                    </View>
-                    <Text style={[styles.dayName, { color: palette.text }]}>{day.name}</Text>
-                  </View>
-                ))}
+                {program.trainingDays?.map((day, index) => {
+                  const isDayExpanded = expandedDay === day.id;
+                  return (
+                    <TouchableOpacity
+                      key={day.id}
+                      style={[styles.dayCard, { backgroundColor: isDark ? '#1F1F23' : '#F9F9F8' }]}
+                      onPress={() => setExpandedDay(isDayExpanded ? null : day.id!)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.dayHeader}>
+                        <Text style={[styles.dayNumber, { color: palette.textMuted }]}>Day {index + 1}</Text>
+                        <View style={styles.dayHeaderRight}>
+                          <Text style={[styles.dayExercises, { color: palette.textMuted }]}>
+                            {day.exercises?.length || 0} exercises
+                          </Text>
+                          <Ionicons
+                            name={isDayExpanded ? 'chevron-up' : 'chevron-down'}
+                            size={16}
+                            color={palette.textMuted}
+                          />
+                        </View>
+                      </View>
+                      <Text style={[styles.dayName, { color: palette.text }]}>{day.name}</Text>
+
+                      {isDayExpanded && day.exercises && day.exercises.length > 0 && (
+                        <View style={[styles.dayExercisesList, { borderTopColor: palette.cardBorder }]}>
+                          {day.exercises.map((exercise: TrainingExercise, exIndex: number) => (
+                            <View
+                              key={exercise.id || exIndex}
+                              style={[
+                                styles.dayExerciseRow,
+                                exIndex > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }
+                              ]}
+                            >
+                              <View style={[styles.dayExerciseNumber, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
+                                <Text style={[styles.dayExerciseNumberText, { color: palette.textMuted }]}>{exIndex + 1}</Text>
+                              </View>
+                              <View style={styles.dayExerciseContent}>
+                                <Text style={[styles.dayExerciseName, { color: palette.text }]} numberOfLines={1}>
+                                  {exercise.name}
+                                </Text>
+                                <View style={styles.dayExerciseDetails}>
+                                  {exercise.targetNumberOfSets && (
+                                    <View style={[styles.detailBadge, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
+                                      <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                                        {exercise.targetNumberOfSets} sets
+                                      </Text>
+                                    </View>
+                                  )}
+                                  {exercise.targetRepetitions && (
+                                    <View style={[styles.detailBadge, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
+                                      <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                                        {exercise.targetRepetitions} reps
+                                      </Text>
+                                    </View>
+                                  )}
+                                  {exercise.targetRepetitionsInReserve && (
+                                    <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
+                                      <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
+                                        {exercise.targetRepetitionsInReserve} RIR
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                                <View style={styles.dayExerciseMeta}>
+                                  {exercise.muscleCategory && (
+                                    <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
+                                      {exercise.muscleCategory}
+                                      {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
+                                    </Text>
+                                  )}
+                                  {exercise.equipment && (
+                                    <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
+                                      {exercise.equipment}
+                                    </Text>
+                                  )}
+                                </View>
+                              </View>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             ) : (
               <View style={styles.mesocyclesList}>
@@ -248,6 +324,90 @@ export default function ProgramsPage() {
                         <Text style={[styles.microMeta, { color: palette.textMuted }]}>
                           {micro.trainingDays?.length || 0} training days
                         </Text>
+                        {micro.trainingDays?.map((day, dayIndex) => {
+                          const isDayExpanded = expandedDay === day.id;
+                          return (
+                            <TouchableOpacity
+                              key={day.id}
+                              style={[styles.microDayCard, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}
+                              onPress={(e) => { e.stopPropagation(); setExpandedDay(isDayExpanded ? null : day.id!); }}
+                              activeOpacity={0.8}
+                            >
+                              <View style={styles.microDayHeader}>
+                                <Text style={[styles.microDayName, { color: palette.text }]}>{day.name || `Day ${dayIndex + 1}`}</Text>
+                                <View style={styles.microDayHeaderRight}>
+                                  <Text style={[styles.microDayExercises, { color: palette.textMuted }]}>
+                                    {day.exercises?.length || 0} exercises
+                                  </Text>
+                                  <Ionicons
+                                    name={isDayExpanded ? 'chevron-up' : 'chevron-down'}
+                                    size={14}
+                                    color={palette.textMuted}
+                                  />
+                                </View>
+                              </View>
+
+                              {isDayExpanded && day.exercises && day.exercises.length > 0 && (
+                                <View style={[styles.dayExercisesList, { borderTopColor: palette.cardBorder }]}>
+                                  {day.exercises.map((exercise: TrainingExercise, exIndex: number) => (
+                                    <View
+                                      key={exercise.id || exIndex}
+                                      style={[
+                                        styles.dayExerciseRow,
+                                        exIndex > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }
+                                      ]}
+                                    >
+                                      <View style={[styles.dayExerciseNumber, { backgroundColor: isDark ? '#1F1F23' : '#FFFFFF' }]}>
+                                        <Text style={[styles.dayExerciseNumberText, { color: palette.textMuted }]}>{exIndex + 1}</Text>
+                                      </View>
+                                      <View style={styles.dayExerciseContent}>
+                                        <Text style={[styles.dayExerciseName, { color: palette.text }]} numberOfLines={1}>
+                                          {exercise.name}
+                                        </Text>
+                                        <View style={styles.dayExerciseDetails}>
+                                          {exercise.targetNumberOfSets && (
+                                            <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#FFFFFF' }]}>
+                                              <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                                                {exercise.targetNumberOfSets} sets
+                                              </Text>
+                                            </View>
+                                          )}
+                                          {exercise.targetRepetitions && (
+                                            <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#FFFFFF' }]}>
+                                              <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                                                {exercise.targetRepetitions} reps
+                                              </Text>
+                                            </View>
+                                          )}
+                                          {exercise.targetRepetitionsInReserve && (
+                                            <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
+                                              <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
+                                                {exercise.targetRepetitionsInReserve} RIR
+                                              </Text>
+                                            </View>
+                                          )}
+                                        </View>
+                                        <View style={styles.dayExerciseMeta}>
+                                          {exercise.muscleCategory && (
+                                            <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
+                                              {exercise.muscleCategory}
+                                              {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
+                                            </Text>
+                                          )}
+                                          {exercise.equipment && (
+                                            <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
+                                              {exercise.equipment}
+                                            </Text>
+                                          )}
+                                        </View>
+                                      </View>
+                                    </View>
+                                  ))}
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
                       </View>
                     ))}
                   </TouchableOpacity>
@@ -325,26 +485,52 @@ export default function ProgramsPage() {
                   </Text>
                 </View>
               </View>
-              {currentTrainingDay.exercises?.slice(0, 3).map((exercise: TrainingExercise, index: number) => (
-                <View key={exercise.id || index} style={[styles.exerciseRow, index > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }]}>
+              {currentTrainingDay.exercises?.map((exercise: TrainingExercise, index: number) => (
+                <View key={exercise.id || index} style={[styles.currentDayExerciseRow, index > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }]}>
                   <View style={[styles.exerciseNumber, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
                     <Text style={[styles.exerciseNumberText, { color: palette.textMuted }]}>{index + 1}</Text>
                   </View>
-                  <View style={styles.exerciseInfo}>
+                  <View style={styles.currentDayExerciseContent}>
                     <Text style={[styles.exerciseName, { color: palette.text }]} numberOfLines={1}>{exercise.name}</Text>
-                    {exercise.muscleCategory && (
-                      <Text style={[styles.exerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
-                        {exercise.muscleCategory}
-                      </Text>
-                    )}
+                    <View style={styles.dayExerciseDetails}>
+                      {exercise.targetNumberOfSets && (
+                        <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+                          <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                            {exercise.targetNumberOfSets} sets
+                          </Text>
+                        </View>
+                      )}
+                      {exercise.targetRepetitions && (
+                        <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+                          <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                            {exercise.targetRepetitions} reps
+                          </Text>
+                        </View>
+                      )}
+                      {exercise.targetRepetitionsInReserve && (
+                        <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
+                          <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
+                            {exercise.targetRepetitionsInReserve} RIR
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.dayExerciseMeta}>
+                      {exercise.muscleCategory && (
+                        <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
+                          {exercise.muscleCategory}
+                          {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
+                        </Text>
+                      )}
+                      {exercise.equipment && (
+                        <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
+                          {exercise.equipment}
+                        </Text>
+                      )}
+                    </View>
                   </View>
                 </View>
               ))}
-              {(currentTrainingDay.exercises?.length || 0) > 3 && (
-                <Text style={[styles.moreExercises, { color: palette.textMuted }]}>
-                  +{(currentTrainingDay.exercises?.length || 0) - 3} more exercises
-                </Text>
-              )}
             </View>
           </View>
         )}
@@ -356,6 +542,31 @@ export default function ProgramsPage() {
               <Text style={[styles.sectionTitle, { color: palette.text }]}>All Programs</Text>
             </View>
             {programs.filter(p => p.id !== activeProgram?.id).map((program) => renderProgramCard(program))}
+          </View>
+        )}
+
+        {/* Create Program */}
+        {!loading && !error && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: palette.text }]}>Create Program</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+              onPress={() => router.push('/program-wizard')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.createProgramIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="add-circle" size={28} color={palette.accent} />
+              </View>
+              <View style={styles.createProgramInfo}>
+                <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Periodized Program</Text>
+                <Text style={[styles.createProgramDescription, { color: palette.textMuted }]}>
+                  Build a custom program with weeks and training days
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
+            </TouchableOpacity>
           </View>
         )}
 
@@ -451,6 +662,21 @@ const styles = StyleSheet.create({
   dayNumber: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
   dayExercises: { fontSize: 11 },
   dayName: { fontSize: 15, fontWeight: '600' },
+  dayHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+
+  // Expanded Day Exercises
+  dayExercisesList: { marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
+  dayExerciseRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 },
+  dayExerciseNumber: { width: 24, height: 24, borderRadius: 6, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
+  dayExerciseNumberText: { fontSize: 11, fontWeight: '600' },
+  dayExerciseContent: { flex: 1 },
+  dayExerciseName: { fontSize: 14, fontWeight: '600', marginBottom: 6 },
+  dayExerciseDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
+  detailBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  detailBadgeText: { fontSize: 11, fontWeight: '500' },
+  dayExerciseMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
+  dayExerciseMuscle: { fontSize: 11, fontWeight: '500' },
+  dayExerciseEquipment: { fontSize: 11 },
 
   // Mesocycles
   mesocyclesList: { gap: 10 },
@@ -462,7 +688,12 @@ const styles = StyleSheet.create({
   mesoGoalText: { fontSize: 11, fontWeight: '600' },
   microCard: { marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
   microWeek: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  microMeta: { fontSize: 12 },
+  microMeta: { fontSize: 12, marginBottom: 8 },
+  microDayCard: { padding: 12, borderRadius: 10, marginTop: 8 },
+  microDayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  microDayName: { fontSize: 13, fontWeight: '600' },
+  microDayHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  microDayExercises: { fontSize: 11 },
 
   // Training Day Card
   trainingDayCard: { borderRadius: 20, borderWidth: 1, padding: 16 },
@@ -475,9 +706,18 @@ const styles = StyleSheet.create({
   exerciseNumber: { width: 28, height: 28, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   exerciseNumberText: { fontSize: 12, fontWeight: '600' },
   exerciseInfo: { flex: 1 },
-  exerciseName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
+  exerciseName: { fontSize: 15, fontWeight: '600', marginBottom: 6 },
   exerciseMuscle: { fontSize: 12, fontWeight: '500' },
+  currentDayExerciseRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
+  currentDayExerciseContent: { flex: 1 },
   moreExercises: { fontSize: 13, textAlign: 'center', paddingTop: 12 },
+
+  // Create Program
+  createProgramButton: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, padding: 16, gap: 14 },
+  createProgramIcon: { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  createProgramInfo: { flex: 1 },
+  createProgramTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  createProgramDescription: { fontSize: 13, lineHeight: 18 },
 
   // Templates
   templatesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
