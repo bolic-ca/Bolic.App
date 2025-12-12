@@ -44,6 +44,9 @@ export interface WizardState {
   // Navigation state
   currentMicrocycleIndex: number | null;
   currentTrainingDayIndex: number | null;
+
+  // Edit mode
+  editProgramId?: string;
 }
 
 interface ProgramWizardContextType {
@@ -77,6 +80,7 @@ interface ProgramWizardContextType {
   saveProgram: () => Promise<boolean>;
   resetWizard: () => void;
   discardDraft: () => Promise<void>;
+  loadProgramForEdit: (programId: string) => Promise<void>;
 
   // Validation
   canProceedFromStep1: () => boolean;
@@ -86,6 +90,7 @@ interface ProgramWizardContextType {
   isSaving: boolean;
   isLoading: boolean;
   hasDraft: boolean;
+  isEditMode: boolean;
 }
 
 const initialState: WizardState = {
@@ -105,10 +110,11 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasDraft, setHasDraft] = useState(false);
-  const { createProgram } = usePrograms();
+  const { createProgram, updateProgram, programs } = usePrograms();
   const { userId } = useStorage();
   const router = useRouter();
   const isInitialMount = useRef(true);
+  const isEditMode = !!state.editProgramId;
 
   // Load draft on mount
   useEffect(() => {
@@ -432,16 +438,55 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
     return totalDays > 0;
   }, [state.name, state.microcycles]);
 
+  // Load program for editing
+  const loadProgramForEdit = useCallback(async (programId: string) => {
+    const program = programs.find(p => p.id === programId);
+    if (!program || program.type !== 'periodized' || !program.mesocycles?.[0]) {
+      Alert.alert('Error', 'Program not found or not periodized');
+      return;
+    }
+
+    const mesocycle = program.mesocycles[0];
+
+    // Transform Program to WizardState
+    const wizardMicrocycles: WizardMicrocycle[] = mesocycle.microcycles.map(micro => ({
+      tempId: micro.id,
+      weekNumber: micro.weekNumber,
+      name: micro.name || `Week ${micro.weekNumber}`,
+      volumeTarget: micro.volumeTarget,
+      intensityTarget: micro.intensityTarget,
+      trainingDays: micro.trainingDays.map(day => ({
+        tempId: day.id || generateId(),
+        name: day.name || '',
+        description: day.description || '',
+        exercises: day.exercises || [],
+      })),
+    }));
+
+    setState({
+      name: mesocycle.name,
+      description: mesocycle.description || '',
+      goal: (mesocycle.goal as MesocycleGoal) || '',
+      durationWeeks: mesocycle.durationWeeks || wizardMicrocycles.length,
+      microcycles: wizardMicrocycles,
+      currentMicrocycleIndex: null,
+      currentTrainingDayIndex: null,
+      editProgramId: programId,
+    });
+  }, [programs]);
+
   // Transform wizard state to Program
   const transformToProgram = useCallback((): Program => {
-    const programId = generateId();
-    const mesocycleId = generateId();
+    const programId = state.editProgramId || generateId();
+    const mesocycleId = state.editProgramId
+      ? programs.find(p => p.id === state.editProgramId)?.mesocycles?.[0]?.id || generateId()
+      : generateId();
 
     const microcycles: Microcycle[] = state.microcycles.map(micro => {
-      const microcycleId = generateId();
+      const microcycleId = micro.tempId.includes('-') ? micro.tempId : generateId();
 
       const trainingDays: TrainingDay[] = micro.trainingDays.map((day, dayIndex) => ({
-        id: generateId(),
+        id: day.tempId && !day.tempId.includes('temp') ? day.tempId : generateId(),
         userId: userId || '',
         microcycleId,
         number: dayIndex + 1,
@@ -449,7 +494,7 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
         description: day.description || undefined,
         exercises: day.exercises.map(ex => ({
           ...ex,
-          id: generateId(),
+          id: ex.id || generateId(),
           userId: userId || '',
           trainingDayIds: [],
         })),
@@ -478,6 +523,10 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
       microcycles,
     };
 
+    const existingProgram = state.editProgramId
+      ? programs.find(p => p.id === state.editProgramId)
+      : null;
+
     return {
       id: programId,
       userId: userId || '',
@@ -485,10 +534,10 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
       description: state.description || undefined,
       type: 'periodized',
       mesocycles: [mesocycle],
-      createdDate: new Date().toISOString(),
+      createdDate: existingProgram?.createdDate || new Date().toISOString(),
       lastModified: new Date().toISOString(),
     };
-  }, [state, userId]);
+  }, [state, userId, programs]);
 
   // Save program
   const saveProgram = useCallback(async (): Promise<boolean> => {
@@ -500,26 +549,38 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
     setIsSaving(true);
     try {
       const program = transformToProgram();
-      await createProgram(program);
-      // Clear draft after successful save
-      await clearDraft();
-      Alert.alert('Success', 'Program created successfully!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            setState(initialState);
-            router.replace('/(tabs)/programs');
+      if (state.editProgramId) {
+        await updateProgram(program);
+        Alert.alert('Success', 'Program updated successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setState(initialState);
+              router.replace('/(tabs)/programs');
+            },
           },
-        },
-      ]);
+        ]);
+      } else {
+        await createProgram(program);
+        await clearDraft();
+        Alert.alert('Success', 'Program created successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setState(initialState);
+              router.replace('/(tabs)/programs');
+            },
+          },
+        ]);
+      }
       return true;
     } catch (error) {
-      Alert.alert('Error', 'Failed to create program. Please try again.');
+      Alert.alert('Error', `Failed to ${state.editProgramId ? 'update' : 'create'} program. Please try again.`);
       return false;
     } finally {
       setIsSaving(false);
     }
-  }, [canSave, transformToProgram, createProgram, router, clearDraft]);
+  }, [canSave, transformToProgram, createProgram, updateProgram, router, clearDraft, state.editProgramId]);
 
   // Reset wizard and clear draft
   const resetWizard = useCallback(async () => {
@@ -552,11 +613,13 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
     saveProgram,
     resetWizard,
     discardDraft,
+    loadProgramForEdit,
     canProceedFromStep1,
     canSave,
     isSaving,
     isLoading,
     hasDraft,
+    isEditMode,
   }), [
     state,
     setMesocycleInfo,
@@ -576,11 +639,13 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
     saveProgram,
     resetWizard,
     discardDraft,
+    loadProgramForEdit,
     canProceedFromStep1,
     canSave,
     isSaving,
     isLoading,
     hasDraft,
+    isEditMode,
   ]);
 
   return (

@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useProgramWizard, MesocycleGoal } from '@/contexts/ProgramWizardContext';
 
@@ -24,20 +24,30 @@ export default function MesocycleInfoScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { customColors } = useThemeCustomization();
-  const { state, setMesocycleInfo, canProceedFromStep1, discardDraft, isLoading, hasDraft } = useProgramWizard();
+  const { editProgramId } = useLocalSearchParams<{ editProgramId?: string }>();
+  const { state, setMesocycleInfo, canProceedFromStep1, discardDraft, isLoading, hasDraft, loadProgramForEdit, isEditMode } = useProgramWizard();
 
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
+  // Load program for editing if editProgramId is provided
+  useEffect(() => {
+    if (editProgramId && !isLoading && !state.editProgramId) {
+      setLoadingEdit(true);
+      loadProgramForEdit(editProgramId).finally(() => setLoadingEdit(false));
+    }
+  }, [editProgramId, isLoading, state.editProgramId, loadProgramForEdit]);
 
   // Show draft restored banner
   useEffect(() => {
-    if (!isLoading && hasDraft && state.name) {
+    if (!isLoading && hasDraft && state.name && !isEditMode) {
       setShowDraftBanner(true);
       // Auto-hide after 5 seconds
       const timer = setTimeout(() => setShowDraftBanner(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, hasDraft, state.name]);
+  }, [isLoading, hasDraft, state.name, isEditMode]);
 
   // Athletic color palette
   const hexToRgba = (hex: string, alpha: number) => {
@@ -106,12 +116,14 @@ export default function MesocycleInfoScreen() {
   };
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading || loadingEdit) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={palette.accent} />
-          <Text style={[styles.loadingText, { color: palette.textMuted }]}>Loading...</Text>
+          <Text style={[styles.loadingText, { color: palette.textMuted }]}>
+            {loadingEdit ? 'Loading program...' : 'Loading...'}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -127,7 +139,9 @@ export default function MesocycleInfoScreen() {
           </View>
         </TouchableOpacity>
         <View>
-          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>CREATE</Text>
+          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>
+            {isEditMode ? 'EDIT' : 'CREATE'}
+          </Text>
           <Text style={[styles.headerTitle, { color: palette.text }]}>Periodized Program</Text>
         </View>
         <View style={styles.closeButton} />

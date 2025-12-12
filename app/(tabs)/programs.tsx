@@ -96,6 +96,20 @@ export default function ProgramsPage() {
     }
   };
 
+  const handleEditProgram = (program: Program) => {
+    if (program.type === 'periodized') {
+      router.push({
+        pathname: '/program-wizard',
+        params: { editProgramId: program.id }
+      });
+    } else {
+      router.push({
+        pathname: '/program-edit',
+        params: { programId: program.id }
+      });
+    }
+  };
+
   const handleDeleteProgram = async (program: Program) => {
     Alert.alert(
       'Delete Program',
@@ -192,18 +206,30 @@ export default function ProgramsPage() {
                 <Ionicons name="play" size={18} color={palette.accent} />
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              onPress={(e) => { e.stopPropagation(); handleDeleteProgram(program); }}
-              style={[styles.actionButton, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}
-            >
-              <Ionicons name="trash-outline" size={18} color={palette.danger} />
-            </TouchableOpacity>
             <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={palette.textMuted} />
           </View>
         </View>
 
         {isExpanded && (
           <View style={[styles.expandedContent, { borderTopColor: palette.cardBorder }]}>
+            {/* Action Buttons */}
+            <View style={styles.expandedActions}>
+              <TouchableOpacity
+                onPress={(e) => { e.stopPropagation(); handleEditProgram(program); }}
+                style={[styles.expandedActionButton, { backgroundColor: isDark ? 'rgba(100, 116, 139, 0.15)' : 'rgba(100, 116, 139, 0.1)' }]}
+              >
+                <Ionicons name="create-outline" size={18} color={palette.textMuted} />
+                <Text style={[styles.expandedActionText, { color: palette.textMuted }]}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={(e) => { e.stopPropagation(); handleDeleteProgram(program); }}
+                style={[styles.expandedActionButton, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}
+              >
+                <Ionicons name="trash-outline" size={18} color={palette.danger} />
+                <Text style={[styles.expandedActionText, { color: palette.danger }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+
             {isSimple ? (
               <View style={styles.trainingDaysList}>
                 {program.trainingDays?.map((day, index) => {
@@ -656,6 +682,9 @@ const styles = StyleSheet.create({
 
   // Expanded Content
   expandedContent: { marginTop: 16, paddingTop: 16, borderTopWidth: 1 },
+  expandedActions: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  expandedActionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 10 },
+  expandedActionText: { fontSize: 14, fontWeight: '600' },
   trainingDaysList: { gap: 8 },
   dayCard: { padding: 14, borderRadius: 12 },
   dayHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
