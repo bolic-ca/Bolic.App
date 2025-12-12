@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
 import type { TrainingExercise, Program } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { usePrograms } from '@/hooks/usePrograms';
@@ -544,6 +545,31 @@ export default function ProgramsPage() {
           </View>
         )}
 
+        {/* Create Program */}
+        {!loading && !error && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: palette.text }]}>Create Program</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+              onPress={() => router.push('/program-wizard')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.createProgramIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="add-circle" size={28} color={palette.accent} />
+              </View>
+              <View style={styles.createProgramInfo}>
+                <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Periodized Program</Text>
+                <Text style={[styles.createProgramDescription, { color: palette.textMuted }]}>
+                  Build a custom program with weeks and training days
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Templates */}
         {!loading && !error && (
           <View style={styles.section}>
@@ -685,6 +711,13 @@ const styles = StyleSheet.create({
   currentDayExerciseRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
   currentDayExerciseContent: { flex: 1 },
   moreExercises: { fontSize: 13, textAlign: 'center', paddingTop: 12 },
+
+  // Create Program
+  createProgramButton: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, padding: 16, gap: 14 },
+  createProgramIcon: { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  createProgramInfo: { flex: 1 },
+  createProgramTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  createProgramDescription: { fontSize: 13, lineHeight: 18 },
 
   // Templates
   templatesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

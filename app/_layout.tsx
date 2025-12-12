@@ -69,6 +69,13 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Stack.Screen
+              name="program-wizard"
+              options={{
+                presentation: 'modal',
+                headerShown: false,
+              }}
+            />
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

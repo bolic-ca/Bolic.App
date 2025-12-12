@@ -8,7 +8,8 @@
       "Skill(frontend-design:frontend-design)",
       "Bash(npx expo install:*)",
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []
