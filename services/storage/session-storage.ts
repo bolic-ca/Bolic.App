@@ -39,6 +39,7 @@ export interface SessionSet {
   reps: number;
   rir?: number;
   rpe?: number;
+  notes?: string;
   completedAt: string;
 }
 

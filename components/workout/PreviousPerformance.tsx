@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 
@@ -18,32 +19,82 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
 
   if (!data) {
     return (
-      <Text style={[styles.text, { color: theme.textSecondary }]}>
-        No previous data
-      </Text>
+      <View style={[styles.container, { backgroundColor: theme.background, borderColor: theme.cardBorder }]}>
+        <Ionicons name="time-outline" size={14} color={theme.textSecondary} />
+        <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+          First time doing this exercise
+        </Text>
+      </View>
     );
   }
 
-  // Build performance string
-  let performanceText = `Last time: ${data.weight} kg × ${data.reps} reps`;
-
-  if (data.rir !== undefined || data.rpe !== undefined) {
-    const extras = [];
-    if (data.rir !== undefined) extras.push(`RIR ${data.rir}`);
-    if (data.rpe !== undefined) extras.push(`RPE ${data.rpe}`);
-    performanceText += ` (${extras.join(', ')})`;
-  }
-
   return (
-    <Text style={[styles.text, { color: theme.textSecondary }]}>
-      {performanceText}
-    </Text>
+    <View style={[styles.container, { backgroundColor: theme.background, borderColor: theme.cardBorder }]}>
+      <Ionicons name="arrow-undo-outline" size={14} color={theme.textSecondary} />
+      <Text style={[styles.label, { color: theme.textSecondary }]}>Last:</Text>
+      <View style={styles.statsContainer}>
+        <View style={styles.stat}>
+          <Text style={[styles.statValue, { color: theme.text }]}>{data.weight}</Text>
+          <Text style={[styles.statUnit, { color: theme.textSecondary }]}>kg</Text>
+        </View>
+        <Text style={[styles.separator, { color: theme.textSecondary }]}>×</Text>
+        <View style={styles.stat}>
+          <Text style={[styles.statValue, { color: theme.text }]}>{data.reps}</Text>
+          <Text style={[styles.statUnit, { color: theme.textSecondary }]}>reps</Text>
+        </View>
+        {data.rir !== undefined && (
+          <>
+            <Text style={[styles.separator, { color: theme.textSecondary }]}>·</Text>
+            <View style={styles.stat}>
+              <Text style={[styles.statValue, { color: theme.text }]}>{data.rir}</Text>
+              <Text style={[styles.statUnit, { color: theme.textSecondary }]}>RIR</Text>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  text: {
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  emptyText: {
     fontSize: 13,
+    fontWeight: '500',
+    fontStyle: 'italic',
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  stat: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  statUnit: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  separator: {
+    fontSize: 12,
     fontWeight: '500',
   },
 });

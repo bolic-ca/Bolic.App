@@ -13,14 +13,35 @@ import WorkoutTimer from './WorkoutTimer';
 interface WorkoutHeaderProps {
   startedAt: string;
   trainingDayName?: string;
+  programName?: string;
   onCancel: () => void;
   onFinish: () => void;
   onMinimize?: () => void;
 }
 
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  };
+  return date.toLocaleDateString('en-US', options);
+}
+
+function formatTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
 export default function WorkoutHeader({
   startedAt,
   trainingDayName = 'Workout',
+  programName,
   onCancel,
   onFinish,
   onMinimize,
@@ -44,42 +65,64 @@ export default function WorkoutHeader({
     );
   };
 
+  const dateStr = formatDate(startedAt);
+  const timeStr = formatTime(startedAt);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background, borderBottomColor: theme.cardBorder }]}>
-      <View style={styles.content}>
-        {/* Left: Cancel and Minimize */}
-        <View style={styles.leftActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleCancelPress}
-          >
-            <Ionicons name="close-circle-outline" size={28} color={theme.textSecondary} />
-          </TouchableOpacity>
+      {/* Top Row: Date/Time and Actions */}
+      <View style={styles.topRow}>
+        <View style={styles.dateTimeContainer}>
+          <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
+          <Text style={[styles.dateText, { color: theme.textSecondary }]}>
+            {dateStr} at {timeStr}
+          </Text>
+        </View>
+        <View style={styles.actions}>
           {onMinimize && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={onMinimize}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="chevron-down-circle-outline" size={28} color={theme.textSecondary} />
+              <Ionicons name="chevron-down" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
           )}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleCancelPress}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="close" size={22} color={theme.textSecondary} />
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Center: Training Day Name + Timer */}
-        <View style={styles.centerContent}>
+      {/* Main Content: Title and Timer */}
+      <View style={styles.mainContent}>
+        <View style={styles.titleSection}>
+          {programName && (
+            <Text style={[styles.programName, { color: theme.textSecondary }]} numberOfLines={1}>
+              {programName}
+            </Text>
+          )}
           <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
             {trainingDayName}
           </Text>
-          <WorkoutTimer startedAt={startedAt} color={customColors.primaryButton} />
         </View>
 
-        {/* Finish Button */}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={onFinish}
-        >
-          <Ionicons name="checkmark-circle" size={28} color={customColors.primaryButton} />
-        </TouchableOpacity>
+        <View style={styles.timerSection}>
+          <WorkoutTimer startedAt={startedAt} color={customColors.primaryButton} />
+          <TouchableOpacity
+            style={[styles.finishButton, { backgroundColor: customColors.primaryButton }]}
+            onPress={onFinish}
+          >
+            <Ionicons name="checkmark" size={18} color={customColors.primaryButtonText} />
+            <Text style={[styles.finishButtonText, { color: customColors.primaryButtonText }]}>
+              Finish
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -88,31 +131,65 @@ export default function WorkoutHeader({
 const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
     paddingHorizontal: 16,
   },
-  content: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  leftActions: {
+  dateTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+  },
+  dateText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   actionButton: {
     padding: 4,
   },
-  centerContent: {
-    flex: 1,
+  mainContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+  },
+  titleSection: {
+    flex: 1,
+    marginRight: 16,
+  },
+  programName: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  timerSection: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  finishButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    gap: 4,
+  },
+  finishButtonText: {
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 4,
   },
 });

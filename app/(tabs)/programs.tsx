@@ -67,6 +67,7 @@ export default function ProgramsPage() {
         }
       };
       refetchData();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
 
@@ -104,8 +105,8 @@ export default function ProgramsPage() {
       });
     } else {
       router.push({
-        pathname: '/program-edit',
-        params: { programId: program.id }
+        pathname: '/simple-program-wizard/index',
+        params: { editProgramId: program.id }
       });
     }
   };
@@ -577,18 +578,38 @@ export default function ProgramsPage() {
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: palette.text }]}>Create Program</Text>
             </View>
+
+            {/* Simple Program */}
             <TouchableOpacity
               style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+              onPress={() => router.push('/simple-program-wizard/index')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.createProgramIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="repeat" size={28} color={palette.accent} />
+              </View>
+              <View style={styles.createProgramInfo}>
+                <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Simple Program</Text>
+                <Text style={[styles.createProgramDescription, { color: palette.textMuted }]}>
+                  Create a rotating schedule with training days
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
+            </TouchableOpacity>
+
+            {/* Periodized Program */}
+            <TouchableOpacity
+              style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder, marginTop: 12 }]}
               onPress={() => router.push('/program-wizard')}
               activeOpacity={0.8}
             >
               <View style={[styles.createProgramIcon, { backgroundColor: palette.accentGlow }]}>
-                <Ionicons name="add-circle" size={28} color={palette.accent} />
+                <Ionicons name="calendar" size={28} color={palette.accent} />
               </View>
               <View style={styles.createProgramInfo}>
                 <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Periodized Program</Text>
                 <Text style={[styles.createProgramDescription, { color: palette.textMuted }]}>
-                  Build a custom program with weeks and training days
+                  Build a custom program with mesocycles and microcycles
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />

@@ -96,6 +96,7 @@ export interface WorkoutProgress {
   completedExercises: number;
   totalExercises: number;
   totalSets: number;
+  totalVolume: number;
 }
 
 /**
@@ -108,7 +109,15 @@ export function getWorkoutProgress(
   session: WorkoutSession,
   trainingDay: TrainingDay | null
 ): WorkoutProgress {
-  const totalSets = session.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+  let totalSets = 0;
+  let totalVolume = 0;
+
+  for (const exercise of session.exercises) {
+    for (const set of exercise.sets) {
+      totalSets++;
+      totalVolume += set.weight * set.reps;
+    }
+  }
 
   let completedExercises = 0;
   if (trainingDay?.exercises) {
@@ -124,5 +133,6 @@ export function getWorkoutProgress(
     completedExercises,
     totalExercises: trainingDay?.exercises?.length || 0,
     totalSets,
+    totalVolume,
   };
 }

@@ -37,7 +37,7 @@ export default function HomePage() {
     if (!activeProgram) return null;
 
     // Get all training days for the program
-    let trainingDays: any[] = [];
+    let trainingDays: TrainingDay[] = [];
     if (activeProgram.type === 'simple' && activeProgram.trainingDays?.length > 0) {
       trainingDays = activeProgram.trainingDays;
     } else if (activeProgram.type === 'periodized' && activeProgram.mesocycles?.length > 0) {
@@ -87,7 +87,7 @@ export default function HomePage() {
     const findTrainingDay = (trainingDayId: string) => {
       // Search in simple program
       if (activeProgram.type === 'simple' && activeProgram.trainingDays) {
-        const found = activeProgram.trainingDays.find(td => td.id === trainingDayId);
+        const found = activeProgram.trainingDays.find((td: TrainingDay) => td.id === trainingDayId);
         if (found) return found;
       }
 
@@ -97,7 +97,7 @@ export default function HomePage() {
           if (meso.microcycles) {
             for (const micro of meso.microcycles) {
               if (micro.trainingDays) {
-                const found = micro.trainingDays.find(td => td.id === trainingDayId);
+                const found = micro.trainingDays.find((td: TrainingDay) => td.id === trainingDayId);
                 if (found) return found;
               }
             }
@@ -144,7 +144,7 @@ export default function HomePage() {
       return;
     }
 
-    if (!nextTrainingDay) {
+    if (!nextTrainingDay || !nextTrainingDay.id) {
       Alert.alert(
         'No Training Day',
         'Your active program doesn\'t have any training days configured.',
@@ -154,7 +154,7 @@ export default function HomePage() {
     }
 
     try {
-      await startSession(activeProgram.id, nextTrainingDay.id, nextTrainingDay.name);
+      await startSession(activeProgram.id, nextTrainingDay.id, nextTrainingDay.name ?? undefined);
       expand();
     } catch (err) {
       Alert.alert('Error', 'Failed to start workout session');
@@ -246,6 +246,7 @@ export default function HomePage() {
         <WorkoutInterface
           session={session}
           trainingDay={activeTrainingDay}
+          programName={activeProgram?.name}
           loading={false}
           onComplete={handleCompleteWorkout}
           onCancel={handleCancelWorkout}

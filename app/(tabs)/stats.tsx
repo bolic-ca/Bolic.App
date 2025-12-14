@@ -168,7 +168,7 @@ export default function StatsPage() {
                         {record.exerciseName}
                       </Text>
                       <Text style={[styles.prDate, { color: palette.textMuted }]}>
-                        {record.date ? new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
+                        {record.achievedAt ? new Date(record.achievedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
                       </Text>
                     </View>
                     <View style={styles.prValue}>

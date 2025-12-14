@@ -10,6 +10,7 @@ import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
 import ActiveWorkoutBanner from '@/components/workout/ActiveWorkoutBanner';
+import type { TrainingDay } from '@/types/training';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -25,7 +26,7 @@ export default function TabLayout() {
     const findTrainingDay = (trainingDayId: string) => {
       // Search in simple program
       if (activeProgram.type === 'simple' && activeProgram.trainingDays) {
-        const found = activeProgram.trainingDays.find(td => td.id === trainingDayId);
+        const found = activeProgram.trainingDays.find((td: TrainingDay) => td.id === trainingDayId);
         if (found) return found.name;
       }
 
@@ -35,7 +36,7 @@ export default function TabLayout() {
           if (meso.microcycles) {
             for (const micro of meso.microcycles) {
               if (micro.trainingDays) {
-                const found = micro.trainingDays.find(td => td.id === trainingDayId);
+                const found = micro.trainingDays.find((td: TrainingDay) => td.id === trainingDayId);
                 if (found) return found.name;
               }
             }

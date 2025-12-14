@@ -15,6 +15,8 @@ interface ExerciseListProps {
   session: WorkoutSession;
   sessionHistory: WorkoutSession[];
   onAddSet: (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>) => void;
+  onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
+  onDeleteSet?: (exerciseId: string, setIndex: number) => void;
 }
 
 export default function ExerciseList({
@@ -22,6 +24,8 @@ export default function ExerciseList({
   session,
   sessionHistory,
   onAddSet,
+  onUpdateSet,
+  onDeleteSet,
 }: ExerciseListProps) {
   if (!trainingDay.exercises || trainingDay.exercises.length === 0) {
     return null;
@@ -48,6 +52,8 @@ export default function ExerciseList({
             sessionExercise={sessionExercise}
             previousPerformance={previousPerformance}
             onAddSet={onAddSet}
+            onUpdateSet={onUpdateSet}
+            onDeleteSet={onDeleteSet}
           />
         );
       })}

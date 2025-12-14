@@ -12,7 +12,7 @@ export interface GetTrainingSessionRequest {
   userId?: string;
 }
 
-export interface CreateTrainingSessionRequest extends Omit<TrainingDay, 'id'> {
+export interface CreateTrainingSessionRequest extends Omit<TrainingDay, 'id' | 'userId'> {
   userId?: string;
 }
 
