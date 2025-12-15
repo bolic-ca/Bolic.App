@@ -172,3 +172,27 @@ export async function getSessionHistory(
     .sort((a, b) => new Date(b.data.startedAt).getTime() - new Date(a.data.startedAt).getTime())
     .slice(0, limit);
 }
+
+/**
+ * Delete a session
+ * @param userId - User ID
+ * @param sessionId - Session ID
+ * @param sessionDate - Date string of the session (to locate month partition)
+ */
+export async function deleteSession(
+  userId: string,
+  sessionId: string,
+  sessionDate: string
+): Promise<void> {
+  const date = new Date(sessionDate);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  const sessions = await getSessionsByMonth(userId, year, month);
+  const updatedSessions = sessions.filter(s => s.id !== sessionId);
+
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+  const key = getUserKey(userId, `${USER_DATA_KEYS.SESSIONS_PREFIX}${monthKey}`);
+  
+  await storageClient.set(key, updatedSessions);
+}

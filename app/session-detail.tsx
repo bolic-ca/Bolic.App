@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,18 +6,33 @@ import {
   ScrollView,
   TouchableOpacity,
   useColorScheme,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import { WorkoutSession, SessionExercise } from '@/services/storage/session-storage';
+import { useStorage } from '@/contexts/StorageContext';
+import { 
+  WorkoutSession, 
+  SessionExercise, 
+  SessionSet,
+  saveSession, 
+  deleteSession 
+} from '@/services/storage/session-storage';
 
 export default function SessionDetailModal() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { customColors } = useThemeCustomization();
+  const { userId } = useStorage();
   const params = useLocalSearchParams();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedNotes, setEditedNotes] = useState('');
+  const [editedExercises, setEditedExercises] = useState<SessionExercise[]>([]);
 
   // Athletic color palette
   const hexToRgba = (hex: string, alpha: number) => {
@@ -37,6 +52,7 @@ export default function SessionDetailModal() {
     accent,
     accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
     success: '#22C55E',
+    danger: '#EF4444',
   };
 
   // Parse the session data from params
@@ -50,6 +66,98 @@ export default function SessionDetailModal() {
     }
     return null;
   }, [params.session]);
+
+  // Initialize edited state
+  useEffect(() => {
+    if (session) {
+      setEditedName(session.name || '');
+      setEditedNotes(session.notes || '');
+      // Deep copy to ensure we don't mutate original state directly
+      setEditedExercises(JSON.parse(JSON.stringify(session.exercises)));
+    }
+  }, [session]);
+
+  const handleSetChange = (exerciseId: string, setIndex: number, field: keyof SessionSet, value: string) => {
+    const updatedExercises = editedExercises.map(ex => {
+      if (ex.exerciseId !== exerciseId) return ex;
+      
+      const updatedSets = ex.sets.map((set, idx) => {
+        if (idx !== setIndex) return set;
+        
+        // Handle numeric conversion
+        const numValue = parseFloat(value);
+        if (isNaN(numValue) && value !== '') return set; // Prevent non-numeric inputs
+        
+        // For required fields (weight, reps), fallback to 0 if empty
+        // For optional fields (rir, rpe), allow undefined if empty
+        let newValue: number | undefined = numValue;
+        if (value === '') {
+          if (field === 'weight' || field === 'reps') {
+            newValue = 0;
+          } else {
+            newValue = undefined;
+          }
+        }
+        
+        return {
+          ...set,
+          [field]: newValue
+        };
+      });
+      
+      return { ...ex, sets: updatedSets };
+    });
+    
+    setEditedExercises(updatedExercises);
+  };
+
+  const handleSave = async () => {
+    if (!session || !userId) return;
+
+    try {
+      const updatedSession: WorkoutSession = {
+        ...session,
+        name: editedName,
+        notes: editedNotes,
+        exercises: editedExercises,
+      };
+
+      await saveSession(userId, updatedSession, session.id);
+      setIsEditing(false);
+      
+      Alert.alert('Success', 'Session updated');
+      router.back();
+
+    } catch {
+      Alert.alert('Error', 'Failed to save changes');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!session || !userId) return;
+
+    Alert.alert(
+      'Delete Session',
+      'Are you sure you want to delete this session? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (session.startedAt) {
+                await deleteSession(userId, session.id, session.startedAt);
+                router.back();
+              }
+            } catch {
+              Alert.alert('Error', 'Failed to delete session');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Calculate session duration
   const duration = useMemo(() => {
@@ -66,21 +174,25 @@ export default function SessionDetailModal() {
     return `${hours}h ${mins}m`;
   }, [session]);
 
-  // Calculate total volume
+  // Calculate total volume (using edited values if editing)
+  const displayExercises = useMemo(() => {
+    return isEditing ? editedExercises : (session?.exercises || []);
+  }, [isEditing, editedExercises, session?.exercises]);
+
   const totalVolume = useMemo(() => {
-    if (!session?.exercises) return 0;
-    return session.exercises.reduce((total, exercise) => {
+    if (!displayExercises) return 0;
+    return displayExercises.reduce((total, exercise) => {
       return total + exercise.sets.reduce((setTotal, set) => {
         return setTotal + (set.weight * set.reps);
       }, 0);
     }, 0);
-  }, [session]);
+  }, [displayExercises]);
 
   // Calculate total sets
   const totalSets = useMemo(() => {
-    if (!session?.exercises) return 0;
-    return session.exercises.reduce((total, exercise) => total + exercise.sets.length, 0);
-  }, [session]);
+    if (!displayExercises) return 0;
+    return displayExercises.reduce((total, exercise) => total + exercise.sets.length, 0);
+  }, [displayExercises]);
 
   // Format date
   const formattedDate = useMemo(() => {
@@ -132,11 +244,24 @@ export default function SessionDetailModal() {
             <Ionicons name="close" size={22} color={palette.text} />
           </View>
         </TouchableOpacity>
-        <View>
+        
+        <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={[styles.headerLabel, { color: palette.textMuted }]}>WORKOUT</Text>
-          <Text style={[styles.headerTitle, { color: palette.text }]}>{session.name || 'Session Details'}</Text>
+          {isEditing ? (
+            <Text style={[styles.headerTitle, { color: palette.text }]}>Edit Session</Text>
+          ) : (
+            <Text style={[styles.headerTitle, { color: palette.text }]}>{session.name || 'Session Details'}</Text>
+          )}
         </View>
-        <View style={styles.placeholder} />
+
+        <TouchableOpacity 
+          style={styles.editButton} 
+          onPress={isEditing ? handleSave : () => setIsEditing(true)}
+        >
+          <Text style={[styles.editText, { color: palette.accent }]}>
+            {isEditing ? 'Save' : 'Edit'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -145,6 +270,24 @@ export default function SessionDetailModal() {
           <Text style={[styles.dateText, { color: palette.text }]}>{formattedDate}</Text>
           <Text style={[styles.timeText, { color: palette.textMuted }]}>{formattedTime}</Text>
         </View>
+
+        {/* Editable Name */}
+        {isEditing && (
+          <View style={styles.editSection}>
+            <Text style={[styles.editLabel, { color: palette.textMuted }]}>Session Name</Text>
+            <TextInput
+              style={[styles.input, { 
+                backgroundColor: palette.cardBg, 
+                borderColor: palette.cardBorder,
+                color: palette.text 
+              }]}
+              value={editedName}
+              onChangeText={setEditedName}
+              placeholder="Session Name"
+              placeholderTextColor={palette.textMuted}
+            />
+          </View>
+        )}
 
         {/* Summary Stats */}
         <View style={styles.statsRow}>
@@ -175,26 +318,56 @@ export default function SessionDetailModal() {
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: palette.text }]}>Exercises</Text>
           </View>
-          {session.exercises.map((exercise, index) => (
+          {displayExercises.map((exercise, index) => (
             <ExerciseCard
               key={`${exercise.exerciseId}-${index}`}
               exercise={exercise}
               palette={palette}
               isDark={isDark}
+              isEditing={isEditing}
+              onSetChange={handleSetChange}
             />
           ))}
         </View>
 
         {/* Notes */}
-        {session.notes && (
+        {(session.notes || isEditing) && (
           <View style={styles.notesSection}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: palette.text }]}>Notes</Text>
             </View>
-            <View style={[styles.notesCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-              <Text style={[styles.notesText, { color: palette.text }]}>{session.notes}</Text>
-            </View>
+            
+            {isEditing ? (
+              <TextInput
+                style={[styles.notesInput, { 
+                  backgroundColor: palette.cardBg, 
+                  borderColor: palette.cardBorder,
+                  color: palette.text 
+                }]}
+                value={editedNotes}
+                onChangeText={setEditedNotes}
+                placeholder="Add notes about this workout..."
+                placeholderTextColor={palette.textMuted}
+                multiline
+                textAlignVertical="top"
+              />
+            ) : (
+              <View style={[styles.notesCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+                <Text style={[styles.notesText, { color: palette.text }]}>{session.notes}</Text>
+              </View>
+            )}
           </View>
+        )}
+
+        {/* Delete Button (Only in Edit Mode) */}
+        {isEditing && (
+          <TouchableOpacity 
+            style={[styles.deleteButton, { backgroundColor: `${palette.danger}15` }]}
+            onPress={handleDelete}
+          >
+            <Ionicons name="trash-outline" size={20} color={palette.danger} />
+            <Text style={[styles.deleteText, { color: palette.danger }]}>Delete Session</Text>
+          </TouchableOpacity>
         )}
 
         <View style={{ height: 40 }} />
@@ -216,9 +389,11 @@ interface ExerciseCardProps {
     success: string;
   };
   isDark: boolean;
+  isEditing?: boolean;
+  onSetChange?: (exerciseId: string, setIndex: number, field: keyof SessionSet, value: string) => void;
 }
 
-function ExerciseCard({ exercise, palette, isDark }: ExerciseCardProps) {
+function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange }: ExerciseCardProps) {
   return (
     <View style={[styles.exerciseCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
       <View style={styles.exerciseHeader}>
@@ -233,15 +408,72 @@ function ExerciseCard({ exercise, palette, isDark }: ExerciseCardProps) {
             <View style={[styles.setNumberBadge, { backgroundColor: palette.accentGlow }]}>
               <Text style={[styles.setNumber, { color: palette.accent }]}>{index + 1}</Text>
             </View>
-            <Text style={[styles.setDetails, { color: palette.text }]}>
-              {set.weight} kg × {set.reps} reps
-            </Text>
-            {(set.rir !== undefined || set.rpe !== undefined) && (
-              <Text style={[styles.setMetrics, { color: palette.textMuted }]}>
-                {set.rir !== undefined && `RIR ${set.rir}`}
-                {set.rir !== undefined && set.rpe !== undefined && ' · '}
-                {set.rpe !== undefined && `RPE ${set.rpe}`}
-              </Text>
+            
+            {isEditing ? (
+              <View style={styles.editSetContainer}>
+                <View style={styles.editInputGroup}>
+                  <TextInput
+                    style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
+                    value={set.weight.toString()}
+                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'weight', val)}
+                    keyboardType="numeric"
+                    placeholder="0"
+                    placeholderTextColor={palette.textMuted}
+                  />
+                  <Text style={[styles.editUnit, { color: palette.textMuted }]}>kg</Text>
+                </View>
+                <Text style={{ color: palette.textMuted }}>×</Text>
+                <View style={styles.editInputGroup}>
+                  <TextInput
+                    style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
+                    value={set.reps.toString()}
+                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'reps', val)}
+                    keyboardType="numeric"
+                    placeholder="0"
+                    placeholderTextColor={palette.textMuted}
+                  />
+                  <Text style={[styles.editUnit, { color: palette.textMuted }]}>reps</Text>
+                </View>
+
+                {/* RIR Input */}
+                <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
+                  <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RIR</Text>
+                  <TextInput
+                    style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
+                    value={set.rir?.toString() ?? ''}
+                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rir', val)}
+                    keyboardType="numeric"
+                    placeholder="-"
+                    placeholderTextColor={palette.textMuted}
+                  />
+                </View>
+
+                {/* RPE Input */}
+                <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
+                  <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RPE</Text>
+                  <TextInput
+                    style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
+                    value={set.rpe?.toString() ?? ''}
+                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rpe', val)}
+                    keyboardType="numeric"
+                    placeholder="-"
+                    placeholderTextColor={palette.textMuted}
+                  />
+                </View>
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.setDetails, { color: palette.text }]}>
+                  {set.weight} kg × {set.reps} reps
+                </Text>
+                {(set.rir !== undefined || set.rpe !== undefined) && (
+                  <Text style={[styles.setMetrics, { color: palette.textMuted }]}>
+                    {set.rir !== undefined && `RIR ${set.rir}`}
+                    {set.rir !== undefined && set.rpe !== undefined && ' · '}
+                    {set.rpe !== undefined && `RPE ${set.rpe}`}
+                  </Text>
+                )}
+              </>
             )}
           </View>
         ))}
@@ -274,6 +506,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  editButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   headerLabel: {
     fontSize: 11,
@@ -406,6 +648,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  editSetContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  editInputGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  editInput: {
+    width: 50,
+    height: 36,
+    borderRadius: 8,
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  editUnit: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
   notesSection: {
     marginBottom: 24,
   },
@@ -415,6 +681,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   notesText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  notesInput: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    minHeight: 120,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -445,6 +719,34 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  editSection: {
+    marginBottom: 20,
+  },
+  editLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 24,
+  },
+  deleteText: {
+    fontSize: 16,
     fontWeight: '600',
   },
 });

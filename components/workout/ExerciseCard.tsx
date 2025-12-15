@@ -174,6 +174,11 @@ export default function ExerciseCard({
           <Text style={[styles.setsCount, { color: theme.textSecondary }]}>
             {sessionExercise?.sets.length || 0}
             {exercise.targetNumberOfSets ? `/${exercise.targetNumberOfSets}` : ''} sets
+            {previousPerformance && !isExpanded && (
+              <Text style={[styles.prevHint, { color: theme.textSecondary }]}>
+                {' · '}Last: {previousPerformance.weight}kg × {previousPerformance.reps}
+              </Text>
+            )}
           </Text>
         </View>
 
@@ -294,6 +299,11 @@ const styles = StyleSheet.create({
   setsCount: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  prevHint: {
+    fontSize: 13,
+    fontWeight: '500',
+    fontStyle: 'italic',
   },
   expandedContent: {
     paddingHorizontal: 16,

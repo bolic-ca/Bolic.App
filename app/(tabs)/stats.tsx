@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, useColorScheme, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
@@ -149,6 +150,81 @@ export default function StatsPage() {
           </View>
         )}
 
+        {/* Recent Activity */}
+        {!loading && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: palette.text }]}>Recent Activity</Text>
+            </View>
+
+            {sessionHistory && sessionHistory.length > 0 ? (
+              <View style={styles.historyList}>
+                {sessionHistory.slice(0, 5).map((session) => {
+                  const date = new Date(session.startedAt);
+                  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  
+                  // Calculate volume
+                  const volume = session.exercises.reduce((acc, ex) => 
+                    acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0)
+                  , 0);
+
+                  // Calculate duration
+                  let duration = '';
+                  if (session.completedAt) {
+                    const start = new Date(session.startedAt);
+                    const end = new Date(session.completedAt);
+                    const diffMins = Math.floor((end.getTime() - start.getTime()) / 60000);
+                    duration = `${diffMins} min`;
+                  }
+
+                  return (
+                    <TouchableOpacity
+                      key={session.id}
+                      style={[styles.historyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+                      onPress={() => router.push({ pathname: '/session-detail', params: { session: JSON.stringify(session) } })}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.historyIconBg, { backgroundColor: palette.accentGlow }]}>
+                        <Ionicons name="barbell" size={20} color={palette.accent} />
+                      </View>
+                      <View style={styles.historyInfo}>
+                        <Text style={[styles.historyTitle, { color: palette.text }]} numberOfLines={1}>
+                          {session.name || 'Workout'}
+                        </Text>
+                        <Text style={[styles.historySubtitle, { color: palette.textMuted }]}>
+                          {formattedDate} • {session.exercises.length} Exercises
+                        </Text>
+                      </View>
+                      <View style={styles.historyStats}>
+                        <Text style={[styles.historyValue, { color: palette.text }]}>{(volume / 1000).toFixed(1)}k kg</Text>
+                        <Text style={[styles.historyLabel, { color: palette.textMuted }]}>{duration}</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={[styles.emptyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+                <View style={[styles.emptyIconContainer, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+                  <Ionicons name="time-outline" size={32} color={palette.textMuted} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: palette.text }]}>No Recent Activity</Text>
+                <Text style={[styles.emptyDescription, { color: palette.textMuted }]}>
+                  Complete a workout to see it here
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.viewAllButton, { borderColor: palette.cardBorder }]}
+              onPress={() => router.push('/history')}
+            >
+              <Text style={[styles.viewAllText, { color: palette.text }]}>View All History</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Personal Records */}
         {!loading && (
           <View style={styles.section}>
@@ -250,6 +326,42 @@ const styles = StyleSheet.create({
   weeklyProgress: { flex: 1, height: 8, borderRadius: 4, overflow: 'hidden' },
   weeklyProgressBar: { height: '100%', borderRadius: 4 },
   weeklyPercent: { fontSize: 16, fontWeight: '700', minWidth: 44, textAlign: 'right' },
+
+  // History Cards
+  historyList: { gap: 10 },
+  historyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    gap: 12,
+  },
+  historyIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  historyInfo: { flex: 1 },
+  historyTitle: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2, marginBottom: 2 },
+  historySubtitle: { fontSize: 12, fontWeight: '500' },
+  historyStats: { alignItems: 'flex-end', marginRight: 4 },
+  historyValue: { fontSize: 14, fontWeight: '700' },
+  historyLabel: { fontSize: 11, fontWeight: '500' },
+  
+  viewAllButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 
   // PR Cards
   prList: { gap: 10 },

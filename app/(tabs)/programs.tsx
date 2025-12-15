@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -137,23 +137,6 @@ export default function ProgramsPage() {
       ]
     );
   };
-
-  const currentTrainingDay = useMemo(() => {
-    if (!activeProgram) return null;
-    if (activeProgram.type === 'simple' && activeProgram.trainingDays?.length > 0) {
-      return activeProgram.trainingDays[0];
-    }
-    if (activeProgram.type === 'periodized' && activeProgram.mesocycles?.length > 0) {
-      const firstMeso = activeProgram.mesocycles[0];
-      if (firstMeso.microcycles?.length > 0) {
-        const firstMicro = firstMeso.microcycles[0];
-        if (firstMicro.trainingDays?.length > 0) {
-          return firstMicro.trainingDays[0];
-        }
-      }
-    }
-    return null;
-  }, [activeProgram]);
 
   const renderProgramCard = (program: Program, isActive: boolean = false) => {
     const isExpanded = expandedProgram === program.id;
@@ -494,74 +477,6 @@ export default function ProgramsPage() {
           </View>
         )}
 
-        {/* Current Training Day */}
-        {currentTrainingDay && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: palette.text }]}>Current Training Day</Text>
-            </View>
-            <View style={[styles.trainingDayCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-              <View style={styles.trainingDayHeader}>
-                <View style={[styles.trainingDayIcon, { backgroundColor: palette.accentGlow }]}>
-                  <Ionicons name="barbell-outline" size={24} color={palette.accent} />
-                </View>
-                <View style={styles.trainingDayInfo}>
-                  <Text style={[styles.trainingDayName, { color: palette.text }]}>{currentTrainingDay.name}</Text>
-                  <Text style={[styles.trainingDayMeta, { color: palette.textMuted }]}>
-                    {currentTrainingDay.exercises?.length || 0} exercises
-                  </Text>
-                </View>
-              </View>
-              {currentTrainingDay.exercises?.map((exercise: TrainingExercise, index: number) => (
-                <View key={exercise.id || index} style={[styles.currentDayExerciseRow, index > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }]}>
-                  <View style={[styles.exerciseNumber, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
-                    <Text style={[styles.exerciseNumberText, { color: palette.textMuted }]}>{index + 1}</Text>
-                  </View>
-                  <View style={styles.currentDayExerciseContent}>
-                    <Text style={[styles.exerciseName, { color: palette.text }]} numberOfLines={1}>{exercise.name}</Text>
-                    <View style={styles.dayExerciseDetails}>
-                      {exercise.targetNumberOfSets && (
-                        <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
-                          <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
-                            {exercise.targetNumberOfSets} sets
-                          </Text>
-                        </View>
-                      )}
-                      {exercise.targetRepetitions && (
-                        <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
-                          <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
-                            {exercise.targetRepetitions} reps
-                          </Text>
-                        </View>
-                      )}
-                      {exercise.targetRepetitionsInReserve && (
-                        <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
-                          <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
-                            {exercise.targetRepetitionsInReserve} RIR
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.dayExerciseMeta}>
-                      {exercise.muscleCategory && (
-                        <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
-                          {exercise.muscleCategory}
-                          {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
-                        </Text>
-                      )}
-                      {exercise.equipment && (
-                        <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
-                          {exercise.equipment}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
         {/* All Programs */}
         {!loading && !error && programs.filter(p => p.id !== activeProgram?.id).length > 0 && (
           <View style={styles.section}>
@@ -744,23 +659,6 @@ const styles = StyleSheet.create({
   microDayName: { fontSize: 13, fontWeight: '600' },
   microDayHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   microDayExercises: { fontSize: 11 },
-
-  // Training Day Card
-  trainingDayCard: { borderRadius: 20, borderWidth: 1, padding: 16 },
-  trainingDayHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-  trainingDayIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  trainingDayInfo: { flex: 1 },
-  trainingDayName: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3, marginBottom: 2 },
-  trainingDayMeta: { fontSize: 13 },
-  exerciseRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  exerciseNumber: { width: 28, height: 28, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  exerciseNumberText: { fontSize: 12, fontWeight: '600' },
-  exerciseInfo: { flex: 1 },
-  exerciseName: { fontSize: 15, fontWeight: '600', marginBottom: 6 },
-  exerciseMuscle: { fontSize: 12, fontWeight: '500' },
-  currentDayExerciseRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
-  currentDayExerciseContent: { flex: 1 },
-  moreExercises: { fontSize: 13, textAlign: 'center', paddingTop: 12 },
 
   // Create Program
   createProgramButton: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, padding: 16, gap: 14 },

@@ -401,66 +401,102 @@ export default function HomePage() {
             </View>
           )}
 
-          {/* History Section */}
+          {/* Look Back Section */}
           {!loading && (lastSession || previousInstanceOfToday) && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: palette.text }]}>History</Text>
+                <Text style={[styles.sectionTitle, { color: palette.text }]}>Look Back</Text>
               </View>
 
               {/* Last Session */}
               {lastSession && (
                 <TouchableOpacity
-                  style={[styles.historyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+                  style={[styles.lookBackCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
                   onPress={() => handleViewSession(lastSession)}
                   activeOpacity={0.8}
                 >
-                  <View style={styles.historyCardContent}>
-                    <View style={[styles.historyIndicator, { backgroundColor: palette.success }]} />
-                    <View style={styles.historyDetails}>
-                      <Text style={[styles.historyLabel, { color: palette.textMuted }]}>Last Completed</Text>
-                      <Text style={[styles.historyTitle, { color: palette.text }]} numberOfLines={1}>
+                  <View style={styles.lookBackHeader}>
+                    <View style={[styles.lookBackIconContainer, { backgroundColor: `${palette.success}15` }]}>
+                      <Ionicons name="checkmark-circle" size={24} color={palette.success} />
+                    </View>
+                    <View style={styles.lookBackHeaderInfo}>
+                      <Text style={[styles.lookBackLabel, { color: palette.textMuted }]}>LAST COMPLETED</Text>
+                      <Text style={[styles.lookBackTitle, { color: palette.text }]} numberOfLines={1}>
                         {lastSession.name || 'Workout'}
                       </Text>
-                      <Text style={[styles.historyMeta, { color: palette.textMuted }]}>
-                        {lastSession.exercises?.length || 0} exercises · {lastSession.exercises?.reduce((total, ex) => total + (ex.sets?.length || 0), 0) || 0} sets
-                      </Text>
                     </View>
-                    <View style={styles.historyTime}>
-                      <Text style={[styles.historyTimeText, { color: palette.textMuted }]}>
+                    <View style={styles.lookBackDateContainer}>
+                      <Text style={[styles.lookBackDate, { color: palette.textMuted }]}>
                         {lastSession.completedAt ? new Date(lastSession.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
                       </Text>
                       <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
                     </View>
                   </View>
+                  {lastSession.exercises && lastSession.exercises.length > 0 && (
+                    <View style={[styles.lookBackExercises, { borderTopColor: palette.cardBorder }]}>
+                      {lastSession.exercises.slice(0, 4).map((ex, idx) => (
+                        <View key={ex.exerciseId || idx} style={styles.lookBackExerciseRow}>
+                          <Text style={[styles.lookBackExerciseName, { color: palette.text }]} numberOfLines={1}>
+                            {ex.exerciseName}
+                          </Text>
+                          <Text style={[styles.lookBackExerciseSets, { color: palette.textMuted }]}>
+                            {ex.sets.length} sets
+                          </Text>
+                        </View>
+                      ))}
+                      {lastSession.exercises.length > 4 && (
+                        <Text style={[styles.lookBackMore, { color: palette.textMuted }]}>
+                          +{lastSession.exercises.length - 4} more
+                        </Text>
+                      )}
+                    </View>
+                  )}
                 </TouchableOpacity>
               )}
 
-              {/* Last Time You Did This */}
+              {/* Previous Instance of Today's Training Day */}
               {previousInstanceOfToday && (
                 <TouchableOpacity
-                  style={[styles.historyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+                  style={[styles.lookBackCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
                   onPress={() => handleViewSession(previousInstanceOfToday)}
                   activeOpacity={0.8}
                 >
-                  <View style={styles.historyCardContent}>
-                    <View style={[styles.historyIndicator, { backgroundColor: palette.streak }]} />
-                    <View style={styles.historyDetails}>
-                      <Text style={[styles.historyLabel, { color: palette.textMuted }]}>Previous {nextTrainingDay?.name}</Text>
-                      <Text style={[styles.historyTitle, { color: palette.text }]} numberOfLines={1}>
+                  <View style={styles.lookBackHeader}>
+                    <View style={[styles.lookBackIconContainer, { backgroundColor: `${palette.streak}15` }]}>
+                      <Ionicons name="repeat" size={24} color={palette.streak} />
+                    </View>
+                    <View style={styles.lookBackHeaderInfo}>
+                      <Text style={[styles.lookBackLabel, { color: palette.textMuted }]}>PREVIOUS {nextTrainingDay?.name?.toUpperCase()}</Text>
+                      <Text style={[styles.lookBackTitle, { color: palette.text }]} numberOfLines={1}>
                         {previousInstanceOfToday.name || 'Workout'}
                       </Text>
-                      <Text style={[styles.historyMeta, { color: palette.textMuted }]}>
-                        {previousInstanceOfToday.exercises?.length || 0} exercises · {previousInstanceOfToday.exercises?.reduce((total, ex) => total + (ex.sets?.length || 0), 0) || 0} sets
-                      </Text>
                     </View>
-                    <View style={styles.historyTime}>
-                      <Text style={[styles.historyTimeText, { color: palette.textMuted }]}>
+                    <View style={styles.lookBackDateContainer}>
+                      <Text style={[styles.lookBackDate, { color: palette.textMuted }]}>
                         {previousInstanceOfToday.completedAt ? new Date(previousInstanceOfToday.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Previous'}
                       </Text>
                       <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
                     </View>
                   </View>
+                  {previousInstanceOfToday.exercises && previousInstanceOfToday.exercises.length > 0 && (
+                    <View style={[styles.lookBackExercises, { borderTopColor: palette.cardBorder }]}>
+                      {previousInstanceOfToday.exercises.slice(0, 4).map((ex, idx) => (
+                        <View key={ex.exerciseId || idx} style={styles.lookBackExerciseRow}>
+                          <Text style={[styles.lookBackExerciseName, { color: palette.text }]} numberOfLines={1}>
+                            {ex.exerciseName}
+                          </Text>
+                          <Text style={[styles.lookBackExerciseSets, { color: palette.textMuted }]}>
+                            {ex.sets.length} sets
+                          </Text>
+                        </View>
+                      ))}
+                      {previousInstanceOfToday.exercises.length > 4 && (
+                        <Text style={[styles.lookBackMore, { color: palette.textMuted }]}>
+                          +{previousInstanceOfToday.exercises.length - 4} more
+                        </Text>
+                      )}
+                    </View>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
@@ -724,52 +760,76 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // History Cards
-  historyCard: {
-    borderRadius: 16,
+  // Look Back Cards
+  lookBackCard: {
+    borderRadius: 20,
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: 12,
     overflow: 'hidden',
   },
-  historyCardContent: {
+  lookBackHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    padding: 16,
+    gap: 12,
   },
-  historyIndicator: {
-    width: 4,
-    height: 44,
-    borderRadius: 2,
-    marginRight: 14,
+  lookBackIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  historyDetails: {
+  lookBackHeaderInfo: {
     flex: 1,
   },
-  historyLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  historyTitle: {
-    fontSize: 16,
+  lookBackLabel: {
+    fontSize: 10,
     fontWeight: '700',
-    letterSpacing: -0.2,
-    marginBottom: 2,
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
-  historyMeta: {
-    fontSize: 13,
-    fontWeight: '500',
+  lookBackTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  historyTime: {
+  lookBackDateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  historyTimeText: {
+  lookBackDate: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  lookBackExercises: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    gap: 8,
+  },
+  lookBackExerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  lookBackExerciseName: {
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
+    marginRight: 12,
+  },
+  lookBackExerciseSets: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  lookBackMore: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 
   // Loading
