@@ -12,11 +12,11 @@ export interface GetTrainingDayRequest {
   userId?: string;
 }
 
-export interface CreateTrainingDayRequest extends Omit<TrainingDay, 'id'> {
+export interface CreateTrainingDayRequest extends Omit<TrainingDay, 'id' | 'userId'> {
   userId?: string;
 }
 
-export interface UpdateTrainingDayRequest extends TrainingDay {
+export interface UpdateTrainingDayRequest extends Omit<TrainingDay, 'userId'> {
   userId?: string;
 }
 

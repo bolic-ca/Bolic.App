@@ -449,13 +449,13 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
     const mesocycle = program.mesocycles[0];
 
     // Transform Program to WizardState
-    const wizardMicrocycles: WizardMicrocycle[] = mesocycle.microcycles.map(micro => ({
+    const wizardMicrocycles: WizardMicrocycle[] = mesocycle.microcycles.map((micro: Microcycle) => ({
       tempId: micro.id,
       weekNumber: micro.weekNumber,
       name: micro.name || `Week ${micro.weekNumber}`,
       volumeTarget: micro.volumeTarget,
       intensityTarget: micro.intensityTarget,
-      trainingDays: micro.trainingDays.map(day => ({
+      trainingDays: micro.trainingDays.map((day: TrainingDay) => ({
         tempId: day.id || generateId(),
         name: day.name || '',
         description: day.description || '',

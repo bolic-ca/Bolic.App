@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -54,9 +54,11 @@ export default function ExerciseFormScreen() {
     accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
   };
   const { userId } = useStorage();
-  const { createExercise } = useExercises();
+  const { createExercise, updateExercise, getExerciseById } = useExercises();
   const { programs, updateProgram } = usePrograms();
-  const params = useLocalSearchParams<{ trainingDayId?: string; programId?: string }>();
+  const params = useLocalSearchParams<{ trainingDayId?: string; programId?: string; exerciseId?: string }>();
+
+  const isEditMode = !!params.exerciseId;
 
   // Form state
   const [name, setName] = useState('');
@@ -75,6 +77,23 @@ export default function ExerciseFormScreen() {
   const [showPositionPicker, setShowPositionPicker] = useState(false);
 
   const availableSubcategories = muscleCategory && muscleSubcategories[muscleCategory] || [];
+
+  // Load existing exercise data in edit mode
+  useEffect(() => {
+    if (isEditMode && params.exerciseId) {
+      const existingExercise = getExerciseById(params.exerciseId);
+      if (existingExercise) {
+        setName(existingExercise.name || '');
+        setMuscleCategory(existingExercise.muscleCategory || '');
+        setMuscleSubcategory(existingExercise.muscleSubcategory || '');
+        setEquipment(existingExercise.equipment || '');
+        setTargetRepetitions(existingExercise.targetRepetitions || '');
+        setTargetRIR(existingExercise.targetRepetitionsInReserve || '');
+        setTargetPosition(existingExercise.targetPosition || '');
+        setNotes(existingExercise.notes || '');
+      }
+    }
+  }, [isEditMode, params.exerciseId, getExerciseById]);
 
   const handleSubmit = async () => {
     // Validation
@@ -96,6 +115,33 @@ export default function ExerciseFormScreen() {
     setLoading(true);
 
     try {
+      if (isEditMode && params.exerciseId) {
+        // Update existing exercise
+        const existingExercise = getExerciseById(params.exerciseId);
+        await updateExercise({
+          id: params.exerciseId,
+          userId,
+          trainingDayIds: existingExercise?.trainingDayIds || [],
+          name: name.trim(),
+          muscleCategory,
+          muscleSubcategory: muscleSubcategory || null,
+          equipment: equipment.trim() || null,
+          targetRepetitions: targetRepetitions.trim() || null,
+          targetRepetitionsInReserve: targetRIR.trim() || null,
+          targetPosition: targetPosition || null,
+          notes: notes.trim() || null,
+          sets: existingExercise?.sets || [],
+        });
+
+        Alert.alert('Success', 'Exercise updated', [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]);
+        return;
+      }
+
       // Create the exercise in exercise storage
       const trainingDayIds = params.trainingDayId ? [params.trainingDayId] : [];
       const newExercise = await createExercise({
@@ -199,8 +245,8 @@ export default function ExerciseFormScreen() {
           </View>
         </TouchableOpacity>
         <View>
-          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>CREATE</Text>
-          <Text style={[styles.headerTitle, { color: palette.text }]}>New Exercise</Text>
+          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>{isEditMode ? 'EDIT' : 'CREATE'}</Text>
+          <Text style={[styles.headerTitle, { color: palette.text }]}>{isEditMode ? 'Edit Exercise' : 'New Exercise'}</Text>
         </View>
         <View style={styles.closeButton} />
       </View>
@@ -400,7 +446,7 @@ export default function ExerciseFormScreen() {
                 <View style={styles.submitButtonIcon}>
                   <Ionicons name="checkmark" size={22} color="#FFF" />
                 </View>
-                <Text style={styles.submitButtonText}>Create Exercise</Text>
+                <Text style={styles.submitButtonText}>{isEditMode ? 'Update Exercise' : 'Create Exercise'}</Text>
                 <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.7)" />
               </>
             )}

@@ -20,6 +20,7 @@ import CompletionModal from './CompletionModal';
 interface WorkoutInterfaceProps {
   session: WorkoutSession;
   trainingDay: TrainingDay | null;
+  programName?: string;
   loading: boolean;
   onComplete: (notes?: string) => void;
   onCancel: () => void;
@@ -29,6 +30,7 @@ interface WorkoutInterfaceProps {
 export default function WorkoutInterface({
   session,
   trainingDay,
+  programName,
   loading,
   onComplete,
   onCancel,
@@ -37,7 +39,7 @@ export default function WorkoutInterface({
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
-  const { addSet, sessionHistory } = useWorkoutSession();
+  const { addSet, updateSet, deleteSet, sessionHistory } = useWorkoutSession();
   const [completionModalVisible, setCompletionModalVisible] = useState(false);
 
   // Calculate workout progress
@@ -49,6 +51,24 @@ export default function WorkoutInterface({
       await addSet(exerciseId, exerciseName, set);
     } catch (err) {
       console.error('Error adding set:', err);
+    }
+  };
+
+  // Handle updating a set
+  const handleUpdateSet = async (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => {
+    try {
+      await updateSet(exerciseId, setIndex, set);
+    } catch (err) {
+      console.error('Error updating set:', err);
+    }
+  };
+
+  // Handle deleting a set
+  const handleDeleteSet = async (exerciseId: string, setIndex: number) => {
+    try {
+      await deleteSet(exerciseId, setIndex);
+    } catch (err) {
+      console.error('Error deleting set:', err);
     }
   };
 
@@ -110,7 +130,8 @@ export default function WorkoutInterface({
       {/* Header with Timer and Actions */}
       <WorkoutHeader
         startedAt={session.startedAt}
-        trainingDayName={trainingDay.name}
+        trainingDayName={trainingDay.name ?? undefined}
+        programName={programName}
         onCancel={onCancel}
         onFinish={handleFinish}
         onMinimize={onMinimize}
@@ -121,18 +142,23 @@ export default function WorkoutInterface({
         completedExercises={progress.completedExercises}
         totalExercises={progress.totalExercises}
         totalSets={progress.totalSets}
+        totalVolume={progress.totalVolume}
       />
 
       {/* Exercise List */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        delayContentTouches={false}
+        keyboardShouldPersistTaps="handled"
       >
         <ExerciseList
           trainingDay={trainingDay}
           session={session}
           sessionHistory={sessionHistory}
           onAddSet={handleAddSet}
+          onUpdateSet={handleUpdateSet}
+          onDeleteSet={handleDeleteSet}
         />
       </ScrollView>
 

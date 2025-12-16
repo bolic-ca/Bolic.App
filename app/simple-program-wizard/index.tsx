@@ -7,47 +7,25 @@ import {
   TextInput,
   TouchableOpacity,
   useColorScheme,
-  ActivityIndicator,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useSimpleProgramWizard } from '@/contexts/SimpleProgramWizardContext';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import { useProgramWizard, MesocycleGoal } from '@/contexts/ProgramWizardContext';
 
-const goalOptions: MesocycleGoal[] = ['Hypertrophy', 'Strength', 'Deload', 'Peaking'];
-const durationPresets = [4, 6, 8, 12];
-
-export default function MesocycleInfoScreen() {
+export default function SimpleProgramWizardIndex() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { customColors } = useThemeCustomization();
   const { editProgramId } = useLocalSearchParams<{ editProgramId?: string }>();
-  const { state, setMesocycleInfo, canProceedFromStep1, discardDraft, isLoading, hasDraft, loadProgramForEdit, isEditMode } = useProgramWizard();
+  const { state, setProgramInfo, canProceedFromStep1, hasDraft, discardDraft, isEditMode, loadProgramForEdit } = useSimpleProgramWizard();
 
-  const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
-
-  // Load program for editing if editProgramId is provided
-  useEffect(() => {
-    if (editProgramId && !isLoading && !state.editProgramId) {
-      setLoadingEdit(true);
-      loadProgramForEdit(editProgramId).finally(() => setLoadingEdit(false));
-    }
-  }, [editProgramId, isLoading, state.editProgramId, loadProgramForEdit]);
-
-  // Show draft restored banner
-  useEffect(() => {
-    if (!isLoading && hasDraft && state.name && !isEditMode) {
-      setShowDraftBanner(true);
-      // Auto-hide after 5 seconds
-      const timer = setTimeout(() => setShowDraftBanner(false), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, hasDraft, state.name, isEditMode]);
 
   // Athletic color palette
   const hexToRgba = (hex: string, alpha: number) => {
@@ -68,6 +46,24 @@ export default function MesocycleInfoScreen() {
     accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
   };
 
+  // Load program for editing if editProgramId is provided
+  useEffect(() => {
+    if (editProgramId && !state.editProgramId) {
+      setLoadingEdit(true);
+      loadProgramForEdit(editProgramId).finally(() => setLoadingEdit(false));
+    }
+  }, [editProgramId, state.editProgramId, loadProgramForEdit]);
+
+  // Show draft restored banner
+  useEffect(() => {
+    if (hasDraft && state.name && !isEditMode) {
+      setShowDraftBanner(true);
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => setShowDraftBanner(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasDraft, state.name, isEditMode]);
+
   const handleClose = () => {
     // In edit mode, just go back without draft dialog
     if (isEditMode) {
@@ -76,7 +72,7 @@ export default function MesocycleInfoScreen() {
     }
 
     // In create mode, show save draft dialog if there's content
-    const hasContent = state.name || state.microcycles.some(m => m.trainingDays.length > 0);
+    const hasContent = state.name || state.trainingDays.length > 0;
     if (hasContent) {
       Alert.alert(
         'Save Draft?',
@@ -118,19 +114,17 @@ export default function MesocycleInfoScreen() {
 
   const handleNext = () => {
     if (canProceedFromStep1()) {
-      router.push('/program-wizard/microcycles');
+      router.push('/simple-program-wizard/training-days');
     }
   };
 
   // Show loading state
-  if (isLoading || loadingEdit) {
+  if (loadingEdit) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={palette.accent} />
-          <Text style={[styles.loadingText, { color: palette.textMuted }]}>
-            {loadingEdit ? 'Loading program...' : 'Loading...'}
-          </Text>
+          <Text style={[styles.loadingText, { color: palette.textMuted }]}>Loading program...</Text>
         </View>
       </SafeAreaView>
     );
@@ -149,7 +143,7 @@ export default function MesocycleInfoScreen() {
           <Text style={[styles.headerLabel, { color: palette.textMuted }]}>
             {isEditMode ? 'EDIT' : 'CREATE'}
           </Text>
-          <Text style={[styles.headerTitle, { color: palette.text }]}>Periodized Program</Text>
+          <Text style={[styles.headerTitle, { color: palette.text }]}>Simple Program</Text>
         </View>
         <View style={styles.closeButton} />
       </View>
@@ -182,10 +176,10 @@ export default function MesocycleInfoScreen() {
           <Text style={[styles.label, { color: palette.text }]}>Program Name *</Text>
           <TextInput
             style={[styles.input, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
-            placeholder="e.g., 8-Week Hypertrophy Block"
+            placeholder="e.g., Upper/Lower Split"
             placeholderTextColor={palette.textMuted}
             value={state.name}
-            onChangeText={(text) => setMesocycleInfo({ name: text })}
+            onChangeText={(text) => setProgramInfo({ name: text })}
           />
         </View>
 
@@ -197,96 +191,58 @@ export default function MesocycleInfoScreen() {
             placeholder="Describe your program's focus and goals"
             placeholderTextColor={palette.textMuted}
             value={state.description}
-            onChangeText={(text) => setMesocycleInfo({ description: text })}
+            onChangeText={(text) => setProgramInfo({ description: text })}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
           />
         </View>
 
-        {/* Goal */}
+        {/* Schedule Type */}
         <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: palette.text }]}>Training Goal</Text>
-          <TouchableOpacity
-            style={[styles.picker, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
-            onPress={() => setShowGoalPicker(!showGoalPicker)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.pickerText, { color: state.goal ? palette.text : palette.textMuted }]}>
-              {state.goal || 'Select goal (optional)'}
-            </Text>
-            <Ionicons name={showGoalPicker ? 'chevron-up' : 'chevron-down'} size={20} color={palette.textMuted} />
-          </TouchableOpacity>
-          {showGoalPicker && (
-            <View style={[styles.pickerOptions, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-              {goalOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={option}
-                  style={[
-                    styles.pickerOption,
-                    index < goalOptions.length - 1 && { borderBottomWidth: 1, borderBottomColor: palette.cardBorder },
-                  ]}
-                  onPress={() => {
-                    setMesocycleInfo({ goal: option });
-                    setShowGoalPicker(false);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.pickerOptionText, { color: palette.text }]}>{option}</Text>
-                  {state.goal === option && <Ionicons name="checkmark" size={18} color={palette.accent} />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Duration */}
-        <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: palette.text }]}>Duration (Weeks)</Text>
-          <View style={styles.durationContainer}>
-            {durationPresets.map((weeks) => (
-              <TouchableOpacity
-                key={weeks}
-                style={[
-                  styles.durationButton,
-                  {
-                    backgroundColor: state.durationWeeks === weeks ? palette.accent : palette.cardBg,
-                    borderColor: state.durationWeeks === weeks ? palette.accent : palette.cardBorder,
-                  },
-                ]}
-                onPress={() => setMesocycleInfo({ durationWeeks: weeks })}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={[
-                    styles.durationButtonText,
-                    { color: state.durationWeeks === weeks ? '#FFFFFF' : palette.text }
-                  ]}
-                >
-                  {weeks}
+          <Text style={[styles.label, { color: palette.text }]}>Schedule Type</Text>
+          <View style={styles.scheduleContainer}>
+            <TouchableOpacity
+              style={[
+                styles.scheduleOption,
+                { backgroundColor: palette.cardBg, borderColor: state.schedule === 'rotating' ? palette.accent : palette.cardBorder },
+                state.schedule === 'rotating' && styles.scheduleOptionActive,
+              ]}
+              onPress={() => setProgramInfo({ schedule: 'rotating' })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.scheduleIconContainer, { backgroundColor: state.schedule === 'rotating' ? palette.accentGlow : 'transparent' }]}>
+                <Ionicons name="repeat" size={20} color={state.schedule === 'rotating' ? palette.accent : palette.textMuted} />
+              </View>
+              <View style={styles.scheduleTextContainer}>
+                <Text style={[styles.scheduleTitle, { color: palette.text }]}>Rotating</Text>
+                <Text style={[styles.scheduleDescription, { color: palette.textMuted }]}>
+                  Days repeat in order
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.customDurationContainer}>
-            <Text style={[styles.customDurationLabel, { color: palette.textMuted }]}>or custom:</Text>
-            <TextInput
-              style={[styles.customDurationInput, { backgroundColor: palette.cardBg, color: palette.text, borderColor: palette.cardBorder }]}
-              placeholder="0"
-              placeholderTextColor={palette.textMuted}
-              value={durationPresets.includes(state.durationWeeks) ? '' : state.durationWeeks.toString()}
-              onChangeText={(text) => {
-                const num = parseInt(text, 10);
-                if (!isNaN(num) && num > 0 && num <= 52) {
-                  setMesocycleInfo({ durationWeeks: num });
-                } else if (text === '') {
-                  setMesocycleInfo({ durationWeeks: 4 });
-                }
-              }}
-              keyboardType="number-pad"
-              maxLength={2}
-            />
-            <Text style={[styles.customDurationLabel, { color: palette.textMuted }]}>weeks</Text>
+              </View>
+              {state.schedule === 'rotating' && <Ionicons name="checkmark-circle" size={20} color={palette.accent} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.scheduleOption,
+                { backgroundColor: palette.cardBg, borderColor: state.schedule === 'weekly' ? palette.accent : palette.cardBorder },
+                state.schedule === 'weekly' && styles.scheduleOptionActive,
+              ]}
+              onPress={() => setProgramInfo({ schedule: 'weekly' })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.scheduleIconContainer, { backgroundColor: state.schedule === 'weekly' ? palette.accentGlow : 'transparent' }]}>
+                <Ionicons name="calendar" size={20} color={state.schedule === 'weekly' ? palette.accent : palette.textMuted} />
+              </View>
+              <View style={styles.scheduleTextContainer}>
+                <Text style={[styles.scheduleTitle, { color: palette.text }]}>Weekly</Text>
+                <Text style={[styles.scheduleDescription, { color: palette.textMuted }]}>
+                  Specific days each week
+                </Text>
+              </View>
+              {state.schedule === 'weekly' && <Ionicons name="checkmark-circle" size={20} color={palette.accent} />}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -297,7 +253,7 @@ export default function MesocycleInfoScreen() {
             <Text style={[styles.infoCardTitle, { color: palette.text }]}>What happens next?</Text>
           </View>
           <Text style={[styles.infoCardText, { color: palette.textMuted }]}>
-            You will be able to add training days to each week (microcycle) and assign exercises to each day.
+            You&apos;ll add training days to your program and assign exercises to each day.
           </Text>
         </View>
 
@@ -324,7 +280,7 @@ export default function MesocycleInfoScreen() {
             <View style={styles.submitButtonIcon}>
               <Ionicons name="calendar-outline" size={22} color="#FFF" />
             </View>
-            <Text style={styles.submitButtonText}>Next: Add Weeks</Text>
+            <Text style={styles.submitButtonText}>Next: Add Training Days</Text>
             <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.7)" />
           </LinearGradient>
         </TouchableOpacity>
@@ -433,87 +389,62 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 16,
     fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   textArea: {
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 16,
     fontSize: 16,
-    minHeight: 80,
-  },
-  picker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderRadius: 14,
-    padding: 16,
+    minHeight: 100,
   },
-  pickerText: {
-    fontSize: 16,
-  },
-  pickerOptions: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  pickerOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  pickerOptionText: {
-    fontSize: 16,
-  },
-  durationContainer: {
-    flexDirection: 'row',
+  scheduleContainer: {
     gap: 12,
   },
-  durationButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
+  scheduleOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  scheduleOptionActive: {
+    borderWidth: 2,
+  },
+  scheduleIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  durationButtonText: {
-    fontSize: 16,
+  scheduleTextContainer: {
+    flex: 1,
+  },
+  scheduleTitle: {
+    fontSize: 15,
     fontWeight: '600',
+    marginBottom: 2,
   },
-  customDurationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 10,
-  },
-  customDurationLabel: {
-    fontSize: 14,
-  },
-  customDurationInput: {
-    width: 60,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 16,
-    textAlign: 'center',
+  scheduleDescription: {
+    fontSize: 13,
   },
   infoCard: {
-    borderWidth: 1,
     borderRadius: 14,
+    borderWidth: 1,
     padding: 16,
     marginBottom: 20,
   },
   infoCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     marginBottom: 8,
   },
   infoCardTitle: {

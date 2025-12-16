@@ -12,11 +12,11 @@ export interface GetExerciseRequest {
   userId?: string;
 }
 
-export interface CreateExerciseRequest extends Omit<TrainingExercise, 'id'> {
+export interface CreateExerciseRequest extends Omit<TrainingExercise, 'id' | 'userId'> {
   userId?: string;
 }
 
-export interface UpdateExerciseRequest extends TrainingExercise {
+export interface UpdateExerciseRequest extends Omit<TrainingExercise, 'userId'> {
   userId?: string;
 }
 

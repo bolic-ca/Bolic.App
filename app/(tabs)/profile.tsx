@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,7 +31,7 @@ const supportMenuItems: MenuItem[] = [
 
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
-  const { customColors, setCustomColors, presetColors } = useThemeCustomization();
+  const { customColors, setCustomColors, presetColors, preferences, setWeightUnit } = useThemeCustomization();
   const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
   const [storageStats, setStorageStats] = useState<{ totalKeys: number; totalSize: number } | null>(null);
@@ -296,6 +296,55 @@ export default function ProfilePage() {
                 </View>
               </View>
             )}
+
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+
+            {/* Weight Unit Toggle */}
+            <View style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="barbell" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Weight Unit</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Choose pounds or kilograms</Text>
+              </View>
+              <View style={styles.unitToggle}>
+                <TouchableOpacity
+                  style={[
+                    styles.unitOption,
+                    { backgroundColor: preferences.weightUnit === 'lbs' ? palette.accent : 'transparent' },
+                  ]}
+                  onPress={() => setWeightUnit('lbs')}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.unitOptionText,
+                      { color: preferences.weightUnit === 'lbs' ? '#FFF' : palette.textMuted },
+                    ]}
+                  >
+                    lbs
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.unitOption,
+                    { backgroundColor: preferences.weightUnit === 'kg' ? palette.accent : 'transparent' },
+                  ]}
+                  onPress={() => setWeightUnit('kg')}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.unitOptionText,
+                      { color: preferences.weightUnit === 'kg' ? '#FFF' : palette.textMuted },
+                    ]}
+                  >
+                    kg
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -538,6 +587,23 @@ const styles = StyleSheet.create({
   },
   colorCircleSelected: { borderWidth: 3, borderColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
   colorName: { fontSize: 10, fontWeight: '500', textAlign: 'center' },
+
+  // Unit Toggle
+  unitToggle: {
+    flexDirection: 'row',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(113, 113, 122, 0.3)',
+  },
+  unitOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  unitOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 
   // Storage Stats
   storageStatsCard: {

@@ -32,14 +32,41 @@ export interface SessionExercise {
 }
 
 /**
+ * RIR (Reps In Reserve) value
+ * - number: standard RIR (0-5+)
+ * - 'F': Failure (went to absolute failure)
+ * - 'P': Partials (went beyond failure with partial reps)
+ */
+export type RirValue = number | 'F' | 'P';
+
+/**
  * Set within a session
  */
 export interface SessionSet {
   weight: number;
   reps: number;
-  rir?: number;
+  rir?: RirValue;
   rpe?: number;
+  notes?: string;
   completedAt: string;
+}
+
+/**
+ * Format RIR value for display
+ */
+export function formatRir(rir: RirValue): string {
+  if (rir === 'F') return 'Failure';
+  if (rir === 'P') return 'Partials';
+  return String(rir);
+}
+
+/**
+ * Format RIR value for short display
+ */
+export function formatRirShort(rir: RirValue): string {
+  if (rir === 'F') return 'F';
+  if (rir === 'P') return 'P';
+  return String(rir);
 }
 
 /**
@@ -170,4 +197,28 @@ export async function getSessionHistory(
   return sessions
     .sort((a, b) => new Date(b.data.startedAt).getTime() - new Date(a.data.startedAt).getTime())
     .slice(0, limit);
+}
+
+/**
+ * Delete a session
+ * @param userId - User ID
+ * @param sessionId - Session ID
+ * @param sessionDate - Date string of the session (to locate month partition)
+ */
+export async function deleteSession(
+  userId: string,
+  sessionId: string,
+  sessionDate: string
+): Promise<void> {
+  const date = new Date(sessionDate);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  const sessions = await getSessionsByMonth(userId, year, month);
+  const updatedSessions = sessions.filter(s => s.id !== sessionId);
+
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+  const key = getUserKey(userId, `${USER_DATA_KEYS.SESSIONS_PREFIX}${monthKey}`);
+  
+  await storageClient.set(key, updatedSessions);
 }

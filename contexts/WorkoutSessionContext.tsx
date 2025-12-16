@@ -23,7 +23,9 @@ interface WorkoutSessionContextType {
   loading: boolean;
   error: Error | null;
   startSession: (programId: string, trainingDayId: string, name?: string) => Promise<void>;
-  addSet: (exerciseId: string, exerciseName: string, set: SessionSet) => Promise<void>;
+  addSet: (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>) => Promise<void>;
+  updateSet: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => Promise<void>;
+  deleteSet: (exerciseId: string, setIndex: number) => Promise<void>;
   completeSession: (notes?: string) => Promise<void>;
   cancelSession: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -110,7 +112,7 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
     }
   }, [userId]);
 
-  const addSet = useCallback(async (exerciseId: string, exerciseName: string, set: SessionSet): Promise<void> => {
+  const addSet = useCallback(async (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>): Promise<void> => {
     if (!session) {
       throw new Error('No active session');
     }
@@ -120,26 +122,40 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const updatedSession = { ...session };
+      // Deep copy exercises array to ensure React detects changes
+      const updatedExercises = session.exercises.map(ex => ({
+        ...ex,
+        sets: [...ex.sets],
+      }));
 
       // Find or create exercise in session
-      let exercise = updatedSession.exercises.find(ex => ex.exerciseId === exerciseId);
-      if (!exercise) {
-        exercise = {
+      let exerciseIndex = updatedExercises.findIndex(ex => ex.exerciseId === exerciseId);
+      if (exerciseIndex === -1) {
+        updatedExercises.push({
           exerciseId,
           exerciseName,
           sets: [],
-        };
-        updatedSession.exercises.push(exercise);
+        });
+        exerciseIndex = updatedExercises.length - 1;
       }
 
-      // Add set
-      exercise.sets.push({
-        ...set,
-        completedAt: getCurrentTimestamp(),
-      });
+      // Add set to the exercise
+      updatedExercises[exerciseIndex] = {
+        ...updatedExercises[exerciseIndex],
+        sets: [
+          ...updatedExercises[exerciseIndex].sets,
+          {
+            ...set,
+            completedAt: getCurrentTimestamp(),
+          },
+        ],
+      };
 
-      updatedSession.completedAt = null; // Still in progress
+      const updatedSession: WorkoutSession = {
+        ...session,
+        exercises: updatedExercises,
+        completedAt: null, // Still in progress
+      };
 
       const sessionItem: StorageItem<WorkoutSession> = {
         id: session.id,
@@ -153,6 +169,121 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
       setSession(updatedSession);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to add set');
+      setError(error);
+      throw error;
+    }
+  }, [session, userId]);
+
+  const updateSet = useCallback(async (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>): Promise<void> => {
+    if (!session) {
+      throw new Error('No active session');
+    }
+
+    if (!userId) {
+      throw new Error('User not initialized');
+    }
+
+    try {
+      const exerciseIndex = session.exercises.findIndex(ex => ex.exerciseId === exerciseId);
+      if (exerciseIndex === -1) {
+        throw new Error('Exercise not found in session');
+      }
+
+      const exercise = session.exercises[exerciseIndex];
+      if (setIndex < 0 || setIndex >= exercise.sets.length) {
+        throw new Error('Invalid set index');
+      }
+
+      // Deep copy exercises array and update the specific set
+      const updatedExercises = session.exercises.map((ex, idx) => {
+        if (idx !== exerciseIndex) {
+          return { ...ex, sets: [...ex.sets] };
+        }
+        return {
+          ...ex,
+          sets: ex.sets.map((s, sIdx) =>
+            sIdx === setIndex
+              ? { ...set, completedAt: s.completedAt }
+              : { ...s }
+          ),
+        };
+      });
+
+      const updatedSession: WorkoutSession = {
+        ...session,
+        exercises: updatedExercises,
+      };
+
+      const sessionItem: StorageItem<WorkoutSession> = {
+        id: session.id,
+        userId,
+        data: updatedSession,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      };
+
+      await setActiveSession(userId, sessionItem);
+      setSession(updatedSession);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to update set');
+      setError(error);
+      throw error;
+    }
+  }, [session, userId]);
+
+  const deleteSet = useCallback(async (exerciseId: string, setIndex: number): Promise<void> => {
+    if (!session) {
+      throw new Error('No active session');
+    }
+
+    if (!userId) {
+      throw new Error('User not initialized');
+    }
+
+    try {
+      const exerciseIndex = session.exercises.findIndex(ex => ex.exerciseId === exerciseId);
+      if (exerciseIndex === -1) {
+        throw new Error('Exercise not found in session');
+      }
+
+      const exercise = session.exercises[exerciseIndex];
+      if (setIndex < 0 || setIndex >= exercise.sets.length) {
+        throw new Error('Invalid set index');
+      }
+
+      // Deep copy exercises array and remove the specific set
+      let updatedExercises = session.exercises.map((ex, idx) => {
+        if (idx !== exerciseIndex) {
+          return { ...ex, sets: [...ex.sets] };
+        }
+        return {
+          ...ex,
+          sets: ex.sets.filter((_, sIdx) => sIdx !== setIndex),
+        };
+      });
+
+      // If exercise has no more sets, remove it from the session
+      if (updatedExercises[exerciseIndex].sets.length === 0) {
+        updatedExercises = updatedExercises.filter((_, idx) => idx !== exerciseIndex);
+      }
+
+      const updatedSession: WorkoutSession = {
+        ...session,
+        exercises: updatedExercises,
+      };
+
+      const sessionItem: StorageItem<WorkoutSession> = {
+        id: session.id,
+        userId,
+        data: updatedSession,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      };
+
+      await setActiveSession(userId, sessionItem);
+      setSession(updatedSession);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to delete set');
       setError(error);
       throw error;
     }
@@ -215,6 +346,8 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
         error,
         startSession,
         addSet,
+        updateSet,
+        deleteSet,
         completeSession,
         cancelSession,
         refetch: fetchActiveSession,

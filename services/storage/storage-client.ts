@@ -74,7 +74,7 @@ export async function clear(): Promise<void> {
  * @param keys - Array of storage keys
  * @returns Record of key-value pairs
  */
-export async function multiGet(keys: string[]): Promise<Record<string, any>> {
+export async function multiGet(keys: readonly string[]): Promise<Record<string, any>> {
   try {
     const results = await AsyncStorage.multiGet(keys);
     const parsed: Record<string, any> = {};
