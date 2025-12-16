@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, useColorScheme, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { SessionSet } from '@/services/storage/session-storage';
 import { formatRirShort } from '@/services/storage/session-storage';
 
@@ -19,9 +20,10 @@ interface SetListItemProps {
 export default function SetListItem({ set, setNumber, onPress }: SetListItemProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { preferences } = useThemeCustomization();
 
-  // Build set text: "Set 1: 100 kg × 10 reps"
-  let setText = `Set ${setNumber}: ${set.weight} kg × ${set.reps} reps`;
+  // Build set text: "Set 1: 100 lbs × 10 reps"
+  let setText = `Set ${setNumber}: ${set.weight} ${preferences.weightUnit} × ${set.reps} reps`;
 
   // Add RIR if available
   if (set.rir !== undefined) {

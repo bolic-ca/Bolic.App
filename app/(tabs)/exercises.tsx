@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,7 +33,7 @@ const muscleCategoryColors: Record<string, string> = {
 export default function ExercisesPage() {
   const colorScheme = useColorScheme();
   const { customColors } = useThemeCustomization();
-  const { exercises, loading: exercisesLoading, refetch } = useExercises();
+  const { exercises, loading: exercisesLoading, refetch, deleteExercise } = useExercises();
   const isDark = colorScheme === 'dark';
 
   // Athletic color palette
@@ -61,6 +61,27 @@ export default function ExercisesPage() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
+
+  const handleDelete = (exerciseId: string, exerciseName: string) => {
+    Alert.alert(
+      'Delete Exercise',
+      `Are you sure you want to delete "${exerciseName}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteExercise(exerciseId);
+            } catch {
+              Alert.alert('Error', 'Failed to delete exercise');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
@@ -132,6 +153,7 @@ export default function ExercisesPage() {
                     key={exercise.id}
                     style={[styles.exerciseCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
                     activeOpacity={0.8}
+                    onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
                   >
                     <View style={[styles.exerciseIcon, { backgroundColor: `${categoryColor}15` }]}>
                       <Ionicons
@@ -166,8 +188,24 @@ export default function ExercisesPage() {
                         </View>
                       )}
                     </View>
-                    <View style={[styles.exerciseArrow, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
-                      <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+                    <View style={styles.exerciseActions}>
+                      <TouchableOpacity
+                        style={[styles.actionButton, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}
+                        onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="pencil" size={16} color={palette.accent} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleDelete(exercise.id!, exercise.name || 'this exercise');
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                      </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
                 );
@@ -287,7 +325,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   equipmentText: { fontSize: 11, fontWeight: '600' },
-  exerciseArrow: {
+  exerciseActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
     width: 32,
     height: 32,
     borderRadius: 8,

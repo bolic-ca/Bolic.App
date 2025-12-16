@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 import { formatRirShort } from '@/services/storage/session-storage';
 
@@ -17,6 +18,7 @@ interface PreviousPerformanceProps {
 export default function PreviousPerformance({ data }: PreviousPerformanceProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { preferences } = useThemeCustomization();
 
   if (!data) {
     return (
@@ -36,7 +38,7 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
       <View style={styles.statsContainer}>
         <View style={styles.stat}>
           <Text style={[styles.statValue, { color: theme.text }]}>{data.weight}</Text>
-          <Text style={[styles.statUnit, { color: theme.textSecondary }]}>kg</Text>
+          <Text style={[styles.statUnit, { color: theme.textSecondary }]}>{preferences.weightUnit}</Text>
         </View>
         <Text style={[styles.separator, { color: theme.textSecondary }]}>×</Text>
         <View style={styles.stat}>

@@ -2,22 +2,35 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_STORAGE_KEY = '@bolic_theme_customization';
+const PREFERENCES_STORAGE_KEY = '@bolic_preferences';
+
+export type WeightUnit = 'kg' | 'lbs';
 
 interface ThemeCustomization {
   primaryButton: string;
   primaryButtonText: string;
 }
 
+interface UserPreferences {
+  weightUnit: WeightUnit;
+}
+
 interface ThemeContextType {
   customColors: ThemeCustomization;
   setCustomColors: (colors: ThemeCustomization) => void;
   presetColors: { name: string; button: string; text: string }[];
+  preferences: UserPreferences;
+  setWeightUnit: (unit: WeightUnit) => void;
   isLoaded: boolean;
 }
 
 const defaultColors: ThemeCustomization = {
   primaryButton: '#F97316', // Vibrant orange (matching Athletic design)
   primaryButtonText: '#fff',
+};
+
+const defaultPreferences: UserPreferences = {
+  weightUnit: 'lbs',
 };
 
 export const presetColors = [
@@ -35,25 +48,35 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [customColors, setCustomColorsState] = useState<ThemeCustomization>(defaultColors);
+  const [preferences, setPreferencesState] = useState<UserPreferences>(defaultPreferences);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load saved colors on mount
+  // Load saved colors and preferences on mount
   useEffect(() => {
-    const loadSavedColors = async () => {
+    const loadSavedData = async () => {
       try {
-        const savedColors = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+        const [savedColors, savedPreferences] = await Promise.all([
+          AsyncStorage.getItem(THEME_STORAGE_KEY),
+          AsyncStorage.getItem(PREFERENCES_STORAGE_KEY),
+        ]);
+
         if (savedColors) {
           const parsed = JSON.parse(savedColors) as ThemeCustomization;
           setCustomColorsState(parsed);
         }
+
+        if (savedPreferences) {
+          const parsed = JSON.parse(savedPreferences) as UserPreferences;
+          setPreferencesState(parsed);
+        }
       } catch (error) {
-        console.error('Error loading theme colors:', error);
+        console.error('Error loading theme/preferences:', error);
       } finally {
         setIsLoaded(true);
       }
     };
 
-    loadSavedColors();
+    loadSavedData();
   }, []);
 
   // Save colors when they change
@@ -66,12 +89,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Save weight unit preference
+  const setWeightUnit = async (unit: WeightUnit) => {
+    try {
+      const newPreferences = { ...preferences, weightUnit: unit };
+      await AsyncStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(newPreferences));
+      setPreferencesState(newPreferences);
+    } catch (error) {
+      console.error('Error saving weight unit:', error);
+    }
+  };
+
   return (
     <ThemeContext.Provider
       value={{
         customColors,
         setCustomColors,
         presetColors,
+        preferences,
+        setWeightUnit,
         isLoaded,
       }}
     >

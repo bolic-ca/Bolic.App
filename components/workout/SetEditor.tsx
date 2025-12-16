@@ -60,7 +60,7 @@ export default function SetEditor({
 }: SetEditorProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -158,7 +158,7 @@ export default function SetEditor({
               <View style={styles.inputRow}>
                 <View style={styles.inputGroupLarge}>
                   <Text style={[styles.inputLabel, { color: theme.text }]}>
-                    Weight (kg) <Text style={styles.requiredStar}>*</Text>
+                    Weight ({preferences.weightUnit}) <Text style={styles.requiredStar}>*</Text>
                   </Text>
                   <TextInput
                     style={[
