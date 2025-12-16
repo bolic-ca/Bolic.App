@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
+import { formatRirShort } from '@/services/storage/session-storage';
 
 interface PreviousPerformanceProps {
   data: PreviousPerformanceData | null;
@@ -46,8 +47,10 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
           <>
             <Text style={[styles.separator, { color: theme.textSecondary }]}>·</Text>
             <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: theme.text }]}>{data.rir}</Text>
-              <Text style={[styles.statUnit, { color: theme.textSecondary }]}>RIR</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{formatRirShort(data.rir)}</Text>
+              <Text style={[styles.statUnit, { color: theme.textSecondary }]}>
+                {data.rir === 'F' || data.rir === 'P' ? '' : 'RIR'}
+              </Text>
             </View>
           </>
         )}

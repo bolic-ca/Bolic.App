@@ -14,12 +14,13 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStorage } from '@/contexts/StorageContext';
-import { 
-  WorkoutSession, 
-  SessionExercise, 
+import {
+  WorkoutSession,
+  SessionExercise,
   SessionSet,
-  saveSession, 
-  deleteSession 
+  saveSession,
+  deleteSession,
+  formatRirShort,
 } from '@/services/storage/session-storage';
 
 export default function SessionDetailModal() {
@@ -80,16 +81,32 @@ export default function SessionDetailModal() {
   const handleSetChange = (exerciseId: string, setIndex: number, field: keyof SessionSet, value: string) => {
     const updatedExercises = editedExercises.map(ex => {
       if (ex.exerciseId !== exerciseId) return ex;
-      
+
       const updatedSets = ex.sets.map((set, idx) => {
         if (idx !== setIndex) return set;
-        
-        // Handle numeric conversion
+
+        // Special handling for RIR field (can be number, 'F', or 'P')
+        if (field === 'rir') {
+          const upperValue = value.toUpperCase();
+          if (upperValue === 'F' || upperValue === 'P') {
+            return { ...set, rir: upperValue as 'F' | 'P' };
+          }
+          if (value === '') {
+            return { ...set, rir: undefined };
+          }
+          const numValue = parseInt(value, 10);
+          if (!isNaN(numValue) && numValue >= 0) {
+            return { ...set, rir: numValue };
+          }
+          return set; // Invalid input, don't change
+        }
+
+        // Handle numeric conversion for other fields
         const numValue = parseFloat(value);
         if (isNaN(numValue) && value !== '') return set; // Prevent non-numeric inputs
-        
+
         // For required fields (weight, reps), fallback to 0 if empty
-        // For optional fields (rir, rpe), allow undefined if empty
+        // For optional fields (rpe), allow undefined if empty
         let newValue: number | undefined = numValue;
         if (value === '') {
           if (field === 'weight' || field === 'reps') {
@@ -98,16 +115,16 @@ export default function SessionDetailModal() {
             newValue = undefined;
           }
         }
-        
+
         return {
           ...set,
           [field]: newValue
         };
       });
-      
+
       return { ...ex, sets: updatedSets };
     });
-    
+
     setEditedExercises(updatedExercises);
   };
 
@@ -440,9 +457,9 @@ function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange }: Exe
                   <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RIR</Text>
                   <TextInput
                     style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
-                    value={set.rir?.toString() ?? ''}
+                    value={set.rir !== undefined ? formatRirShort(set.rir) : ''}
                     onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rir', val)}
-                    keyboardType="numeric"
+                    autoCapitalize="characters"
                     placeholder="-"
                     placeholderTextColor={palette.textMuted}
                   />
@@ -468,7 +485,11 @@ function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange }: Exe
                 </Text>
                 {(set.rir !== undefined || set.rpe !== undefined) && (
                   <Text style={[styles.setMetrics, { color: palette.textMuted }]}>
-                    {set.rir !== undefined && `RIR ${set.rir}`}
+                    {set.rir !== undefined && (
+                      set.rir === 'F' ? 'Failure' :
+                      set.rir === 'P' ? 'Partials' :
+                      `RIR ${formatRirShort(set.rir)}`
+                    )}
                     {set.rir !== undefined && set.rpe !== undefined && ' · '}
                     {set.rpe !== undefined && `RPE ${set.rpe}`}
                   </Text>

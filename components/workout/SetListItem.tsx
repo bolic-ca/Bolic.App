@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, useColorScheme, Pressable } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import type { SessionSet } from '@/services/storage/session-storage';
+import { formatRirShort } from '@/services/storage/session-storage';
 
 interface SetListItemProps {
   set: SessionSet;
@@ -24,7 +25,15 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
 
   // Add RIR if available
   if (set.rir !== undefined) {
-    setText += ` (RIR ${set.rir})`;
+    const rirDisplay = formatRirShort(set.rir);
+    // For F and P, display the full word
+    if (set.rir === 'F') {
+      setText += ' (Failure)';
+    } else if (set.rir === 'P') {
+      setText += ' (Partials)';
+    } else {
+      setText += ` (RIR ${rirDisplay})`;
+    }
   }
 
   const isEditable = !!onPress;

@@ -32,15 +32,41 @@ export interface SessionExercise {
 }
 
 /**
+ * RIR (Reps In Reserve) value
+ * - number: standard RIR (0-5+)
+ * - 'F': Failure (went to absolute failure)
+ * - 'P': Partials (went beyond failure with partial reps)
+ */
+export type RirValue = number | 'F' | 'P';
+
+/**
  * Set within a session
  */
 export interface SessionSet {
   weight: number;
   reps: number;
-  rir?: number;
+  rir?: RirValue;
   rpe?: number;
   notes?: string;
   completedAt: string;
+}
+
+/**
+ * Format RIR value for display
+ */
+export function formatRir(rir: RirValue): string {
+  if (rir === 'F') return 'Failure';
+  if (rir === 'P') return 'Partials';
+  return String(rir);
+}
+
+/**
+ * Format RIR value for short display
+ */
+export function formatRirShort(rir: RirValue): string {
+  if (rir === 'F') return 'F';
+  if (rir === 'P') return 'P';
+  return String(rir);
 }
 
 /**

@@ -3,7 +3,7 @@
  * Helper functions for workout session management
  */
 
-import type { WorkoutSession, SessionExercise } from '@/services/storage/session-storage';
+import type { WorkoutSession, SessionExercise, RirValue } from '@/services/storage/session-storage';
 import type { TrainingDay } from '@/types/training';
 
 /**
@@ -12,7 +12,7 @@ import type { TrainingDay } from '@/types/training';
 export interface PreviousPerformance {
   weight: number;
   reps: number;
-  rir?: number;
+  rir?: RirValue;
   rpe?: number;
 }
 

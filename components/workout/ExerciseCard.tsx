@@ -177,6 +177,11 @@ export default function ExerciseCard({
             {previousPerformance && !isExpanded && (
               <Text style={[styles.prevHint, { color: theme.textSecondary }]}>
                 {' · '}Last: {previousPerformance.weight}kg × {previousPerformance.reps}
+                {previousPerformance.rir !== undefined && (
+                  previousPerformance.rir === 'F' ? ' (F)' :
+                  previousPerformance.rir === 'P' ? ' (P)' :
+                  ` @${previousPerformance.rir}RIR`
+                )}
               </Text>
             )}
           </Text>

@@ -21,7 +21,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import type { SessionSet } from '@/services/storage/session-storage';
+import type { SessionSet, RirValue } from '@/services/storage/session-storage';
+
+// RIR quick-select options
+const RIR_OPTIONS: { value: RirValue | null; label: string; description?: string }[] = [
+  { value: null, label: '-', description: 'None' },
+  { value: 3, label: '3' },
+  { value: 2, label: '2' },
+  { value: 1, label: '1' },
+  { value: 0, label: '0' },
+  { value: 'F', label: 'F', description: 'Failure' },
+  { value: 'P', label: 'P', description: 'Partials' },
+];
 
 interface SetEditorProps {
   visible: boolean;
@@ -33,7 +44,7 @@ interface SetEditorProps {
   initialData?: {
     weight?: number;
     reps?: number;
-    rir?: number;
+    rir?: RirValue;
     notes?: string;
   };
 }
@@ -53,7 +64,7 @@ export default function SetEditor({
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
-  const [rir, setRir] = useState('');
+  const [rir, setRir] = useState<RirValue | null>(null);
   const [notes, setNotes] = useState('');
 
   // Reset form when modal opens/closes or initial data changes
@@ -61,7 +72,7 @@ export default function SetEditor({
     if (visible) {
       setWeight(initialData?.weight?.toString() ?? '');
       setReps(initialData?.reps?.toString() ?? '');
-      setRir(initialData?.rir?.toString() ?? '');
+      setRir(initialData?.rir ?? null);
       setNotes(initialData?.notes ?? '');
     }
   }, [visible, initialData]);
@@ -85,11 +96,8 @@ export default function SetEditor({
       reps: repsNum,
     };
 
-    if (rir.trim() !== '') {
-      const rirNum = parseInt(rir, 10);
-      if (!isNaN(rirNum) && rirNum >= 0) {
-        setData.rir = rirNum;
-      }
+    if (rir !== null) {
+      setData.rir = rir;
     }
 
     if (notes.trim() !== '') {
@@ -187,20 +195,49 @@ export default function SetEditor({
               {/* RIR */}
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { color: theme.text }]}>
-                  RIR <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(optional)</Text>
+                  RIR <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(Reps in Reserve)</Text>
                 </Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder },
-                  ]}
-                  value={rir}
-                  onChangeText={setRir}
-                  keyboardType="number-pad"
-                  placeholder="Reps in reserve"
-                  placeholderTextColor={theme.textSecondary}
-                  selectTextOnFocus
-                />
+                <View style={styles.rirOptionsRow}>
+                  {RIR_OPTIONS.map((option) => {
+                    const isSelected = rir === option.value;
+                    const isSpecial = option.value === 'F' || option.value === 'P';
+                    return (
+                      <TouchableOpacity
+                        key={option.label}
+                        style={[
+                          styles.rirOption,
+                          {
+                            backgroundColor: isSelected
+                              ? (isSpecial ? (option.value === 'F' ? '#ff6b6b' : '#ffd93d') : customColors.primaryButton)
+                              : theme.card,
+                            borderColor: isSelected
+                              ? (isSpecial ? (option.value === 'F' ? '#ff6b6b' : '#ffd93d') : customColors.primaryButton)
+                              : theme.cardBorder,
+                          },
+                        ]}
+                        onPress={() => setRir(option.value)}
+                      >
+                        <Text
+                          style={[
+                            styles.rirOptionText,
+                            {
+                              color: isSelected
+                                ? (isSpecial && option.value === 'P' ? '#000' : '#fff')
+                                : theme.text,
+                            },
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <View style={styles.rirLegend}>
+                  <Text style={[styles.rirLegendText, { color: theme.textSecondary }]}>
+                    F = Failure · P = Partials (beyond failure)
+                  </Text>
+                </View>
               </View>
 
               {/* Notes */}
@@ -328,6 +365,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
     minHeight: 80,
+  },
+  rirOptionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  rirOption: {
+    minWidth: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  rirOptionText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  rirLegend: {
+    marginTop: 8,
+  },
+  rirLegendText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   modalActions: {
     flexDirection: 'row',
