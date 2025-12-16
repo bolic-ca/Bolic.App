@@ -497,7 +497,7 @@ export default function ProgramsPage() {
             {/* Simple Program */}
             <TouchableOpacity
               style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
-              onPress={() => router.push('/simple-program-wizard/index')}
+              onPress={() => router.push('/simple-program-wizard')}
               activeOpacity={0.8}
             >
               <View style={[styles.createProgramIcon, { backgroundColor: palette.accentGlow }]}>
