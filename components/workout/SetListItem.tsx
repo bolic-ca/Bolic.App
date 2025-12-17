@@ -10,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { SessionSet } from '@/services/storage/session-storage';
 import { formatRirShort } from '@/services/storage/session-storage';
+import { displayWeight } from '@/utils/weight';
 
 interface SetListItemProps {
   set: SessionSet;
@@ -23,7 +24,8 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
   const { preferences } = useThemeCustomization();
 
   // Build set text: "Set 1: 100 lbs × 10 reps"
-  let setText = `Set ${setNumber}: ${set.weight} ${preferences.weightUnit} × ${set.reps} reps`;
+  const weightDisplay = displayWeight(set.weight, preferences.weightUnit);
+  let setText = `Set ${setNumber}: ${weightDisplay} ${preferences.weightUnit} × ${set.reps} reps`;
 
   // Add RIR if available
   if (set.rir !== undefined) {

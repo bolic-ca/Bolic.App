@@ -6,10 +6,11 @@ import { router } from 'expo-router';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
+import { displayWeight } from '@/utils/weight';
 
 export default function StatsPage() {
   const colorScheme = useColorScheme();
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
   const { stats: userStats, prs, loading: statsLoading } = useStats();
   const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
   const isDark = colorScheme === 'dark';
@@ -38,10 +39,11 @@ export default function StatsPage() {
   };
 
   // Build stat cards from real data
+  const totalVolumeConverted = displayWeight(userStats?.totalVolume || 0, preferences.weightUnit);
   const stats = [
     { title: 'Total Workouts', value: userStats?.totalWorkouts || 0, icon: 'fitness' as const, color: '#4ecdc4' },
     { title: 'Current Streak', value: `${userStats?.currentStreak || 0}`, suffix: 'days', icon: 'flame' as const, color: '#ff6b6b' },
-    { title: 'Total Volume', value: `${((userStats?.totalVolume || 0) / 1000).toFixed(1)}k`, suffix: 'kg', icon: 'barbell' as const, color: '#ffd93d' },
+    { title: 'Total Volume', value: `${(totalVolumeConverted / 1000).toFixed(1)}k`, suffix: preferences.weightUnit, icon: 'barbell' as const, color: '#ffd93d' },
     { title: 'Active Time', value: userStats?.activeTime || 0, suffix: 'hrs', icon: 'time' as const, color: '#a29bfe' },
   ];
 
@@ -196,7 +198,7 @@ export default function StatsPage() {
                         </Text>
                       </View>
                       <View style={styles.historyStats}>
-                        <Text style={[styles.historyValue, { color: palette.text }]}>{(volume / 1000).toFixed(1)}k kg</Text>
+                        <Text style={[styles.historyValue, { color: palette.text }]}>{(displayWeight(volume, preferences.weightUnit) / 1000).toFixed(1)}k {preferences.weightUnit}</Text>
                         <Text style={[styles.historyLabel, { color: palette.textMuted }]}>{duration}</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
@@ -248,8 +250,8 @@ export default function StatsPage() {
                       </Text>
                     </View>
                     <View style={styles.prValue}>
-                      <Text style={[styles.prWeight, { color: palette.accent }]}>{record.weight}</Text>
-                      <Text style={[styles.prReps, { color: palette.textMuted }]}>kg × {record.reps}</Text>
+                      <Text style={[styles.prWeight, { color: palette.accent }]}>{displayWeight(record.weight, preferences.weightUnit)}</Text>
+                      <Text style={[styles.prReps, { color: palette.textMuted }]}>{preferences.weightUnit} × {record.reps}</Text>
                     </View>
                   </View>
                 ))}

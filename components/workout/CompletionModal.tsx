@@ -21,6 +21,7 @@ import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { WorkoutSession } from '@/services/storage/session-storage';
 import { calculateWorkoutDuration, formatDuration } from '@/utils/workout-helpers';
+import { displayWeight, type WeightUnit } from '@/utils/weight';
 
 interface CompletionModalProps {
   visible: boolean;
@@ -29,11 +30,12 @@ interface CompletionModalProps {
   session: WorkoutSession;
 }
 
-function formatVolume(volume: number): string {
-  if (volume >= 1000) {
-    return `${(volume / 1000).toFixed(1)}k kg`;
+function formatVolume(volumeInKg: number, weightUnit: WeightUnit): string {
+  const converted = displayWeight(volumeInKg, weightUnit);
+  if (converted >= 1000) {
+    return `${(converted / 1000).toFixed(1)}k ${weightUnit}`;
   }
-  return `${volume.toLocaleString()} kg`;
+  return `${converted.toLocaleString()} ${weightUnit}`;
 }
 
 export default function CompletionModal({
@@ -44,7 +46,7 @@ export default function CompletionModal({
 }: CompletionModalProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
   const [notes, setNotes] = useState('');
 
   // Calculate workout statistics
@@ -118,7 +120,7 @@ export default function CompletionModal({
               <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                 <Ionicons name="barbell-outline" size={22} color={customColors.primaryButton} />
                 <Text style={[styles.statValue, { color: theme.text }]}>
-                  {formatVolume(totalVolume)}
+                  {formatVolume(totalVolume, preferences.weightUnit)}
                 </Text>
                 <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Volume</Text>
               </View>

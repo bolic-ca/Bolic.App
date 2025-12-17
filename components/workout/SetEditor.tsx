@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { SessionSet, RirValue } from '@/services/storage/session-storage';
+import { displayWeight, toStorageUnit } from '@/utils/weight';
 
 // RIR quick-select options
 const RIR_OPTIONS: { value: RirValue | null; label: string; description?: string }[] = [
@@ -70,12 +71,16 @@ export default function SetEditor({
   // Reset form when modal opens/closes or initial data changes
   useEffect(() => {
     if (visible) {
-      setWeight(initialData?.weight?.toString() ?? '');
+      // Convert weight from storage unit (kg) to display unit
+      const displayWeightValue = initialData?.weight
+        ? displayWeight(initialData.weight, preferences.weightUnit).toString()
+        : '';
+      setWeight(displayWeightValue);
       setReps(initialData?.reps?.toString() ?? '');
       setRir(initialData?.rir ?? null);
       setNotes(initialData?.notes ?? '');
     }
-  }, [visible, initialData]);
+  }, [visible, initialData, preferences.weightUnit]);
 
   const handleSubmit = () => {
     const weightNum = parseFloat(weight);
@@ -91,8 +96,11 @@ export default function SetEditor({
       return;
     }
 
+    // Convert weight from display unit to storage unit (kg)
+    const weightInStorageUnit = toStorageUnit(weightNum, preferences.weightUnit);
+
     const setData: Omit<SessionSet, 'completedAt'> = {
-      weight: weightNum,
+      weight: weightInStorageUnit,
       reps: repsNum,
     };
 
