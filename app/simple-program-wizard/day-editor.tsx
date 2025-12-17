@@ -176,7 +176,7 @@ export default function DayEditorScreen() {
             <View style={styles.exercisesList}>
               {day.exercises.map((exercise: TrainingExercise, index: number) => (
                 <View
-                  key={index}
+                  key={exercise.id || `exercise-${index}`}
                   style={[styles.exerciseCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
                 >
                   <View style={[styles.exerciseNumber, { backgroundColor: palette.inputBg }]}>

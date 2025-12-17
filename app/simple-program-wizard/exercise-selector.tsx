@@ -91,10 +91,10 @@ export default function ExerciseSelectorScreen() {
   const handleSelectExercise = (exercise: TrainingExercise) => {
     if (dayIndex === null) return;
 
-    // Create a copy of the exercise for this training day
+    // Create a copy of the exercise for this training day with a unique ID
     const exerciseCopy: TrainingExercise = {
       ...exercise,
-      id: undefined,
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       trainingDayIds: [],
     };
 

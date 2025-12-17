@@ -54,7 +54,7 @@ export default function ExerciseFormScreen() {
     accentGlow: isDark ? hexToRgba(accent, 0.15) : hexToRgba(accent, 0.08),
   };
   const { userId } = useStorage();
-  const { createExercise, updateExercise, getExerciseById } = useExercises();
+  const { createExercise, updateExercise, allExercises, loading: exercisesLoading } = useExercises();
   const { programs, updateProgram } = usePrograms();
   const params = useLocalSearchParams<{ trainingDayId?: string; programId?: string; exerciseId?: string }>();
 
@@ -78,10 +78,10 @@ export default function ExerciseFormScreen() {
 
   const availableSubcategories = muscleCategory && muscleSubcategories[muscleCategory] || [];
 
-  // Load existing exercise data in edit mode
+  // Load existing exercise data in edit mode (wait for exercises to load first)
   useEffect(() => {
-    if (isEditMode && params.exerciseId) {
-      const existingExercise = getExerciseById(params.exerciseId);
+    if (isEditMode && params.exerciseId && !exercisesLoading && allExercises.length > 0) {
+      const existingExercise = allExercises.find(ex => ex.id === params.exerciseId);
       if (existingExercise) {
         setName(existingExercise.name || '');
         setMuscleCategory(existingExercise.muscleCategory || '');
@@ -93,7 +93,7 @@ export default function ExerciseFormScreen() {
         setNotes(existingExercise.notes || '');
       }
     }
-  }, [isEditMode, params.exerciseId, getExerciseById]);
+  }, [isEditMode, params.exerciseId, exercisesLoading, allExercises]);
 
   const handleSubmit = async () => {
     // Validation
@@ -117,7 +117,7 @@ export default function ExerciseFormScreen() {
     try {
       if (isEditMode && params.exerciseId) {
         // Update existing exercise
-        const existingExercise = getExerciseById(params.exerciseId);
+        const existingExercise = allExercises.find(ex => ex.id === params.exerciseId);
         await updateExercise({
           id: params.exerciseId,
           userId,
@@ -234,6 +234,30 @@ export default function ExerciseFormScreen() {
       setLoading(false);
     }
   };
+
+  // Show loading state when loading exercise data in edit mode
+  if (isEditMode && exercisesLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
+        <View style={[styles.header, { borderBottomColor: palette.cardBorder }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+            <View style={[styles.closeButtonInner, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+              <Ionicons name="close" size={22} color={palette.text} />
+            </View>
+          </TouchableOpacity>
+          <View>
+            <Text style={[styles.headerLabel, { color: palette.textMuted }]}>EDIT</Text>
+            <Text style={[styles.headerTitle, { color: palette.text }]}>Edit Exercise</Text>
+          </View>
+          <View style={styles.closeButton} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={palette.accent} />
+          <Text style={[styles.loadingText, { color: palette.textMuted }]}>Loading exercise...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
@@ -580,5 +604,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
   },
 });

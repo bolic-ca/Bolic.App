@@ -267,8 +267,9 @@ Potential TODO:
 - start looking at auth
 
 Actual Todo:
-[ ] Exit out of simple program after creation, 
-  [ ] check periodized too  
+[x] Exit out of simple program after creation, 
+  [x] check periodized too  
 [ ] Fix editing exercises
 [ ] Fix categories spacing on add exercises
-[ ] No training days configured after creating
+[x] No training days configured after creating
+[ ] "Draft restored" showing on new creation in simple program

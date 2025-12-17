@@ -143,7 +143,7 @@ export default function PreviewScreen() {
                   <View style={[styles.exercisesList, { borderTopColor: palette.cardBorder }]}>
                     {day.exercises.map((exercise: TrainingExercise, exIndex: number) => (
                       <View
-                        key={exIndex}
+                        key={exercise.id || `exercise-${exIndex}`}
                         style={[
                           styles.exerciseRow,
                           exIndex > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }
