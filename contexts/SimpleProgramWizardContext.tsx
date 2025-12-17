@@ -264,12 +264,14 @@ export function SimpleProgramWizardProvider({ children }: { children: React.Reac
 
       // Convert wizard state to Program format
       const trainingDays: TrainingDay[] = state.trainingDays.map((day, index) => ({
+        id: generateId(),
         userId,
         name: day.name,
         description: day.description || undefined,
         number: index + 1,
         exercises: day.exercises.map(ex => ({
           ...ex,
+          id: ex.id || generateId(),
           userId,
           trainingDayIds: [],
         })),
