@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 16 },
 
   categoriesScroll: { maxHeight: 60 },
-  categoriesContainer: { paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
+  categoriesContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
   categoryChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   categoryChipText: { fontSize: 14, fontWeight: '600' },
 

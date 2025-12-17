@@ -86,7 +86,7 @@ const SimpleProgramWizardContext = createContext<SimpleProgramWizardContextType 
 export function SimpleProgramWizardProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { userId } = useStorage();
-  const { createProgram, updateProgram, programs } = usePrograms();
+  const { createProgram, updateProgram, programs, loading: programsLoading } = usePrograms();
 
   const [state, setState] = useState<SimpleProgramWizardState>(initialState);
   const [isSaving, setIsSaving] = useState(false);
@@ -321,6 +321,11 @@ export function SimpleProgramWizardProvider({ children }: { children: React.Reac
   }, []);
 
   const loadProgramForEdit = useCallback(async (programId: string) => {
+    // Don't try to load if programs are still loading
+    if (programsLoading) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       const program = programs.find(p => p.id === programId);
@@ -351,7 +356,7 @@ export function SimpleProgramWizardProvider({ children }: { children: React.Reac
     } finally {
       setIsLoading(false);
     }
-  }, [programs]);
+  }, [programs, programsLoading]);
 
   const value: SimpleProgramWizardContextType = {
     state,

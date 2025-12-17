@@ -110,7 +110,7 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasDraft, setHasDraft] = useState(false);
-  const { createProgram, updateProgram, programs } = usePrograms();
+  const { createProgram, updateProgram, programs, loading: programsLoading } = usePrograms();
   const { userId } = useStorage();
   const router = useRouter();
   const isInitialMount = useRef(true);
@@ -440,6 +440,11 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
 
   // Load program for editing
   const loadProgramForEdit = useCallback(async (programId: string) => {
+    // Don't try to load if programs are still loading
+    if (programsLoading) {
+      return;
+    }
+
     const program = programs.find(p => p.id === programId);
     if (!program || program.type !== 'periodized' || !program.mesocycles?.[0]) {
       Alert.alert('Error', 'Program not found or not periodized');
@@ -473,7 +478,7 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
       currentTrainingDayIndex: null,
       editProgramId: programId,
     });
-  }, [programs]);
+  }, [programs, programsLoading]);
 
   // Transform wizard state to Program
   const transformToProgram = useCallback((): Program => {

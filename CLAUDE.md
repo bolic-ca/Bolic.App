@@ -269,7 +269,11 @@ Potential TODO:
 Actual Todo:
 [x] Exit out of simple program after creation, 
   [x] check periodized too  
-[ ] Fix editing exercises
-[ ] Fix categories spacing on add exercises
+[x] Fix editing exercises
+[x] Fix categories spacing on add exercises
 [x] No training days configured after creating
 [ ] "Draft restored" showing on new creation in simple program
+[ ] Missing Muscles
+  - Ad(b)ductors 
+  - Glutes
+  - Arms
