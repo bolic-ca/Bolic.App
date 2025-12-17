@@ -557,6 +557,7 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
             text: 'OK',
             onPress: () => {
               setState(initialState);
+              router.dismissAll();
               router.replace('/(tabs)/programs');
             },
           },
@@ -569,6 +570,7 @@ export function ProgramWizardProvider({ children }: { children: React.ReactNode 
             text: 'OK',
             onPress: () => {
               setState(initialState);
+              router.dismissAll();
               router.replace('/(tabs)/programs');
             },
           },

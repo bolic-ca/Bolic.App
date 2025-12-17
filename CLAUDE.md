@@ -265,3 +265,10 @@ Potential TODO:
 - Mesocycle grouping - likely on the bench for a bit
 - Start looking at client server syncing
 - start looking at auth
+
+Actual Todo:
+[ ] Exit out of simple program after creation, 
+  [ ] check periodized too  
+[ ] Fix editing exercises
+[ ] Fix categories spacing on add exercises
+[ ] No training days configured after creating

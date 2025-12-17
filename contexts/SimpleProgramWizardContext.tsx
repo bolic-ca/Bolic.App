@@ -300,8 +300,9 @@ export function SimpleProgramWizardProvider({ children }: { children: React.Reac
       // Reset wizard
       setState(initialState);
 
-      // Navigate back
-      router.back();
+      // Navigate back to programs tab (exit wizard completely)
+      router.dismissAll();
+      router.replace('/(tabs)/programs');
 
       return true;
     } catch (err) {
