@@ -10,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 import { formatRirShort } from '@/services/storage/session-storage';
+import { displayWeight } from '@/utils/weight';
 
 interface PreviousPerformanceProps {
   data: PreviousPerformanceData | null;
@@ -37,7 +38,7 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
       <Text style={[styles.label, { color: theme.textSecondary }]}>Last:</Text>
       <View style={styles.statsContainer}>
         <View style={styles.stat}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{data.weight}</Text>
+          <Text style={[styles.statValue, { color: theme.text }]}>{displayWeight(data.weight, preferences.weightUnit)}</Text>
           <Text style={[styles.statUnit, { color: theme.textSecondary }]}>{preferences.weightUnit}</Text>
         </View>
         <Text style={[styles.separator, { color: theme.textSecondary }]}>×</Text>

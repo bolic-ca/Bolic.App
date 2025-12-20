@@ -265,3 +265,15 @@ Potential TODO:
 - Mesocycle grouping - likely on the bench for a bit
 - Start looking at client server syncing
 - start looking at auth
+
+Actual Todo:
+[x] Exit out of simple program after creation, 
+  [x] check periodized too  
+[x] Fix editing exercises
+[x] Fix categories spacing on add exercises
+[x] No training days configured after creating
+[ ] "Draft restored" showing on new creation in simple program
+[ ] Missing Muscles
+  - Ad(b)ductors 
+  - Glutes
+  - Arms

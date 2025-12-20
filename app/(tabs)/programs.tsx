@@ -105,7 +105,7 @@ export default function ProgramsPage() {
       });
     } else {
       router.push({
-        pathname: '/simple-program-wizard/index',
+        pathname: '/simple-program-wizard',
         params: { editProgramId: program.id }
       });
     }

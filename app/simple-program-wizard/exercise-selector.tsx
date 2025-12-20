@@ -91,10 +91,10 @@ export default function ExerciseSelectorScreen() {
   const handleSelectExercise = (exercise: TrainingExercise) => {
     if (dayIndex === null) return;
 
-    // Create a copy of the exercise for this training day
+    // Create a copy of the exercise for this training day with a unique ID
     const exerciseCopy: TrainingExercise = {
       ...exercise,
-      id: undefined,
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       trainingDayIds: [],
     };
 
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 16 },
 
   categoriesScroll: { maxHeight: 60 },
-  categoriesContainer: { paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
+  categoriesContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
   categoryChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   categoryChipText: { fontSize: 14, fontWeight: '600' },
 

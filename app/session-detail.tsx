@@ -22,11 +22,12 @@ import {
   deleteSession,
   formatRirShort,
 } from '@/services/storage/session-storage';
+import { displayWeight, toStorageUnit } from '@/utils/weight';
 
 export default function SessionDetailModal() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
   const { userId } = useStorage();
   const params = useLocalSearchParams();
 
@@ -114,6 +115,11 @@ export default function SessionDetailModal() {
           } else {
             newValue = undefined;
           }
+        }
+
+        // Convert weight from display unit to storage unit (kg)
+        if (field === 'weight' && newValue !== undefined) {
+          newValue = toStorageUnit(newValue, preferences.weightUnit);
         }
 
         return {
@@ -326,7 +332,7 @@ export default function SessionDetailModal() {
             <View style={[styles.statIconBg, { backgroundColor: 'rgba(255, 107, 107, 0.12)' }]}>
               <Ionicons name="barbell-outline" size={16} color="#ff6b6b" />
             </View>
-            <Text style={[styles.statBadgeText, { color: palette.text }]}>{totalVolume.toLocaleString()} kg</Text>
+            <Text style={[styles.statBadgeText, { color: palette.text }]}>{displayWeight(totalVolume, preferences.weightUnit).toLocaleString()} {preferences.weightUnit}</Text>
           </View>
         </View>
 
@@ -343,6 +349,7 @@ export default function SessionDetailModal() {
               isDark={isDark}
               isEditing={isEditing}
               onSetChange={handleSetChange}
+              weightUnit={preferences.weightUnit}
             />
           ))}
         </View>
@@ -408,9 +415,10 @@ interface ExerciseCardProps {
   isDark: boolean;
   isEditing?: boolean;
   onSetChange?: (exerciseId: string, setIndex: number, field: keyof SessionSet, value: string) => void;
+  weightUnit: 'lbs' | 'kg';
 }
 
-function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange }: ExerciseCardProps) {
+function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange, weightUnit }: ExerciseCardProps) {
   return (
     <View style={[styles.exerciseCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
       <View style={styles.exerciseHeader}>
@@ -431,13 +439,13 @@ function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange }: Exe
                 <View style={styles.editInputGroup}>
                   <TextInput
                     style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
-                    value={set.weight.toString()}
+                    value={displayWeight(set.weight, weightUnit).toString()}
                     onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'weight', val)}
                     keyboardType="numeric"
                     placeholder="0"
                     placeholderTextColor={palette.textMuted}
                   />
-                  <Text style={[styles.editUnit, { color: palette.textMuted }]}>kg</Text>
+                  <Text style={[styles.editUnit, { color: palette.textMuted }]}>{weightUnit}</Text>
                 </View>
                 <Text style={{ color: palette.textMuted }}>×</Text>
                 <View style={styles.editInputGroup}>
@@ -481,7 +489,7 @@ function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange }: Exe
             ) : (
               <>
                 <Text style={[styles.setDetails, { color: palette.text }]}>
-                  {set.weight} kg × {set.reps} reps
+                  {displayWeight(set.weight, weightUnit)} {weightUnit} × {set.reps} reps
                 </Text>
                 {(set.rir !== undefined || set.rpe !== undefined) && (
                   <Text style={[styles.setMetrics, { color: palette.textMuted }]}>

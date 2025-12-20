@@ -14,6 +14,7 @@ import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/wor
 import PreviousPerformance from './PreviousPerformance';
 import SetEditor from './SetEditor';
 import SetListItem from './SetListItem';
+import { displayWeight } from '@/utils/weight';
 
 interface ExerciseCardProps {
   exercise: TrainingExercise;
@@ -56,7 +57,7 @@ export default function ExerciseCard({
 }: ExerciseCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
   const [isExpanded, setIsExpanded] = useState(false);
   const [defaultWeight, setDefaultWeight] = useState<number | undefined>();
 
@@ -176,7 +177,7 @@ export default function ExerciseCard({
             {exercise.targetNumberOfSets ? `/${exercise.targetNumberOfSets}` : ''} sets
             {previousPerformance && !isExpanded && (
               <Text style={[styles.prevHint, { color: theme.textSecondary }]}>
-                {' · '}Last: {previousPerformance.weight}kg × {previousPerformance.reps}
+                {' · '}Last: {displayWeight(previousPerformance.weight, preferences.weightUnit)}{preferences.weightUnit} × {previousPerformance.reps}
                 {previousPerformance.rir !== undefined && (
                   previousPerformance.rir === 'F' ? ' (F)' :
                   previousPerformance.rir === 'P' ? ' (P)' :

@@ -7,6 +7,7 @@ import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStorage } from '@/contexts/StorageContext';
 import { getSessionsByMonth, WorkoutSession } from '@/services/storage/session-storage';
 import { StorageItem } from '@/types/storage';
+import { displayWeight } from '@/utils/weight';
 
 interface WeekGroup {
   weekLabel: string;
@@ -18,7 +19,7 @@ interface WeekGroup {
 export default function HistoryPage() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
   const { userId } = useStorage();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -214,8 +215,8 @@ export default function HistoryPage() {
                   </View>
                   <View style={[styles.monthStatDivider, { backgroundColor: palette.cardBorder }]} />
                   <View style={styles.monthStat}>
-                    <Text style={[styles.monthStatValue, { color: palette.text }]}>{(monthStats.totalVolume / 1000).toFixed(1)}k</Text>
-                    <Text style={[styles.monthStatLabel, { color: palette.textMuted }]}>kg</Text>
+                    <Text style={[styles.monthStatValue, { color: palette.text }]}>{(displayWeight(monthStats.totalVolume, preferences.weightUnit) / 1000).toFixed(1)}k</Text>
+                    <Text style={[styles.monthStatLabel, { color: palette.textMuted }]}>{preferences.weightUnit}</Text>
                   </View>
                 </View>
               </View>
@@ -229,7 +230,7 @@ export default function HistoryPage() {
                   <View style={styles.weekHeaderLeft}>
                     <Text style={[styles.weekLabel, { color: palette.text }]}>{group.weekLabel}</Text>
                     <Text style={[styles.weekMeta, { color: palette.textMuted }]}>
-                      {group.sessions.length} workout{group.sessions.length !== 1 ? 's' : ''} · {(group.totalVolume / 1000).toFixed(1)}k kg
+                      {group.sessions.length} workout{group.sessions.length !== 1 ? 's' : ''} · {(displayWeight(group.totalVolume, preferences.weightUnit) / 1000).toFixed(1)}k {preferences.weightUnit}
                     </Text>
                   </View>
                 </View>
