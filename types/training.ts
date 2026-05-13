@@ -8,11 +8,13 @@ export enum MuscleCategory {
   Quads = 'Quads',
   Glutes = 'Glutes',
   Hamstrings = 'Hamstrings',
+  Adductors = 'Adductors',
   Calves = 'Calves',
   Abs = 'Abs',
   Chest = 'Chest',
   Delts = 'Delts',
   Back = 'Back',
+  Arms = 'Arms',
 }
 
 export enum ChestSubcategory {
@@ -36,7 +38,13 @@ export enum BackSubcategory {
   LowerLats = 'Lower Lats',
 }
 
-export type MuscleSubcategory = ChestSubcategory | DeltsSubcategory | BackSubcategory;
+export enum ArmsSubcategory {
+  Biceps = 'Biceps',
+  Triceps = 'Triceps',
+  Forearms = 'Forearms',
+}
+
+export type MuscleSubcategory = ChestSubcategory | DeltsSubcategory | BackSubcategory | ArmsSubcategory;
 
 // Training Set
 export interface TrainingSet {

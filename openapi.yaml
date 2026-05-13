@@ -348,11 +348,13 @@ components:
             - Quads
             - Glutes
             - Hamstrings
+            - Adductors
             - Calves
             - Abs
             - Chest
             - Delts
             - Back
+            - Arms
         muscleSubcategory:
           type: string
           nullable: true
