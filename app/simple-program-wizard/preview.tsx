@@ -8,16 +8,7 @@ import { useSimpleProgramWizard } from '@/contexts/SimpleProgramWizardContext';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { TrainingExercise } from '@/types/training';
 
-const muscleCategoryColors: Record<string, string> = {
-  Chest: '#ff6b6b',
-  Delts: '#ffd93d',
-  Back: '#4ecdc4',
-  Quads: '#a29bfe',
-  Glutes: '#fd79a8',
-  Hamstrings: '#fdcb6e',
-  Calves: '#6c5ce7',
-  Abs: '#00b894',
-};
+import { muscleCategoryColors } from '@/constants/muscle-categories';
 
 export default function PreviewScreen() {
   const colorScheme = useColorScheme();

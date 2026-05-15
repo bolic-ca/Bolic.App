@@ -10,17 +10,7 @@ import { usePrograms } from '@/hooks/usePrograms';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
 import { loadTemplate, getTemplateInfo } from '@/services/storage/template-loader';
 import { useStorage } from '@/contexts/StorageContext';
-
-const muscleCategoryColors: Record<string, string> = {
-  Chest: '#ff6b6b',
-  Delts: '#ffd93d',
-  Back: '#4ecdc4',
-  Quads: '#a29bfe',
-  Glutes: '#fd79a8',
-  Hamstrings: '#fdcb6e',
-  Calves: '#6c5ce7',
-  Abs: '#00b894',
-};
+import { muscleCategoryColors } from '@/constants/muscle-categories';
 
 export default function ProgramsPage() {
   const colorScheme = useColorScheme();

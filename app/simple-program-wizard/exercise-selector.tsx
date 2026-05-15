@@ -15,18 +15,7 @@ import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useSimpleProgramWizard } from '@/contexts/SimpleProgramWizardContext';
 import { useExercises } from '@/hooks/useExercises';
 import { MuscleCategory, TrainingExercise } from '@/types/training';
-
-// Muscle category colors
-const muscleCategoryColors: Record<MuscleCategory, string> = {
-  [MuscleCategory.Chest]: '#EF4444',
-  [MuscleCategory.Back]: '#3B82F6',
-  [MuscleCategory.Delts]: '#F59E0B',
-  [MuscleCategory.Quads]: '#10B981',
-  [MuscleCategory.Hamstrings]: '#8B5CF6',
-  [MuscleCategory.Glutes]: '#EC4899',
-  [MuscleCategory.Calves]: '#06B6D4',
-  [MuscleCategory.Abs]: '#F97316',
-};
+import { muscleCategoryColorsTailwind as muscleCategoryColors } from '@/constants/muscle-categories';
 
 const muscleCategories = Object.values(MuscleCategory);
 

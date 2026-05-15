@@ -26,6 +26,7 @@ const muscleSubcategories: Record<string, string[]> = {
   Chest: ['Upper', 'Middle', 'Lower'],
   Delts: ['Front', 'Lateral', 'Rear'],
   Back: ['Upper Traps', 'Mid Traps', 'Lower Traps', 'Upper Lats', 'Mid Lats', 'Lower Lats'],
+  Arms: ['Biceps', 'Triceps', 'Forearms'],
 };
 
 const targetPositions = ['Lengthened', 'Shortened', 'Neutral'];
