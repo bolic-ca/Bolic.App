@@ -53,45 +53,14 @@ The app implements an active program system for workout management:
 ### Programs Page Layout (`app/(tabs)/programs.tsx`)
 The Programs tab displays content in the following order:
 1. **Active Program** - Shows the currently active program (or empty state if none selected)
-2. **Current Training Day** - Displays the next training day from the active program with exercises
-3. **All Programs** - User's programs excluding the active one, each with a "Set Active" button
-4. **Create Program** - Button to launch the program creation wizard
-5. **Program Templates** - Pre-built program templates that can be added to user's library
+2. **All Programs** - User's programs excluding the active one, each with a "Set Active" button
+3. **Create Program** - Button to launch the simple program wizard
 
 Key features:
-- Programs can be simple (rotating training days) or periodized (mesocycles/microcycles)
 - Each non-active program card shows a "Set Active" button (play icon)
 - Active program shows "Active" badge and no "Set Active" button
 - Delete button works on all programs including active
-- Expanding program cards shows full structure including training days and exercises
-
-### Program Creation Wizard (`app/program-wizard/`)
-Multi-step wizard for creating periodized training programs with the hierarchy:
-**Mesocycle → Microcycle (weeks) → Training Days → Exercises**
-
-**Wizard Screens**:
-- `index.tsx` - Step 1: Mesocycle info (name, description, goal, duration)
-- `microcycles.tsx` - Step 2: Manage weeks with volume/intensity targets
-- `training-days.tsx` - Step 3: Edit training day name and exercises
-- `exercise-selector.tsx` - Step 4: Select exercises from library or create new
-- `preview.tsx` - Step 5: Review structure and save program
-
-**State Management** (`contexts/ProgramWizardContext.tsx`):
-- `WizardState` - Holds mesocycle info, microcycles array, navigation indices
-- `WizardMicrocycle` - Week with tempId, weekNumber, name, volume/intensity targets, trainingDays
-- `WizardTrainingDay` - Day with tempId, name, description, exercises array
-- Actions: `setMesocycleInfo()`, `addMicrocycle()`, `addTrainingDay()`, `addExercise()`, etc.
-- `saveProgram()` - Transforms wizard state to Program type and saves via `usePrograms()`
-
-**Draft Persistence**:
-- Auto-saves wizard state to AsyncStorage on changes (debounced 500ms)
-- Auto-loads draft on wizard open with "Draft restored" banner
-- Close dialog offers "Save Draft" or "Discard" options
-- "Start Fresh" button to discard draft and begin new program
-- Draft cleared automatically after successful program creation
-- Storage key: `program_wizard_draft`
-
-**Entry Point**: "New Periodized Program" button in Programs tab → `router.push('/program-wizard')`
+- Expanding program cards shows training days and exercises
 
 ### Exercises Page Layout (`app/(tabs)/exercises.tsx`)
 Dedicated page for managing the exercise library:
@@ -211,11 +180,6 @@ The app uses `@react-native-async-storage/async-storage` for offline-first data 
 - Manages onboarding state
 - Provides `userId` and `isInitialized` to the app
 
-**Template Loader** (`services/storage/template-loader.ts`):
-- Load sample program templates into user storage
-- Allows users to explore pre-built programs
-- Functions: `loadTemplate()`, `loadAllTemplates()`, `getTemplateInfo()`
-
 **React Hooks** (`hooks/`):
 All hooks use the new storage system:
 - `usePrograms.ts` - Manage training programs (CRUD operations)
@@ -272,7 +236,6 @@ Actual Todo:
 [x] Fix editing exercises
 [x] Fix categories spacing on add exercises
 [x] No training days configured after creating
-[ ] "Draft restored" showing on new creation in simple program
 [ ] Missing Muscles
   - Ad(b)ductors 
   - Glutes
