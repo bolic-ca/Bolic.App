@@ -198,54 +198,6 @@ export default function SimpleProgramWizardIndex() {
           />
         </View>
 
-        {/* Schedule Type */}
-        <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: palette.text }]}>Schedule Type</Text>
-          <View style={styles.scheduleContainer}>
-            <TouchableOpacity
-              style={[
-                styles.scheduleOption,
-                { backgroundColor: palette.cardBg, borderColor: state.schedule === 'rotating' ? palette.accent : palette.cardBorder },
-                state.schedule === 'rotating' && styles.scheduleOptionActive,
-              ]}
-              onPress={() => setProgramInfo({ schedule: 'rotating' })}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.scheduleIconContainer, { backgroundColor: state.schedule === 'rotating' ? palette.accentGlow : 'transparent' }]}>
-                <Ionicons name="repeat" size={20} color={state.schedule === 'rotating' ? palette.accent : palette.textMuted} />
-              </View>
-              <View style={styles.scheduleTextContainer}>
-                <Text style={[styles.scheduleTitle, { color: palette.text }]}>Rotating</Text>
-                <Text style={[styles.scheduleDescription, { color: palette.textMuted }]}>
-                  Days repeat in order
-                </Text>
-              </View>
-              {state.schedule === 'rotating' && <Ionicons name="checkmark-circle" size={20} color={palette.accent} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.scheduleOption,
-                { backgroundColor: palette.cardBg, borderColor: state.schedule === 'weekly' ? palette.accent : palette.cardBorder },
-                state.schedule === 'weekly' && styles.scheduleOptionActive,
-              ]}
-              onPress={() => setProgramInfo({ schedule: 'weekly' })}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.scheduleIconContainer, { backgroundColor: state.schedule === 'weekly' ? palette.accentGlow : 'transparent' }]}>
-                <Ionicons name="calendar" size={20} color={state.schedule === 'weekly' ? palette.accent : palette.textMuted} />
-              </View>
-              <View style={styles.scheduleTextContainer}>
-                <Text style={[styles.scheduleTitle, { color: palette.text }]}>Weekly</Text>
-                <Text style={[styles.scheduleDescription, { color: palette.textMuted }]}>
-                  Specific days each week
-                </Text>
-              </View>
-              {state.schedule === 'weekly' && <Ionicons name="checkmark-circle" size={20} color={palette.accent} />}
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Info Card */}
         <View style={[styles.infoCard, { backgroundColor: palette.accentGlow, borderColor: hexToRgba(palette.accent, 0.3) }]}>
           <View style={styles.infoCardHeader}>
@@ -402,38 +354,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     minHeight: 100,
-  },
-  scheduleContainer: {
-    gap: 12,
-  },
-  scheduleOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    gap: 12,
-  },
-  scheduleOptionActive: {
-    borderWidth: 2,
-  },
-  scheduleIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scheduleTextContainer: {
-    flex: 1,
-  },
-  scheduleTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  scheduleDescription: {
-    fontSize: 13,
   },
   infoCard: {
     borderRadius: 14,
