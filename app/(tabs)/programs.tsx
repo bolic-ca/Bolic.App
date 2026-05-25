@@ -8,22 +8,15 @@ import type { TrainingExercise, Program } from '@/types/training';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { usePrograms } from '@/hooks/usePrograms';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
-import { loadTemplate, getTemplateInfo } from '@/services/storage/template-loader';
-import { useStorage } from '@/contexts/StorageContext';
 import { muscleCategoryColors } from '@/constants/muscle-categories';
 
 export default function ProgramsPage() {
   const colorScheme = useColorScheme();
   const { customColors } = useThemeCustomization();
-  const { userId } = useStorage();
   const { programs, loading, error, deleteProgram, refetch: refetchPrograms } = usePrograms();
   const { program: activeProgram, setActive, clearActive, refetch: refetchActiveProgram } = useActiveProgram();
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
-  const [expandedMeso, setExpandedMeso] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [loadingTemplate, setLoadingTemplate] = useState(false);
-
-  const templates = getTemplateInfo();
   const isDark = colorScheme === 'dark';
 
   // Athletic color palette
@@ -61,20 +54,6 @@ export default function ProgramsPage() {
     }, [])
   );
 
-  const handleAddTemplate = async (templateIndex: number) => {
-    try {
-      setLoadingTemplate(true);
-      await loadTemplate(userId, templateIndex);
-      await refetchPrograms();
-      Alert.alert('Success', 'Template program added!');
-    } catch (err) {
-      Alert.alert('Error', 'Failed to add template program');
-      console.error('Error adding template:', err);
-    } finally {
-      setLoadingTemplate(false);
-    }
-  };
-
   const handleSetActiveProgram = async (program: Program) => {
     try {
       await setActive(program.id);
@@ -88,17 +67,10 @@ export default function ProgramsPage() {
   };
 
   const handleEditProgram = (program: Program) => {
-    if (program.type === 'periodized') {
-      router.push({
-        pathname: '/program-wizard',
-        params: { editProgramId: program.id }
-      });
-    } else {
-      router.push({
-        pathname: '/simple-program-wizard',
-        params: { editProgramId: program.id }
-      });
-    }
+    router.push({
+      pathname: '/simple-program-wizard',
+      params: { editProgramId: program.id }
+    });
   };
 
   const handleDeleteProgram = async (program: Program) => {
@@ -130,7 +102,6 @@ export default function ProgramsPage() {
 
   const renderProgramCard = (program: Program, isActive: boolean = false) => {
     const isExpanded = expandedProgram === program.id;
-    const isSimple = program.type === 'simple';
 
     return (
       <TouchableOpacity
@@ -145,7 +116,7 @@ export default function ProgramsPage() {
       >
         <View style={styles.programHeader}>
           <View style={[styles.programIconContainer, { backgroundColor: palette.accentGlow }]}>
-            <Ionicons name={isSimple ? 'repeat' : 'calendar'} size={24} color={palette.accent} />
+            <Ionicons name="repeat" size={24} color={palette.accent} />
           </View>
           <View style={styles.programInfo}>
             <View style={styles.programTitleRow}>
@@ -159,15 +130,8 @@ export default function ProgramsPage() {
               )}
             </View>
             <View style={styles.programMeta}>
-              <View style={[styles.typeBadge, { backgroundColor: isSimple ? 'rgba(78, 205, 196, 0.12)' : 'rgba(162, 155, 254, 0.12)' }]}>
-                <Text style={[styles.typeBadgeText, { color: isSimple ? '#4ecdc4' : '#a29bfe' }]}>
-                  {isSimple ? 'Simple' : 'Periodized'}
-                </Text>
-              </View>
               <Text style={[styles.programDays, { color: palette.textMuted }]}>
-                {isSimple
-                  ? `${program.trainingDays?.length || 0} days`
-                  : `${program.mesocycles?.length || 0} phases`}
+                {program.trainingDays?.length || 0} days
               </Text>
             </View>
           </View>
@@ -204,216 +168,93 @@ export default function ProgramsPage() {
               </TouchableOpacity>
             </View>
 
-            {isSimple ? (
-              <View style={styles.trainingDaysList}>
-                {program.trainingDays?.map((day, index) => {
-                  const isDayExpanded = expandedDay === day.id;
-                  return (
-                    <TouchableOpacity
-                      key={day.id}
-                      style={[styles.dayCard, { backgroundColor: isDark ? '#1F1F23' : '#F9F9F8' }]}
-                      onPress={() => setExpandedDay(isDayExpanded ? null : day.id!)}
-                      activeOpacity={0.8}
-                    >
-                      <View style={styles.dayHeader}>
-                        <Text style={[styles.dayNumber, { color: palette.textMuted }]}>Day {index + 1}</Text>
-                        <View style={styles.dayHeaderRight}>
-                          <Text style={[styles.dayExercises, { color: palette.textMuted }]}>
-                            {day.exercises?.length || 0} exercises
-                          </Text>
-                          <Ionicons
-                            name={isDayExpanded ? 'chevron-up' : 'chevron-down'}
-                            size={16}
-                            color={palette.textMuted}
-                          />
-                        </View>
-                      </View>
-                      <Text style={[styles.dayName, { color: palette.text }]}>{day.name}</Text>
-
-                      {isDayExpanded && day.exercises && day.exercises.length > 0 && (
-                        <View style={[styles.dayExercisesList, { borderTopColor: palette.cardBorder }]}>
-                          {day.exercises.map((exercise: TrainingExercise, exIndex: number) => (
-                            <View
-                              key={exercise.id || exIndex}
-                              style={[
-                                styles.dayExerciseRow,
-                                exIndex > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }
-                              ]}
-                            >
-                              <View style={[styles.dayExerciseNumber, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
-                                <Text style={[styles.dayExerciseNumberText, { color: palette.textMuted }]}>{exIndex + 1}</Text>
-                              </View>
-                              <View style={styles.dayExerciseContent}>
-                                <Text style={[styles.dayExerciseName, { color: palette.text }]} numberOfLines={1}>
-                                  {exercise.name}
-                                </Text>
-                                <View style={styles.dayExerciseDetails}>
-                                  {exercise.targetNumberOfSets && (
-                                    <View style={[styles.detailBadge, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
-                                      <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
-                                        {exercise.targetNumberOfSets} sets
-                                      </Text>
-                                    </View>
-                                  )}
-                                  {exercise.targetRepetitions && (
-                                    <View style={[styles.detailBadge, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
-                                      <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
-                                        {exercise.targetRepetitions} reps
-                                      </Text>
-                                    </View>
-                                  )}
-                                  {exercise.targetRepetitionsInReserve && (
-                                    <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
-                                      <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
-                                        {exercise.targetRepetitionsInReserve} RIR
-                                      </Text>
-                                    </View>
-                                  )}
-                                </View>
-                                <View style={styles.dayExerciseMeta}>
-                                  {exercise.muscleCategory && (
-                                    <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
-                                      {exercise.muscleCategory}
-                                      {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
-                                    </Text>
-                                  )}
-                                  {exercise.equipment && (
-                                    <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
-                                      {exercise.equipment}
-                                    </Text>
-                                  )}
-                                </View>
-                              </View>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-              <View style={styles.mesocyclesList}>
-                {program.mesocycles?.map((meso, mesoIndex) => (
+            <View style={styles.trainingDaysList}>
+              {program.trainingDays?.map((day, index) => {
+                const isDayExpanded = expandedDay === day.id;
+                return (
                   <TouchableOpacity
-                    key={meso.id}
-                    style={[styles.mesoCard, { backgroundColor: isDark ? '#1F1F23' : '#F9F9F8' }]}
-                    onPress={() => setExpandedMeso(expandedMeso === meso.id ? null : meso.id)}
+                    key={day.id}
+                    style={[styles.dayCard, { backgroundColor: isDark ? '#1F1F23' : '#F9F9F8' }]}
+                    onPress={() => setExpandedDay(isDayExpanded ? null : day.id!)}
                     activeOpacity={0.8}
                   >
-                    <View style={styles.mesoHeader}>
-                      <View>
-                        <Text style={[styles.mesoPhase, { color: palette.textMuted }]}>Phase {mesoIndex + 1}</Text>
-                        <Text style={[styles.mesoName, { color: palette.text }]}>{meso.name}</Text>
+                    <View style={styles.dayHeader}>
+                      <Text style={[styles.dayNumber, { color: palette.textMuted }]}>Day {index + 1}</Text>
+                      <View style={styles.dayHeaderRight}>
+                        <Text style={[styles.dayExercises, { color: palette.textMuted }]}>
+                          {day.exercises?.length || 0} exercises
+                        </Text>
+                        <Ionicons
+                          name={isDayExpanded ? 'chevron-up' : 'chevron-down'}
+                          size={16}
+                          color={palette.textMuted}
+                        />
                       </View>
-                      <Ionicons
-                        name={expandedMeso === meso.id ? 'remove-circle-outline' : 'add-circle-outline'}
-                        size={22}
-                        color={palette.accent}
-                      />
                     </View>
-                    {meso.goal && (
-                      <View style={[styles.mesoGoal, { backgroundColor: palette.accentGlow }]}>
-                        <Ionicons name="flag-outline" size={12} color={palette.accent} />
-                        <Text style={[styles.mesoGoalText, { color: palette.accent }]}>{meso.goal}</Text>
+                    <Text style={[styles.dayName, { color: palette.text }]}>{day.name}</Text>
+
+                    {isDayExpanded && day.exercises && day.exercises.length > 0 && (
+                      <View style={[styles.dayExercisesList, { borderTopColor: palette.cardBorder }]}>
+                        {day.exercises.map((exercise: TrainingExercise, exIndex: number) => (
+                          <View
+                            key={exercise.id || exIndex}
+                            style={[
+                              styles.dayExerciseRow,
+                              exIndex > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }
+                            ]}
+                          >
+                            <View style={[styles.dayExerciseNumber, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
+                              <Text style={[styles.dayExerciseNumberText, { color: palette.textMuted }]}>{exIndex + 1}</Text>
+                            </View>
+                            <View style={styles.dayExerciseContent}>
+                              <Text style={[styles.dayExerciseName, { color: palette.text }]} numberOfLines={1}>
+                                {exercise.name}
+                              </Text>
+                              <View style={styles.dayExerciseDetails}>
+                                {exercise.targetNumberOfSets && (
+                                  <View style={[styles.detailBadge, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
+                                    <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                                      {exercise.targetNumberOfSets} sets
+                                    </Text>
+                                  </View>
+                                )}
+                                {exercise.targetRepetitions && (
+                                  <View style={[styles.detailBadge, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}>
+                                    <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
+                                      {exercise.targetRepetitions} reps
+                                    </Text>
+                                  </View>
+                                )}
+                                {exercise.targetRepetitionsInReserve && (
+                                  <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
+                                    <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
+                                      {exercise.targetRepetitionsInReserve} RIR
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                              <View style={styles.dayExerciseMeta}>
+                                {exercise.muscleCategory && (
+                                  <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
+                                    {exercise.muscleCategory}
+                                    {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
+                                  </Text>
+                                )}
+                                {exercise.equipment && (
+                                  <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
+                                    {exercise.equipment}
+                                  </Text>
+                                )}
+                              </View>
+                            </View>
+                          </View>
+                        ))}
                       </View>
                     )}
-                    {expandedMeso === meso.id && meso.microcycles?.map((micro) => (
-                      <View key={micro.id} style={[styles.microCard, { borderColor: palette.cardBorder }]}>
-                        <Text style={[styles.microWeek, { color: palette.text }]}>Week {micro.weekNumber}</Text>
-                        <Text style={[styles.microMeta, { color: palette.textMuted }]}>
-                          {micro.trainingDays?.length || 0} training days
-                        </Text>
-                        {micro.trainingDays?.map((day, dayIndex) => {
-                          const isDayExpanded = expandedDay === day.id;
-                          return (
-                            <TouchableOpacity
-                              key={day.id}
-                              style={[styles.microDayCard, { backgroundColor: isDark ? '#2A2A2E' : '#EFEFED' }]}
-                              onPress={(e) => { e.stopPropagation(); setExpandedDay(isDayExpanded ? null : day.id!); }}
-                              activeOpacity={0.8}
-                            >
-                              <View style={styles.microDayHeader}>
-                                <Text style={[styles.microDayName, { color: palette.text }]}>{day.name || `Day ${dayIndex + 1}`}</Text>
-                                <View style={styles.microDayHeaderRight}>
-                                  <Text style={[styles.microDayExercises, { color: palette.textMuted }]}>
-                                    {day.exercises?.length || 0} exercises
-                                  </Text>
-                                  <Ionicons
-                                    name={isDayExpanded ? 'chevron-up' : 'chevron-down'}
-                                    size={14}
-                                    color={palette.textMuted}
-                                  />
-                                </View>
-                              </View>
-
-                              {isDayExpanded && day.exercises && day.exercises.length > 0 && (
-                                <View style={[styles.dayExercisesList, { borderTopColor: palette.cardBorder }]}>
-                                  {day.exercises.map((exercise: TrainingExercise, exIndex: number) => (
-                                    <View
-                                      key={exercise.id || exIndex}
-                                      style={[
-                                        styles.dayExerciseRow,
-                                        exIndex > 0 && { borderTopWidth: 1, borderTopColor: palette.cardBorder }
-                                      ]}
-                                    >
-                                      <View style={[styles.dayExerciseNumber, { backgroundColor: isDark ? '#1F1F23' : '#FFFFFF' }]}>
-                                        <Text style={[styles.dayExerciseNumberText, { color: palette.textMuted }]}>{exIndex + 1}</Text>
-                                      </View>
-                                      <View style={styles.dayExerciseContent}>
-                                        <Text style={[styles.dayExerciseName, { color: palette.text }]} numberOfLines={1}>
-                                          {exercise.name}
-                                        </Text>
-                                        <View style={styles.dayExerciseDetails}>
-                                          {exercise.targetNumberOfSets && (
-                                            <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#FFFFFF' }]}>
-                                              <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
-                                                {exercise.targetNumberOfSets} sets
-                                              </Text>
-                                            </View>
-                                          )}
-                                          {exercise.targetRepetitions && (
-                                            <View style={[styles.detailBadge, { backgroundColor: isDark ? '#1F1F23' : '#FFFFFF' }]}>
-                                              <Text style={[styles.detailBadgeText, { color: palette.textMuted }]}>
-                                                {exercise.targetRepetitions} reps
-                                              </Text>
-                                            </View>
-                                          )}
-                                          {exercise.targetRepetitionsInReserve && (
-                                            <View style={[styles.detailBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
-                                              <Text style={[styles.detailBadgeText, { color: '#22C55E' }]}>
-                                                {exercise.targetRepetitionsInReserve} RIR
-                                              </Text>
-                                            </View>
-                                          )}
-                                        </View>
-                                        <View style={styles.dayExerciseMeta}>
-                                          {exercise.muscleCategory && (
-                                            <Text style={[styles.dayExerciseMuscle, { color: muscleCategoryColors[exercise.muscleCategory] || palette.textMuted }]}>
-                                              {exercise.muscleCategory}
-                                              {exercise.muscleSubcategory ? ` · ${exercise.muscleSubcategory}` : ''}
-                                            </Text>
-                                          )}
-                                          {exercise.equipment && (
-                                            <Text style={[styles.dayExerciseEquipment, { color: palette.textMuted }]}>
-                                              {exercise.equipment}
-                                            </Text>
-                                          )}
-                                        </View>
-                                      </View>
-                                    </View>
-                                  ))}
-                                </View>
-                              )}
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    ))}
                   </TouchableOpacity>
-                ))}
-              </View>
-            )}
+                );
+              })}
+            </View>
           </View>
         )}
       </TouchableOpacity>
@@ -484,7 +325,6 @@ export default function ProgramsPage() {
               <Text style={[styles.sectionTitle, { color: palette.text }]}>Create Program</Text>
             </View>
 
-            {/* Simple Program */}
             <TouchableOpacity
               style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
               onPress={() => router.push('/simple-program-wizard')}
@@ -494,64 +334,13 @@ export default function ProgramsPage() {
                 <Ionicons name="repeat" size={28} color={palette.accent} />
               </View>
               <View style={styles.createProgramInfo}>
-                <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Simple Program</Text>
+                <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Program</Text>
                 <Text style={[styles.createProgramDescription, { color: palette.textMuted }]}>
                   Create a rotating schedule with training days
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
             </TouchableOpacity>
-
-            {/* Periodized Program */}
-            <TouchableOpacity
-              style={[styles.createProgramButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder, marginTop: 12 }]}
-              onPress={() => router.push('/program-wizard')}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.createProgramIcon, { backgroundColor: palette.accentGlow }]}>
-                <Ionicons name="calendar" size={28} color={palette.accent} />
-              </View>
-              <View style={styles.createProgramInfo}>
-                <Text style={[styles.createProgramTitle, { color: palette.text }]}>New Periodized Program</Text>
-                <Text style={[styles.createProgramDescription, { color: palette.textMuted }]}>
-                  Build a custom program with mesocycles and microcycles
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={palette.textMuted} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Templates */}
-        {!loading && !error && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: palette.text }]}>Templates</Text>
-            </View>
-            <Text style={[styles.sectionSubtitle, { color: palette.textMuted }]}>Start with a pre-built program</Text>
-            <View style={styles.templatesGrid}>
-              {templates.map((template, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.templateCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
-                  onPress={() => handleAddTemplate(index)}
-                  disabled={loadingTemplate}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.templateIcon, { backgroundColor: palette.accentGlow }]}>
-                    <Ionicons name={template.type === 'simple' ? 'repeat' : 'calendar'} size={24} color={palette.accent} />
-                  </View>
-                  <Text style={[styles.templateName, { color: palette.text }]}>{template.name}</Text>
-                  <Text style={[styles.templateDescription, { color: palette.textMuted }]} numberOfLines={2}>
-                    {template.description}
-                  </Text>
-                  <View style={[styles.addTemplateButton, { backgroundColor: palette.accent }]}>
-                    <Ionicons name="add" size={16} color="#FFF" />
-                    <Text style={styles.addTemplateText}>Add</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
           </View>
         )}
 
@@ -633,23 +422,6 @@ const styles = StyleSheet.create({
   dayExerciseMuscle: { fontSize: 11, fontWeight: '500' },
   dayExerciseEquipment: { fontSize: 11 },
 
-  // Mesocycles
-  mesocyclesList: { gap: 10 },
-  mesoCard: { padding: 14, borderRadius: 12 },
-  mesoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  mesoPhase: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5, marginBottom: 2 },
-  mesoName: { fontSize: 15, fontWeight: '600' },
-  mesoGoal: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginTop: 10, alignSelf: 'flex-start' },
-  mesoGoalText: { fontSize: 11, fontWeight: '600' },
-  microCard: { marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
-  microWeek: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  microMeta: { fontSize: 12, marginBottom: 8 },
-  microDayCard: { padding: 12, borderRadius: 10, marginTop: 8 },
-  microDayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  microDayName: { fontSize: 13, fontWeight: '600' },
-  microDayHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  microDayExercises: { fontSize: 11 },
-
   // Create Program
   createProgramButton: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, padding: 16, gap: 14 },
   createProgramIcon: { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
@@ -657,12 +429,4 @@ const styles = StyleSheet.create({
   createProgramTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
   createProgramDescription: { fontSize: 13, lineHeight: 18 },
 
-  // Templates
-  templatesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  templateCard: { width: '48%', borderRadius: 16, borderWidth: 1, padding: 16 },
-  templateIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  templateName: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
-  templateDescription: { fontSize: 12, lineHeight: 18, marginBottom: 14 },
-  addTemplateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderRadius: 10 },
-  addTemplateText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
 });

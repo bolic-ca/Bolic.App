@@ -70,13 +70,6 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
-              name="program-wizard"
-              options={{
-                presentation: 'modal',
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
               name="simple-program-wizard"
               options={{
                 presentation: 'modal',
