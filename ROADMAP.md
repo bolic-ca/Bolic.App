@@ -16,3 +16,4 @@
 [ ] Equipment on exercises in training day
 [ ] * Start workout with previous day history or previous exercise history.
 [ ] Show all sets in history
+[ ] Wrong starts - total workouts showing 3 instead of 5 
