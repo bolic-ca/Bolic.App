@@ -13,21 +13,26 @@ import { useStats } from '@/hooks/useStats';
 import { useWorkoutUI } from '@/contexts/WorkoutUIContext';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
+import { consumePendingDayOverride } from '@/utils/day-override-store';
 
 export default function HomePage() {
   const colorScheme = useColorScheme();
   const { isExpanded, expand, minimize } = useWorkoutUI();
   const { customColors } = useThemeCustomization();
-
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading, refetch: refetchActiveProgram } = useActiveProgram();
   const { session, sessionHistory, startSession, completeSession, cancelSession, loading: sessionLoading } = useWorkoutSession();
   const { stats, incrementWorkouts, loading: statsLoading } = useStats();
 
-  // Refetch active program when screen comes into focus
+  // Track user-selected day override (cleared once a session starts with it)
+  const [selectedDayOverride, setSelectedDayOverride] = React.useState<string | null>(null);
+
+  // Refetch active program and consume any pending day override when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       refetchActiveProgram();
+      const pending = consumePendingDayOverride();
+      if (pending) setSelectedDayOverride(pending);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
@@ -116,15 +121,33 @@ export default function HomePage() {
     return sessionHistory && sessionHistory.length > 0 ? sessionHistory[0] : null;
   }, [sessionHistory]);
 
-  // Get previous instance of next training day (if available)
+  // Get previous instance of next training day (if available) — recalculated after effectiveNextDay is known
   const previousInstanceOfToday = useMemo(() => {
     if (!nextTrainingDay || !sessionHistory) return null;
-
-    // Find most recent session that matches the next training day
-    return sessionHistory.find(
-      (session) => session.trainingDayId === nextTrainingDay.id
-    ) || null;
+    return sessionHistory.find(s => s.trainingDayId === nextTrainingDay.id) || null;
   }, [nextTrainingDay, sessionHistory]);
+
+  // All training days flattened for override lookup
+  const allTrainingDays = useMemo(() => {
+    if (!activeProgram) return [];
+    if (activeProgram.type === 'simple') return activeProgram.trainingDays ?? [];
+    const days: TrainingDay[] = [];
+    for (const meso of activeProgram.mesocycles ?? []) {
+      for (const micro of meso.microcycles ?? []) {
+        days.push(...(micro.trainingDays ?? []));
+      }
+    }
+    return days;
+  }, [activeProgram]);
+
+  // If user selected a specific day override, use that instead of auto-calculated next
+  const effectiveNextDay = useMemo(() => {
+    if (selectedDayOverride) {
+      const found = allTrainingDays.find((d: TrainingDay) => d.id === selectedDayOverride);
+      if (found) return found;
+    }
+    return nextTrainingDay;
+  }, [selectedDayOverride, allTrainingDays, nextTrainingDay]);
 
   const loading = programLoading || sessionLoading || statsLoading;
 
@@ -144,7 +167,7 @@ export default function HomePage() {
       return;
     }
 
-    if (!nextTrainingDay || !nextTrainingDay.id) {
+    if (!effectiveNextDay || !effectiveNextDay.id) {
       Alert.alert(
         'No Training Day',
         'Your active program doesn\'t have any training days configured.',
@@ -154,7 +177,8 @@ export default function HomePage() {
     }
 
     try {
-      await startSession(activeProgram.id, nextTrainingDay.id, nextTrainingDay.name ?? undefined);
+      await startSession(activeProgram.id, effectiveNextDay.id, effectiveNextDay.name ?? undefined);
+      setSelectedDayOverride(null);
       expand();
     } catch (err) {
       Alert.alert('Error', 'Failed to start workout session');
@@ -303,9 +327,9 @@ export default function HomePage() {
                   <Text style={styles.primaryActionTitle}>
                     {session ? 'Resume Workout' : 'Start Workout'}
                   </Text>
-                  {nextTrainingDay && !session && (
+                  {effectiveNextDay && !session && (
                     <Text style={styles.primaryActionSubtitle}>
-                      {nextTrainingDay.name}
+                      {effectiveNextDay.name}
                     </Text>
                   )}
                 </View>
@@ -346,17 +370,23 @@ export default function HomePage() {
           )}
 
           {/* Up Next Section */}
-          {!loading && nextTrainingDay && (
+          {!loading && effectiveNextDay && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <View style={[styles.sectionBadge, { backgroundColor: palette.accentGlow }]}>
                   <Text style={[styles.sectionBadgeText, { color: palette.accent }]}>UP NEXT</Text>
                 </View>
+                {selectedDayOverride && (
+                  <View style={[styles.overrideBadge, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+                    <Ionicons name="swap-horizontal" size={12} color={palette.textMuted} />
+                    <Text style={[styles.overrideBadgeText, { color: palette.textMuted }]}>CUSTOM</Text>
+                  </View>
+                )}
               </View>
 
               <TouchableOpacity
                 style={[styles.upNextCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
-                onPress={() => handleViewTrainingDay(nextTrainingDay)}
+                onPress={() => handleViewTrainingDay(effectiveNextDay)}
                 activeOpacity={0.8}
               >
                 <View style={styles.upNextContent}>
@@ -365,11 +395,11 @@ export default function HomePage() {
                   </View>
                   <View style={styles.upNextDetails}>
                     <Text style={[styles.upNextTitle, { color: palette.text }]} numberOfLines={1}>
-                      {nextTrainingDay.name}
+                      {effectiveNextDay.name}
                     </Text>
                     <Text style={[styles.upNextMeta, { color: palette.textMuted }]}>
-                      {nextTrainingDay.exercises?.length || 0} exercises
-                      {nextTrainingDay.description ? ` · ${nextTrainingDay.description}` : ''}
+                      {effectiveNextDay.exercises?.length || 0} exercises
+                      {effectiveNextDay.description ? ` · ${effectiveNextDay.description}` : ''}
                     </Text>
                   </View>
                   <View style={[styles.upNextArrow, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
@@ -377,6 +407,29 @@ export default function HomePage() {
                   </View>
                 </View>
               </TouchableOpacity>
+
+              {/* Choose Different Day */}
+              {!session && activeProgram && allTrainingDays.length > 1 && (
+                <TouchableOpacity
+                  style={[styles.chooseDayButton, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/select-training-day',
+                      params: {
+                        programId: activeProgram.id,
+                        currentNextDayId: effectiveNextDay.id ?? '',
+                      },
+                    })
+                  }
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="list-outline" size={18} color={palette.textMuted} />
+                  <Text style={[styles.chooseDayText, { color: palette.textMuted }]}>
+                    Choose a different day
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -682,6 +735,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+
+  // Override badge
+  overrideBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+    marginLeft: 8,
+  },
+  overrideBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+
+  // Choose Different Day button
+  chooseDayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  chooseDayText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   // Up Next Card
