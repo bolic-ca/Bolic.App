@@ -151,6 +151,12 @@ export default function ExerciseCard({
             <Text style={[styles.targetText, { color: theme.textSecondary }]}>{targetText}</Text>
           )}
 
+          {exercise.equipment && (
+            <Text style={[styles.equipmentText, { color: theme.textSecondary }]}>
+              {exercise.equipment}
+            </Text>
+          )}
+
           {/* Sets count */}
           <Text style={[styles.setsCount, { color: theme.textSecondary }]}>
             {sessionExercise?.sets.length || 0}
@@ -279,6 +285,11 @@ const styles = StyleSheet.create({
   },
   targetText: {
     fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  equipmentText: {
+    fontSize: 12,
     fontWeight: '500',
     marginBottom: 4,
   },

@@ -21,11 +21,10 @@ interface SetListItemProps {
 export default function SetListItem({ set, setNumber, onPress }: SetListItemProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { preferences } = useThemeCustomization();
+  const { preferences, customColors } = useThemeCustomization();
 
-  // Build set text: "Set 1: 100 lbs × 10 reps"
   const weightDisplay = displayWeight(set.weight, preferences.weightUnit);
-  let setText = `Set ${setNumber}: ${weightDisplay} ${preferences.weightUnit} × ${set.reps} reps`;
+  let setText = `${weightDisplay} ${preferences.weightUnit} × ${set.reps} reps`;
 
   // Add RIR if available
   if (set.rir !== undefined) {
@@ -52,6 +51,9 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
       onPress={onPress}
       disabled={!isEditable}
     >
+      <View style={[styles.setNumberBadge, { backgroundColor: `${customColors.primaryButton}20` }]}>
+        <Text style={[styles.setNumberText, { color: customColors.primaryButton }]}>{setNumber}</Text>
+      </View>
       <View style={styles.setContent}>
         <Text style={[styles.setText, { color: theme.text }]}>{setText}</Text>
         {set.notes && (
@@ -80,6 +82,17 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  setNumberBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  setNumberText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   setContent: {
     flex: 1,

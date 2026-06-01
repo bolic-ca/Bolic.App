@@ -263,6 +263,24 @@ export default function HistoryPage() {
                           </View>
                           <Ionicons name="chevron-forward" size={16} color={palette.textMuted} />
                         </View>
+                        {session.exercises.length > 0 && (
+                          <View style={[styles.cardExercises, { borderTopColor: palette.cardBorder }]}>
+                            {session.exercises.map((ex, exIdx) => (
+                              <View key={ex.exerciseId || exIdx} style={styles.cardExerciseRow}>
+                                <Text style={[styles.cardExerciseName, { color: palette.text }]} numberOfLines={1}>
+                                  {ex.exerciseName}
+                                </Text>
+                                <View style={styles.cardSets}>
+                                  {ex.sets.map((s, sIdx) => (
+                                    <Text key={sIdx} style={[styles.cardSetText, { color: palette.textMuted }]}>
+                                      {displayWeight(s.weight, preferences.weightUnit)}{preferences.weightUnit}×{s.reps}
+                                    </Text>
+                                  ))}
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
                       </TouchableOpacity>
                     );
                   })}
@@ -413,6 +431,28 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 13,
+    fontWeight: '500',
+  },
+  cardExercises: {
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 10,
+    gap: 8,
+  },
+  cardExerciseRow: {
+    gap: 4,
+  },
+  cardExerciseName: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  cardSets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  cardSetText: {
+    fontSize: 12,
     fontWeight: '500',
   },
   // Empty State

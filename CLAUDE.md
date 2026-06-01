@@ -219,24 +219,4 @@ See `.claude/plans/mutable-whistling-spring.md` for full implementation plan.
 - Current Phase A implementation uses storage hooks exclusively
 - API endpoints documentation in `services/api/README.md` will be integrated in Phase B
 
-Potential TODO:
-- API schema for imports -- have AI generate programs for you, easy import/export
-  - Would probably pair well with a debug/log file in case something goes wrong
-- Create simple program
-- Update RIR, think back to the idea of volume increasing week to week
-  - Same exercise, different set count/RIR
-- Managing Tempo
-- Mesocycle grouping - likely on the bench for a bit
-- Start looking at client server syncing
-- start looking at auth
 
-Actual Todo:
-[x] Exit out of simple program after creation, 
-  [x] check periodized too  
-[x] Fix editing exercises
-[x] Fix categories spacing on add exercises
-[x] No training days configured after creating
-[ ] Missing Muscles
-  - Ad(b)ductors 
-  - Glutes
-  - Arms

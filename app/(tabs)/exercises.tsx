@@ -203,7 +203,7 @@ export default function ExercisesPage() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
-  contentContainer: { paddingHorizontal: 20, paddingBottom: 100 },
+  contentContainer: { paddingHorizontal: 20, paddingBottom: 155 },
 
   // Header
   header: { paddingTop: 8, paddingBottom: 20 },

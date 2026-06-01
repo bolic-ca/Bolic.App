@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 155,
   },
 
   // Header

@@ -3,13 +3,15 @@
  * Helper functions for workout session management
  */
 
-import type { WorkoutSession, SessionExercise, RirValue } from '@/services/storage/session-storage';
+import type { WorkoutSession, SessionExercise, SessionSet, RirValue } from '@/services/storage/session-storage';
 import type { TrainingDay } from '@/types/training';
 
 /**
- * Previous performance data for an exercise
+ * Previous performance data for an exercise — all sets from last session
  */
 export interface PreviousPerformance {
+  sets: SessionSet[];
+  // Convenience: last set values (used in collapsed header hint)
   weight: number;
   reps: number;
   rir?: RirValue;
@@ -18,9 +20,6 @@ export interface PreviousPerformance {
 
 /**
  * Get previous performance for an exercise from session history
- * @param exerciseId - The ID of the exercise
- * @param sessionHistory - Array of past workout sessions
- * @returns Previous performance data or null if not found
  */
 export function getPreviousPerformance(
   exerciseId: string,
@@ -31,6 +30,7 @@ export function getPreviousPerformance(
     if (exercise && exercise.sets.length > 0) {
       const lastSet = exercise.sets[exercise.sets.length - 1];
       return {
+        sets: exercise.sets,
         weight: lastSet.weight,
         reps: lastSet.reps,
         rir: lastSet.rir,

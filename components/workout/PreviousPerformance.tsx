@@ -34,29 +34,29 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background, borderColor: theme.cardBorder }]}>
-      <Ionicons name="arrow-undo-outline" size={14} color={theme.textSecondary} />
-      <Text style={[styles.label, { color: theme.textSecondary }]}>Last:</Text>
-      <View style={styles.statsContainer}>
-        <View style={styles.stat}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{displayWeight(data.weight, preferences.weightUnit)}</Text>
-          <Text style={[styles.statUnit, { color: theme.textSecondary }]}>{preferences.weightUnit}</Text>
-        </View>
-        <Text style={[styles.separator, { color: theme.textSecondary }]}>×</Text>
-        <View style={styles.stat}>
-          <Text style={[styles.statValue, { color: theme.text }]}>{data.reps}</Text>
-          <Text style={[styles.statUnit, { color: theme.textSecondary }]}>reps</Text>
-        </View>
-        {data.rir !== undefined && (
-          <>
-            <Text style={[styles.separator, { color: theme.textSecondary }]}>·</Text>
-            <View style={styles.stat}>
-              <Text style={[styles.statValue, { color: theme.text }]}>{formatRirShort(data.rir)}</Text>
-              <Text style={[styles.statUnit, { color: theme.textSecondary }]}>
-                {data.rir === 'F' || data.rir === 'P' ? '' : 'RIR'}
+      <View style={styles.headerRow}>
+        <Ionicons name="arrow-undo-outline" size={14} color={theme.textSecondary} />
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Previous</Text>
+      </View>
+      <View style={styles.setsContainer}>
+        {data.sets.map((set, idx) => (
+          <View key={idx} style={styles.setRow}>
+            <Text style={[styles.setIndex, { color: theme.textSecondary }]}>{idx + 1}</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>
+              {displayWeight(set.weight, preferences.weightUnit)}{preferences.weightUnit} × {set.reps}
+            </Text>
+            {set.rir !== undefined && (
+              <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
+                {set.rir === 'F' ? 'F' : set.rir === 'P' ? 'P' : `${formatRirShort(set.rir)}RIR`}
               </Text>
-            </View>
-          </>
-        )}
+            )}
+            {set.notes && (
+              <Text style={[styles.setNotes, { color: theme.textSecondary }]} numberOfLines={1}>
+                {set.notes.length > 3 ? `${set.notes.slice(0, 3)}…` : set.notes}
+              </Text>
+            )}
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -64,12 +64,15 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
+    gap: 6,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   emptyText: {
@@ -81,26 +84,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  setsContainer: {
     gap: 4,
   },
-  stat: {
+  setRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 2,
+    alignItems: 'center',
+    gap: 6,
+  },
+  setIndex: {
+    fontSize: 11,
+    fontWeight: '600',
+    width: 14,
+    textAlign: 'right',
   },
   statValue: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
   },
-  statUnit: {
+  setMeta: {
     fontSize: 11,
     fontWeight: '500',
   },
-  separator: {
-    fontSize: 12,
-    fontWeight: '500',
+  setNotes: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    flex: 1,
   },
 });
