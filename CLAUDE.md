@@ -22,8 +22,16 @@ Bolic.App is an Expo-based React Native application using Expo Router for naviga
 
 ### Navigation Structure
 The app uses Expo Router with file-based routing:
-- `app/_layout.tsx` - Root layout with Stack navigator, custom Header component, and theme provider
+- `app/_layout.tsx` - Root layout with Stack navigator, custom Header component, and theme/session providers
 - `app/(tabs)/_layout.tsx` - Tab navigation layout with 5 tabs (index, programs, exercises, stats, profile)
+- `app/simple-program-wizard/` - Multi-step wizard for creating simple programs (index, training-days, day-editor, exercise-selector, preview)
+- `app/exercise-form.tsx` - Create/edit exercise form
+- `app/program-edit.tsx` - Edit an existing program
+- `app/select-training-day.tsx` - Override the auto-calculated next training day before starting
+- `app/session-detail.tsx` - View a completed workout session
+- `app/training-day-detail.tsx` - View exercises in a training day
+- `app/history.tsx` - Full session history list
+- `app/onboarding.tsx` - First-time user onboarding
 - `app/modal.tsx` - Modal screen example
 - `unstable_settings.anchor` is set to '(tabs)' in app/_layout.tsx:9-11
 
@@ -77,18 +85,21 @@ Dedicated page for managing the exercise library:
 ### Home Page Integration (`app/(tabs)/index.tsx`)
 The home tab integrates with the active program system:
 - **Start Workout Button**: Primary action that starts a workout session using the active program
-  - Validates active program exists before starting
-  - Uses the next training day from the active program
-  - Creates a new workout session via `startSession(programId, trainingDayId)`
-  - Shows appropriate error messages if no active program or training days
-- **Next on the Menu**: Displays preview of the next training day from active program
+ - Validates active program exists before starting
+ - Defaults to the auto-calculated next training day (sequential rotation)
+ - Respects a user-selected day override from `select-training-day.tsx` (consumed once on focus via `day-override-store.ts`)
+ - Creates a new workout session via `startSession(programId, trainingDayId)` from `WorkoutSessionContext`
+ - Shows appropriate error messages if no active program or training days
+- **Choose a Different Day**: Button to navigate to `select-training-day` and override the next day
+- **Up Next Card**: Displays preview of the next (or overridden) training day
 - **Look Back**: Shows last completed session and previous instance of the current training day
-- **Recent Activity**: Displays workout count and streak statistics
+- **Stats Pills**: Displays total workouts and current streak
+- **Workout Interface**: When a session is active and expanded, `WorkoutInterface` component renders full-screen in place of the home content
 
 ### Theming System
 Theme configuration in constants/theme.ts:
 - **Colors** - Light/dark mode color definitions for text, background, tint, icons
-  - `primaryButton` / `primaryButtonText` - Customizable primary action button colors (independent of tint)
+ - `primaryButton` / `primaryButtonText` - Customizable primary action button colors (independent of tint)
 - **Fonts** - Platform-specific font families (iOS system fonts, web fonts, default)
 - Colors accessed via `Colors[colorScheme].propertyName`
 
@@ -96,6 +107,12 @@ Color scheme detection:
 - `hooks/use-color-scheme.ts` - Native platforms (re-exports from react-native)
 - `hooks/use-color-scheme.web.ts` - Web platform override
 - `hooks/use-theme-color.ts` - Hook for getting theme-aware colors with light/dark overrides
+
+**ThemeContext** (`contexts/ThemeContext.tsx`):
+- Persists `primaryButton` / `primaryButtonText` accent colors to AsyncStorage
+- Provides preset color swatches plus custom hex input
+- Stores user preferences: `weightUnit` (kg/lbs), `showRir`, `showRpe`, `showNotes`
+- Accessed via `useThemeCustomization()` hook
 
 ### Component Architecture
 **Themed Components** (support light/dark modes):
@@ -108,6 +125,21 @@ Color scheme detection:
 - `ui/collapsible.tsx` - Collapsible/expandable UI component
 - `haptic-tab.tsx` - Tab button with haptic feedback
 - `parallax-scroll-view.tsx` - Scroll view with parallax effect
+
+**Workout Components** (`components/workout/`):
+Full workout tracking UI rendered inside the home tab when a session is active:
+- `WorkoutInterface.tsx` - Top-level component orchestrating the session view
+- `WorkoutHeader.tsx` - Program/day name and controls (minimize, cancel, complete)
+- `WorkoutTimer.tsx` - Elapsed session time display
+- `WorkoutProgressBar.tsx` - Visual progress through planned exercises
+- `ExerciseList.tsx` - Scrollable list of exercises in the session
+- `ExerciseCard.tsx` - Individual exercise with set list and add-set controls
+- `SetListItem.tsx` - Single set row (weight, reps, RIR, RPE, quality)
+- `SetEditor.tsx` - Modal/inline editor for adding or editing a set
+- `PreviousPerformance.tsx` - Shows previous session data for the same exercise
+- `ExerciseSwapModal.tsx` - Swap an exercise mid-session
+- `CompletionModal.tsx` - Notes input and confirmation before completing session
+- `ActiveWorkoutBanner.tsx` - Minimized banner shown when workout is in progress
 
 ### Path Aliases
 TypeScript path alias configured in tsconfig.json:6-8:
@@ -180,13 +212,21 @@ The app uses `@react-native-async-storage/async-storage` for offline-first data 
 - Manages onboarding state
 - Provides `userId` and `isInitialized` to the app
 
+**Workout Session Context** (`contexts/WorkoutSessionContext.tsx`):
+- Shared across all components (not a per-screen hook)
+- Provides `session`, `sessionHistory`, `startSession()`, `addSet()`, `updateSet()`, `deleteSet()`, `swapExercise()`, `completeSession()`, `cancelSession()`
+- Persists active session to AsyncStorage so it survives navigation
+
+**Workout UI Context** (`contexts/WorkoutUIContext.tsx`):
+- Tracks whether the workout panel is expanded or minimized
+- Provides `isExpanded`, `expand()`, `minimize()`
+- Used to toggle between full `WorkoutInterface` and `ActiveWorkoutBanner`
+
 **React Hooks** (`hooks/`):
-All hooks use the new storage system:
 - `usePrograms.ts` - Manage training programs (CRUD operations)
 - `useActiveProgram.ts` - Get/set active program, provides `setActive()`, `clearActive()`, `refetch()`
 - `useExercises.ts` - Manage exercise library (CRUD operations)
 - `useTrainingDay.ts` - Fetch specific training day
-- `useWorkoutSession.ts` - Manage active workout sessions, provides `startSession()`, `addSet()`, `completeSession()`
 - `useStats.ts` - User statistics and personal records
 
 **Key Features**:
@@ -195,6 +235,13 @@ All hooks use the new storage system:
 - **Namespaced storage**: Each user has isolated data
 - **Type-safe**: Full TypeScript support
 - **Persistent**: Data survives app restarts
+- **Import/Export**: `services/storage/storage-export.ts` — JSON export to file and import from file (via `expo-document-picker`)
+
+**Utilities** (`utils/`):
+- `day-override-store.ts` - In-memory store for the user-selected training day override; consumed once when the home screen focuses
+- `weight.ts` - kg/lbs conversion helpers
+- `workout-helpers.ts` - Shared calculations for sessions and sets
+- `storage-helpers.ts` - ID generation and timestamp helpers
 
 **Onboarding Flow**:
 1. App launch → Storage initialization
@@ -205,18 +252,8 @@ All hooks use the new storage system:
 **Weekly Activity Tracking**:
 The stats page (`app/(tabs)/stats.tsx`) calculates weekly activity from actual workout session history. The weekly activity grid shows which days in the last 7 days had completed workouts, with real-time completion rate calculation.
 
-### Future: Phase B (Planned)
-Phase B will add authentication and cloud sync for premium users:
-- Authentication system (signup/login)
-- Cloud sync for subscribed users
-- Data migration from anonymous to authenticated users
-- Offline queue for syncing changes
-
-See `.claude/plans/mutable-whistling-spring.md` for full implementation plan.
-
 **Note on Legacy Files**:
-- `services/api/data-source.ts` is kept for Phase B API integration (marked as deprecated for Phase A)
-- Current Phase A implementation uses storage hooks exclusively
-- API endpoints documentation in `services/api/README.md` will be integrated in Phase B
+- `services/api/data-source.ts` is kept for future cloud sync integration
+- Current implementation uses storage hooks and contexts exclusively
 
 
