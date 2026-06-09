@@ -10,7 +10,7 @@ import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import type { WorkoutSession, SessionSet } from '@/services/storage/session-storage';
-import type { TrainingDay } from '@/types/training';
+import type { TrainingDay, TrainingExercise } from '@/types/training';
 import { getWorkoutProgress } from '@/utils/workout-helpers';
 import WorkoutHeader from './WorkoutHeader';
 import WorkoutProgressBar from './WorkoutProgressBar';
@@ -39,7 +39,7 @@ export default function WorkoutInterface({
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
-  const { addSet, updateSet, deleteSet, sessionHistory } = useWorkoutSession();
+  const { addSet, updateSet, deleteSet, swapExercise, sessionHistory } = useWorkoutSession();
   const [completionModalVisible, setCompletionModalVisible] = useState(false);
 
   // Calculate workout progress
@@ -69,6 +69,15 @@ export default function WorkoutInterface({
       await deleteSet(exerciseId, setIndex);
     } catch (err) {
       console.error('Error deleting set:', err);
+    }
+  };
+
+  // Handle swapping an exercise
+  const handleSwapExercise = async (originalExerciseId: string, newExercise: TrainingExercise) => {
+    try {
+      await swapExercise(originalExerciseId, newExercise.id!, newExercise.name!);
+    } catch (err) {
+      console.error('Error swapping exercise:', err);
     }
   };
 
@@ -159,6 +168,7 @@ export default function WorkoutInterface({
           onAddSet={handleAddSet}
           onUpdateSet={handleUpdateSet}
           onDeleteSet={handleDeleteSet}
+          onSwapExercise={handleSwapExercise}
         />
       </ScrollView>
 

@@ -122,7 +122,10 @@ export function getWorkoutProgress(
   let completedExercises = 0;
   if (trainingDay?.exercises) {
     for (const templateExercise of trainingDay.exercises) {
-      const sessionExercise = session.exercises.find(ex => ex.exerciseId === templateExercise.id);
+      // Respect any mid-workout swap override
+      const override = session.exerciseOverrides?.[templateExercise.id!];
+      const effectiveId = override ? override.exerciseId : templateExercise.id;
+      const sessionExercise = session.exercises.find(ex => ex.exerciseId === effectiveId);
       if (isExerciseComplete(sessionExercise, templateExercise.targetNumberOfSets)) {
         completedExercises++;
       }

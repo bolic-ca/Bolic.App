@@ -13,6 +13,9 @@ interface ThemeCustomization {
 
 interface UserPreferences {
   weightUnit: WeightUnit;
+  showRir: boolean;
+  showRpe: boolean;
+  showNotes: boolean;
 }
 
 interface ThemeContextType {
@@ -21,6 +24,9 @@ interface ThemeContextType {
   presetColors: { name: string; button: string; text: string }[];
   preferences: UserPreferences;
   setWeightUnit: (unit: WeightUnit) => void;
+  setShowRir: (value: boolean) => void;
+  setShowRpe: (value: boolean) => void;
+  setShowNotes: (value: boolean) => void;
   isLoaded: boolean;
 }
 
@@ -31,6 +37,9 @@ const defaultColors: ThemeCustomization = {
 
 const defaultPreferences: UserPreferences = {
   weightUnit: 'lbs',
+  showRir: true,
+  showRpe: true,
+  showNotes: true,
 };
 
 export const presetColors = [
@@ -89,14 +98,40 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Save weight unit preference
+  const savePreferences = async (updated: UserPreferences) => {
+    await AsyncStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(updated));
+    setPreferencesState(updated);
+  };
+
   const setWeightUnit = async (unit: WeightUnit) => {
     try {
-      const newPreferences = { ...preferences, weightUnit: unit };
-      await AsyncStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(newPreferences));
-      setPreferencesState(newPreferences);
+      await savePreferences({ ...preferences, weightUnit: unit });
     } catch (error) {
       console.error('Error saving weight unit:', error);
+    }
+  };
+
+  const setShowRir = async (value: boolean) => {
+    try {
+      await savePreferences({ ...preferences, showRir: value });
+    } catch (error) {
+      console.error('Error saving showRir:', error);
+    }
+  };
+
+  const setShowRpe = async (value: boolean) => {
+    try {
+      await savePreferences({ ...preferences, showRpe: value });
+    } catch (error) {
+      console.error('Error saving showRpe:', error);
+    }
+  };
+
+  const setShowNotes = async (value: boolean) => {
+    try {
+      await savePreferences({ ...preferences, showNotes: value });
+    } catch (error) {
+      console.error('Error saving showNotes:', error);
     }
   };
 
@@ -108,6 +143,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         presetColors,
         preferences,
         setWeightUnit,
+        setShowRir,
+        setShowRpe,
+        setShowNotes,
         isLoaded,
       }}
     >
