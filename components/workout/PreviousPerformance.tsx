@@ -45,9 +45,18 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
             <Text style={[styles.statValue, { color: theme.text }]}>
               {displayWeight(set.weight, preferences.weightUnit)}{preferences.weightUnit} × {set.reps}
             </Text>
-            {set.rir !== undefined && (
+            {set.numberOfPartials !== undefined ? (
               <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
-                {set.rir === 'F' ? 'F' : set.rir === 'P' ? 'P' : `${formatRirShort(set.rir)}RIR`}
+                +{set.numberOfPartials}P
+              </Text>
+            ) : set.rir !== undefined && (
+              <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
+                {set.rir === 'F' ? 'F' : `${formatRirShort(set.rir)}RIR`}
+              </Text>
+            )}
+            {set.rpe !== undefined && (
+              <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
+                RPE{set.rpe}
               </Text>
             )}
             {set.notes && (

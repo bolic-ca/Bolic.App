@@ -26,17 +26,18 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
   const weightDisplay = displayWeight(set.weight, preferences.weightUnit);
   let setText = `${weightDisplay} ${preferences.weightUnit} × ${set.reps} reps`;
 
-  // Add RIR if available
-  if (set.rir !== undefined) {
-    const rirDisplay = formatRirShort(set.rir);
-    // For F and P, display the full word
+  if (set.numberOfPartials !== undefined) {
+    setText += ` (+${set.numberOfPartials} partials)`;
+  } else if (set.rir !== undefined) {
     if (set.rir === 'F') {
       setText += ' (Failure)';
-    } else if (set.rir === 'P') {
-      setText += ' (Partials)';
     } else {
-      setText += ` (RIR ${rirDisplay})`;
+      setText += ` (RIR ${formatRirShort(set.rir)})`;
     }
+  }
+
+  if (set.rpe !== undefined) {
+    setText += ` · RPE ${set.rpe}`;
   }
 
   const isEditable = !!onPress;
