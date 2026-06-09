@@ -26,17 +26,19 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
   const weightDisplay = displayWeight(set.weight, preferences.weightUnit);
   let setText = `${weightDisplay} ${preferences.weightUnit} × ${set.reps} reps`;
 
-  if (set.numberOfPartials !== undefined) {
-    setText += ` (+${set.numberOfPartials} partials)`;
-  } else if (set.rir !== undefined) {
-    if (set.rir === 'F') {
-      setText += ' (Failure)';
-    } else {
-      setText += ` (RIR ${formatRirShort(set.rir)})`;
+  if (preferences.showRir) {
+    if (set.numberOfPartials !== undefined) {
+      setText += ` (+${set.numberOfPartials} partials)`;
+    } else if (set.rir !== undefined) {
+      if (set.rir === 'F') {
+        setText += ' (Failure)';
+      } else {
+        setText += ` (RIR ${formatRirShort(set.rir)})`;
+      }
     }
   }
 
-  if (set.rpe !== undefined) {
+  if (preferences.showRpe && set.rpe !== undefined) {
     setText += ` · RPE ${set.rpe}`;
   }
 
@@ -57,7 +59,7 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
       </View>
       <View style={styles.setContent}>
         <Text style={[styles.setText, { color: theme.text }]}>{setText}</Text>
-        {set.notes && (
+        {preferences.showNotes && set.notes && (
           <Text style={[styles.notesText, { color: theme.textSecondary }]} numberOfLines={1}>
             {set.notes}
           </Text>

@@ -237,7 +237,7 @@ export default function SetEditor({
               </View>
 
               {/* RIR */}
-              <View style={styles.inputGroup}>
+              {preferences.showRir && <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { color: theme.text }]}>
                   RIR <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(Reps in Reserve)</Text>
                 </Text>
@@ -347,10 +347,10 @@ export default function SetEditor({
                     F = Failure · P = number of partial reps beyond failure
                   </Text>
                 </View>
-              </View>
+              </View>}
 
               {/* RPE */}
-              <View style={styles.inputGroup}>
+              {preferences.showRpe && <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { color: theme.text }]}>
                   RPE <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(Rate of Perceived Exertion)</Text>
                 </Text>
@@ -418,27 +418,29 @@ export default function SetEditor({
                     );
                   })}
                 </View>
-              </View>
+              </View>}
 
               {/* Notes */}
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: theme.text }]}>
-                  Notes <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(optional)</Text>
-                </Text>
-                <TextInput
-                  style={[
-                    styles.inputMultiline,
-                    { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder },
-                  ]}
-                  value={notes}
-                  onChangeText={setNotes}
-                  placeholder="Add notes about this set..."
-                  placeholderTextColor={theme.textSecondary}
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-              </View>
+              {preferences.showNotes && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Notes <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(optional)</Text>
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.inputMultiline,
+                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder },
+                    ]}
+                    value={notes}
+                    onChangeText={setNotes}
+                    placeholder="Add notes about this set..."
+                    placeholderTextColor={theme.textSecondary}
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                  />
+                </View>
+              )}
             </ScrollView>
 
             {/* Action Buttons */}

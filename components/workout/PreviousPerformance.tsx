@@ -3,8 +3,8 @@
  * Displays previous performance data for an exercise
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, useColorScheme, Pressable, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
@@ -20,6 +20,7 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { preferences } = useThemeCustomization();
+  const [notePopup, setNotePopup] = useState<string | null>(null);
 
   if (!data) {
     return (
@@ -45,28 +46,54 @@ export default function PreviousPerformance({ data }: PreviousPerformanceProps) 
             <Text style={[styles.statValue, { color: theme.text }]}>
               {displayWeight(set.weight, preferences.weightUnit)}{preferences.weightUnit} × {set.reps}
             </Text>
-            {set.numberOfPartials !== undefined ? (
-              <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
-                +{set.numberOfPartials}P
-              </Text>
-            ) : set.rir !== undefined && (
-              <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
-                {set.rir === 'F' ? 'F' : `${formatRirShort(set.rir)}RIR`}
-              </Text>
+            {preferences.showRir && (
+              set.numberOfPartials !== undefined ? (
+                <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
+                  +{set.numberOfPartials}P
+                </Text>
+              ) : set.rir !== undefined ? (
+                <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
+                  {set.rir === 'F' ? 'F' : `${formatRirShort(set.rir)}RIR`}
+                </Text>
+              ) : null
             )}
-            {set.rpe !== undefined && (
+            {preferences.showRpe && set.rpe !== undefined && (
               <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
                 RPE{set.rpe}
               </Text>
             )}
-            {set.notes && (
-              <Text style={[styles.setNotes, { color: theme.textSecondary }]} numberOfLines={1}>
-                {set.notes.length > 3 ? `${set.notes.slice(0, 3)}…` : set.notes}
-              </Text>
+            {preferences.showNotes && set.notes && (
+              <Pressable onPress={() => setNotePopup(set.notes!)} style={styles.notesChip}>
+                <Ionicons name="document-text-outline" size={11} color={theme.textSecondary} />
+                <Text style={[styles.setNotes, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {set.notes.length > 12 ? `${set.notes.slice(0, 12)}…` : set.notes}
+                </Text>
+              </Pressable>
             )}
           </View>
         ))}
       </View>
+
+      {/* Note popup */}
+      <Modal
+        visible={notePopup !== null}
+        transparent
+        animationType="none"
+        onRequestClose={() => setNotePopup(null)}
+      >
+        <Pressable style={styles.popupOverlay} onPress={() => setNotePopup(null)}>
+          <Pressable style={[styles.popupCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            <View style={styles.popupHeader}>
+              <Ionicons name="document-text-outline" size={16} color={theme.textSecondary} />
+              <Text style={[styles.popupTitle, { color: theme.textSecondary }]}>Set Note</Text>
+              <TouchableOpacity onPress={() => setNotePopup(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="close" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.popupBody, { color: theme.text }]}>{notePopup}</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -115,9 +142,45 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
   },
+  notesChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    flex: 1,
+  },
   setNotes: {
     fontSize: 11,
     fontStyle: 'italic',
     flex: 1,
+  },
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  popupCard: {
+    width: '100%',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 10,
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  popupTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+    letterSpacing: 0.5,
+  },
+  popupBody: {
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22,
   },
 });

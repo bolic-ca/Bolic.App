@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,7 +31,7 @@ const supportMenuItems: MenuItem[] = [
 
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
-  const { customColors, setCustomColors, presetColors, preferences, setWeightUnit } = useThemeCustomization();
+  const { customColors, setCustomColors, presetColors, preferences, setWeightUnit, setShowRir, setShowRpe, setShowNotes } = useThemeCustomization();
   const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
   const [storageStats, setStorageStats] = useState<{ totalKeys: number; totalSize: number } | null>(null);
@@ -344,6 +344,63 @@ export default function ProfilePage() {
                   </Text>
                 </TouchableOpacity>
               </View>
+            </View>
+
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+
+            {/* Show RIR Toggle */}
+            <View style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="layers-outline" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Show RIR</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Reps in Reserve tracking</Text>
+              </View>
+              <Switch
+                value={preferences.showRir}
+                onValueChange={setShowRir}
+                trackColor={{ false: palette.cardBorder, true: palette.accent }}
+                thumbColor="#FFF"
+              />
+            </View>
+
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+
+            {/* Show RPE Toggle */}
+            <View style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="speedometer-outline" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Show RPE</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Rate of Perceived Exertion tracking</Text>
+              </View>
+              <Switch
+                value={preferences.showRpe}
+                onValueChange={setShowRpe}
+                trackColor={{ false: palette.cardBorder, true: palette.accent }}
+                thumbColor="#FFF"
+              />
+            </View>
+
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+
+            {/* Show Notes Toggle */}
+            <View style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="document-text-outline" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Show Notes</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Set notes field during workouts</Text>
+              </View>
+              <Switch
+                value={preferences.showNotes}
+                onValueChange={setShowNotes}
+                trackColor={{ false: palette.cardBorder, true: palette.accent }}
+                thumbColor="#FFF"
+              />
             </View>
           </View>
         </View>
