@@ -72,6 +72,7 @@ export default function ExerciseList({
             onUpdateSet={onUpdateSet}
             onDeleteSet={onDeleteSet}
             onSwapExercise={onSwapExercise}
+            sessionHistory={sessionHistory}
           />
         );
       })}

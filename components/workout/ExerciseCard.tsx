@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { TrainingExercise } from '@/types/training';
-import type { SessionExercise, SessionSet } from '@/services/storage/session-storage';
+import type { SessionExercise, SessionSet, WorkoutSession } from '@/services/storage/session-storage';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 import PreviousPerformance from './PreviousPerformance';
 import SetEditor from './SetEditor';
@@ -27,6 +27,7 @@ interface ExerciseCardProps {
   onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
   onDeleteSet?: (exerciseId: string, setIndex: number) => void;
   onSwapExercise?: (originalExerciseId: string, newExercise: TrainingExercise) => void;
+  sessionHistory?: WorkoutSession[];
 }
 
 import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
@@ -40,6 +41,7 @@ export default function ExerciseCard({
   onUpdateSet,
   onDeleteSet,
   onSwapExercise,
+  sessionHistory,
 }: ExerciseCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -224,7 +226,12 @@ export default function ExerciseCard({
         <View style={styles.expandedContent}>
           {/* Previous Performance */}
           <View style={styles.previousPerformanceContainer}>
-            <PreviousPerformance data={previousPerformance} />
+            <PreviousPerformance
+              data={previousPerformance}
+              exerciseId={exercise.id}
+              exerciseName={exercise.name}
+              sessionHistory={sessionHistory}
+            />
           </View>
 
           {/* Add Set Button */}
@@ -275,6 +282,7 @@ export default function ExerciseCard({
         <ExerciseSwapModal
           visible={swapModalVisible}
           currentExerciseId={exercise.id}
+          sessionHistory={sessionHistory}
           onClose={() => setSwapModalVisible(false)}
           onSelectExercise={handleSelectSwapExercise}
         />
