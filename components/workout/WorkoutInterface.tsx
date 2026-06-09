@@ -25,6 +25,7 @@ interface WorkoutInterfaceProps {
   onComplete: (notes?: string) => void;
   onCancel: () => void;
   onMinimize?: () => void;
+  onUpdateExerciseTargets?: (exerciseId: string, patch: { targetRepetitions?: string | null; targetRepetitionsInReserve?: string | null; notes?: string | null }) => Promise<void>;
 }
 
 export default function WorkoutInterface({
@@ -35,6 +36,7 @@ export default function WorkoutInterface({
   onComplete,
   onCancel,
   onMinimize,
+  onUpdateExerciseTargets,
 }: WorkoutInterfaceProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -169,6 +171,7 @@ export default function WorkoutInterface({
           onUpdateSet={handleUpdateSet}
           onDeleteSet={handleDeleteSet}
           onSwapExercise={handleSwapExercise}
+          onUpdateExerciseTargets={onUpdateExerciseTargets}
         />
       </ScrollView>
 

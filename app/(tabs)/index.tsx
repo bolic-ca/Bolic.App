@@ -12,6 +12,8 @@ import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutUI } from '@/contexts/WorkoutUIContext';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { useStorage } from '@/contexts/StorageContext';
+import { updateExerciseTargets } from '@/services/storage/program-storage';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
 import { consumePendingDayOverride } from '@/utils/day-override-store';
 
@@ -19,6 +21,7 @@ export default function HomePage() {
   const colorScheme = useColorScheme();
   const { isExpanded, expand, minimize } = useWorkoutUI();
   const { customColors } = useThemeCustomization();
+  const { userId } = useStorage();
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading, refetch: refetchActiveProgram } = useActiveProgram();
   const { session, sessionHistory, startSession, completeSession, cancelSession, loading: sessionLoading } = useWorkoutSession();
@@ -151,6 +154,15 @@ export default function HomePage() {
 
   const loading = programLoading || sessionLoading || statsLoading;
 
+  const handleUpdateExerciseTargets = useCallback(async (
+    exerciseId: string,
+    patch: { targetRepetitions?: string | null; targetRepetitionsInReserve?: string | null; notes?: string | null },
+  ) => {
+    if (!userId || !activeProgram || !session) return;
+    await updateExerciseTargets(userId, activeProgram.id, session.trainingDayId, exerciseId, patch);
+    await refetchActiveProgram();
+  }, [userId, activeProgram, session, refetchActiveProgram]);
+
   const handleWorkoutButtonPress = async () => {
     // If there's already a session, just expand the interface
     if (session) {
@@ -275,6 +287,7 @@ export default function HomePage() {
           onComplete={handleCompleteWorkout}
           onCancel={handleCancelWorkout}
           onMinimize={handleMinimizeWorkout}
+          onUpdateExerciseTargets={handleUpdateExerciseTargets}
         />
       ) : (
         <ScrollView

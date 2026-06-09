@@ -19,6 +19,7 @@ interface ExerciseListProps {
   onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
   onDeleteSet?: (exerciseId: string, setIndex: number) => void;
   onSwapExercise?: (originalExerciseId: string, newExercise: TrainingExercise) => void;
+  onUpdateExerciseTargets?: (exerciseId: string, patch: { targetRepetitions?: string | null; targetRepetitionsInReserve?: string | null; notes?: string | null }) => Promise<void>;
 }
 
 export default function ExerciseList({
@@ -29,6 +30,7 @@ export default function ExerciseList({
   onUpdateSet,
   onDeleteSet,
   onSwapExercise,
+  onUpdateExerciseTargets,
 }: ExerciseListProps) {
   const { allExercises } = useExercises();
 
@@ -42,12 +44,26 @@ export default function ExerciseList({
         const originalExerciseId = exercise.id!;
         const override = session.exerciseOverrides?.[originalExerciseId];
 
+        // Resolve identity fields (name, muscle, equipment) from the library.
+        // Falls back to the embedded data for old programs whose IDs predate
+        // the library-reference model (timestamp-based IDs won't match).
+        const libraryExercise = allExercises.find(ex => ex.id === exercise.id);
+        const resolvedExercise: TrainingExercise = libraryExercise
+          ? {
+              ...libraryExercise,
+              targetRepetitions: exercise.targetRepetitions,
+              targetRepetitionsInReserve: exercise.targetRepetitionsInReserve,
+              targetNumberOfSets: exercise.targetNumberOfSets,
+              notes: exercise.notes,
+            }
+          : exercise;
+
         // If the exercise was swapped, resolve the replacement from the library
-        let displayExercise = exercise;
+        let displayExercise = resolvedExercise;
         if (override) {
           const found = allExercises.find(ex => ex.id === override.exerciseId);
           // Fallback: keep template fields but update id/name if not found in library
-          displayExercise = found ?? { ...exercise, id: override.exerciseId, name: override.exerciseName };
+          displayExercise = found ?? { ...resolvedExercise, id: override.exerciseId, name: override.exerciseName };
         }
 
         // Find logged sets using the effective exerciseId
@@ -72,6 +88,7 @@ export default function ExerciseList({
             onUpdateSet={onUpdateSet}
             onDeleteSet={onDeleteSet}
             onSwapExercise={onSwapExercise}
+            onUpdateExerciseTargets={onUpdateExerciseTargets}
             sessionHistory={sessionHistory}
           />
         );
