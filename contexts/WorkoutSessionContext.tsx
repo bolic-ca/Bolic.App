@@ -26,6 +26,7 @@ interface WorkoutSessionContextType {
   addSet: (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>) => Promise<void>;
   updateSet: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => Promise<void>;
   deleteSet: (exerciseId: string, setIndex: number) => Promise<void>;
+  swapExercise: (originalExerciseId: string, newExerciseId: string, newExerciseName: string) => Promise<void>;
   completeSession: (notes?: string) => Promise<void>;
   cancelSession: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -289,6 +290,51 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
     }
   }, [session, userId]);
 
+  const swapExercise = useCallback(async (
+    originalExerciseId: string,
+    newExerciseId: string,
+    newExerciseName: string,
+  ): Promise<void> => {
+    if (!session) throw new Error('No active session');
+    if (!userId) throw new Error('User not initialized');
+
+    try {
+      // Migrate any already-logged sets to the new exercise
+      const updatedExercises = session.exercises.map(ex => {
+        if (ex.exerciseId === originalExerciseId) {
+          return { ...ex, exerciseId: newExerciseId, exerciseName: newExerciseName };
+        }
+        return { ...ex, sets: [...ex.sets] };
+      });
+
+      const updatedOverrides: Record<string, { exerciseId: string; exerciseName: string }> = {
+        ...(session.exerciseOverrides || {}),
+        [originalExerciseId]: { exerciseId: newExerciseId, exerciseName: newExerciseName },
+      };
+
+      const updatedSession: WorkoutSession = {
+        ...session,
+        exercises: updatedExercises,
+        exerciseOverrides: updatedOverrides,
+      };
+
+      const sessionItem: StorageItem<WorkoutSession> = {
+        id: session.id,
+        userId,
+        data: updatedSession,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      };
+
+      await setActiveSession(userId, sessionItem);
+      setSession(updatedSession);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to swap exercise');
+      setError(error);
+      throw error;
+    }
+  }, [session, userId]);
+
   const completeSession = useCallback(async (notes?: string): Promise<void> => {
     if (!session) {
       throw new Error('No active session');
@@ -348,6 +394,7 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
         addSet,
         updateSet,
         deleteSet,
+        swapExercise,
         completeSession,
         cancelSession,
         refetch: fetchActiveSession,

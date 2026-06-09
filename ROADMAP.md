@@ -9,11 +9,13 @@
 - start looking at auth
 
 [ ] Unselected exercises somehow showing up in program creation
-[ ] Quality score per set
-[ ] Remove "Set #:" in training day
-[ ] Spacing issue at bottom - "Current workout <time>" needs margin
+[x] Quality score per set
+[x] Remove "Set #:" in training day
+[x] Spacing issue at bottom - "Current workout <time>" needs margin
 [ ] Easier exercise searching
-[ ] Equipment on exercises in training day
+[x] Equipment on exercises in training day
 [ ] * Start workout with previous day history or previous exercise history.
-[ ] Show all sets in history
+[x] Show all sets in history
 [ ] Wrong starts - total workouts showing 3 instead of 5 
+[ ] Add swap for exercise in training session 
+[ ] Fix the progress bar in training session -> just staying blank 

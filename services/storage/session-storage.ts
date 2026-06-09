@@ -19,6 +19,12 @@ export interface WorkoutSession {
   startedAt: string;
   completedAt: string | null;
   exercises: SessionExercise[];
+  /**
+   * Maps originalExerciseId (from training day template) -> replacement exercise.
+   * Recorded when user swaps an exercise mid-workout.
+   * NOTE: Flagged for addition to OpenAPI spec in Phase B.
+   */
+  exerciseOverrides?: Record<string, { exerciseId: string; exerciseName: string }>;
   notes?: string;
 }
 

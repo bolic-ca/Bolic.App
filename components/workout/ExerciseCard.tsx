@@ -14,15 +14,19 @@ import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/wor
 import PreviousPerformance from './PreviousPerformance';
 import SetEditor from './SetEditor';
 import SetListItem from './SetListItem';
+import ExerciseSwapModal from './ExerciseSwapModal';
 import { displayWeight } from '@/utils/weight';
 
 interface ExerciseCardProps {
   exercise: TrainingExercise;
   sessionExercise?: SessionExercise;
   previousPerformance: PreviousPerformanceData | null;
+  /** The original exercise ID from the training day template (stable key for swap logic). */
+  originalExerciseId?: string;
   onAddSet: (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>) => void;
   onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
   onDeleteSet?: (exerciseId: string, setIndex: number) => void;
+  onSwapExercise?: (originalExerciseId: string, newExercise: TrainingExercise) => void;
 }
 
 import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
@@ -31,15 +35,27 @@ export default function ExerciseCard({
   exercise,
   sessionExercise,
   previousPerformance,
+  originalExerciseId,
   onAddSet,
   onUpdateSet,
   onDeleteSet,
+  onSwapExercise,
 }: ExerciseCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors, preferences } = useThemeCustomization();
   const [isExpanded, setIsExpanded] = useState(false);
   const [defaultWeight, setDefaultWeight] = useState<number | undefined>();
+
+  // Swap modal state
+  const [swapModalVisible, setSwapModalVisible] = useState(false);
+
+  const handleSelectSwapExercise = (newExercise: TrainingExercise) => {
+    setSwapModalVisible(false);
+    if (onSwapExercise && originalExerciseId) {
+      onSwapExercise(originalExerciseId, newExercise);
+    }
+  };
 
   // SetEditor modal state
   const [editorVisible, setEditorVisible] = useState(false);
@@ -112,75 +128,96 @@ export default function ExerciseCard({
   return (
     <View style={[styles.container, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
       {/* Header - Always visible */}
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => setIsExpanded(!isExpanded)}
-        activeOpacity={0.7}
-      >
-        {/* Muscle Category Icon */}
-        {exercise.muscleCategory && (
-          <View
-            style={[
-              styles.muscleIconContainer,
-              { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory]}20` },
-            ]}
-          >
-            <Ionicons
-              name={muscleCategoryIcons[exercise.muscleCategory] || 'fitness'}
-              size={24}
-              color={muscleCategoryColors[exercise.muscleCategory]}
-            />
-          </View>
-        )}
+      <View style={styles.header}>
+        {/* Left: icon + info (tappable for expand/collapse) */}
+        <TouchableOpacity
+          style={styles.headerMain}
+          onPress={() => setIsExpanded(!isExpanded)}
+          activeOpacity={0.7}
+        >
+          {/* Muscle Category Icon */}
+          {exercise.muscleCategory && (
+            <View
+              style={[
+                styles.muscleIconContainer,
+                { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory]}20` },
+              ]}
+            >
+              <Ionicons
+                name={muscleCategoryIcons[exercise.muscleCategory] || 'fitness'}
+                size={24}
+                color={muscleCategoryColors[exercise.muscleCategory]}
+              />
+            </View>
+          )}
 
-        {/* Exercise Info */}
-        <View style={styles.headerInfo}>
-          <View style={styles.headerTopRow}>
-            <Text style={[styles.exerciseName, { color: theme.text }]} numberOfLines={1}>
-              {exercise.name}
-            </Text>
-            {isComplete && (
-              <View style={[styles.completeBadge, { backgroundColor: '#00b89420' }]}>
-                <Ionicons name="checkmark-circle" size={16} color="#00b894" />
-                <Text style={[styles.completeBadgeText, { color: '#00b894' }]}>Complete</Text>
-              </View>
+          {/* Exercise Info */}
+          <View style={styles.headerInfo}>
+            <View style={styles.headerTopRow}>
+              <Text style={[styles.exerciseName, { color: theme.text }]} numberOfLines={1}>
+                {exercise.name}
+              </Text>
+              {isComplete && (
+                <View style={[styles.completeBadge, { backgroundColor: '#00b89420' }]}>
+                  <Ionicons name="checkmark-circle" size={16} color="#00b894" />
+                  <Text style={[styles.completeBadgeText, { color: '#00b894' }]}>Complete</Text>
+                </View>
+              )}
+            </View>
+
+            {targetText && (
+              <Text style={[styles.targetText, { color: theme.textSecondary }]}>{targetText}</Text>
             )}
-          </View>
 
-          {targetText && (
-            <Text style={[styles.targetText, { color: theme.textSecondary }]}>{targetText}</Text>
-          )}
-
-          {exercise.equipment && (
-            <Text style={[styles.equipmentText, { color: theme.textSecondary }]}>
-              {exercise.equipment}
-            </Text>
-          )}
-
-          {/* Sets count */}
-          <Text style={[styles.setsCount, { color: theme.textSecondary }]}>
-            {sessionExercise?.sets.length || 0}
-            {exercise.targetNumberOfSets ? `/${exercise.targetNumberOfSets}` : ''} sets
-            {previousPerformance && !isExpanded && (
-              <Text style={[styles.prevHint, { color: theme.textSecondary }]}>
-                {' · '}Last: {displayWeight(previousPerformance.weight, preferences.weightUnit)}{preferences.weightUnit} × {previousPerformance.reps}
-                {previousPerformance.rir !== undefined && (
-                  previousPerformance.rir === 'F' ? ' (F)' :
-                  previousPerformance.rir === 'P' ? ' (P)' :
-                  ` @${previousPerformance.rir}RIR`
-                )}
+            {exercise.equipment && (
+              <Text style={[styles.equipmentText, { color: theme.textSecondary }]}>
+                {exercise.equipment}
               </Text>
             )}
-          </Text>
-        </View>
 
-        {/* Expand/Collapse Icon */}
-        <Ionicons
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={24}
-          color={theme.textSecondary}
-        />
-      </TouchableOpacity>
+            {/* Sets count */}
+            <Text style={[styles.setsCount, { color: theme.textSecondary }]}>
+              {sessionExercise?.sets.length || 0}
+              {exercise.targetNumberOfSets ? `/${exercise.targetNumberOfSets}` : ''} sets
+              {previousPerformance && !isExpanded && (
+                <Text style={[styles.prevHint, { color: theme.textSecondary }]}>
+                  {' · '}Last: {displayWeight(previousPerformance.weight, preferences.weightUnit)}{preferences.weightUnit} × {previousPerformance.reps}
+                  {previousPerformance.rir !== undefined && (
+                    previousPerformance.rir === 'F' ? ' (F)' :
+                    previousPerformance.rir === 'P' ? ' (P)' :
+                    ` @${previousPerformance.rir}RIR`
+                  )}
+                </Text>
+              )}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Right: action buttons */}
+        <View style={styles.headerActions}>
+          {onSwapExercise && (
+            <TouchableOpacity
+              style={[styles.swapButton, { backgroundColor: theme.cardBorder + '60' }]}
+              onPress={() => setSwapModalVisible(true)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            >
+              <Ionicons name="swap-horizontal" size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            onPress={() => setIsExpanded(!isExpanded)}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+          >
+            <Ionicons
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={24}
+              color={theme.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Expanded Content */}
       {isExpanded && (
@@ -232,6 +269,16 @@ export default function ExerciseCard({
         setNumber={editingSetIndex !== null ? editingSetIndex + 1 : undefined}
         initialData={editorInitialData}
       />
+
+      {/* Exercise Swap Modal */}
+      {onSwapExercise && (
+        <ExerciseSwapModal
+          visible={swapModalVisible}
+          currentExerciseId={exercise.id}
+          onClose={() => setSwapModalVisible(false)}
+          onSelectExercise={handleSelectSwapExercise}
+        />
+      )}
     </View>
   );
 }
@@ -246,8 +293,28 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 12,
+    paddingLeft: 16,
+    paddingRight: 12,
+    gap: 8,
+  },
+  headerMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  swapButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   muscleIconContainer: {
     width: 48,
