@@ -5,6 +5,9 @@
 .agents/
 .cursor/
 
+# backups
+bolic-backup-*
+
 # dependencies
 node_modules/
 

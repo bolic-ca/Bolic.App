@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { TrainingExercise } from '@/types/training';
@@ -28,7 +29,8 @@ interface ExerciseCardProps {
   onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
   onDeleteSet?: (exerciseId: string, setIndex: number) => void;
   onSwapExercise?: (originalExerciseId: string, newExercise: TrainingExercise) => void;
-  onUpdateExerciseTargets?: (exerciseId: string, patch: { targetRepetitions?: string | null; targetRepetitionsInReserve?: string | null; notes?: string | null }) => Promise<void>;
+  /** When true, shows the edit button which opens exercise-form in edit mode. */
+  canEditExercise?: boolean;
   sessionHistory?: WorkoutSession[];
 }
 
@@ -41,7 +43,7 @@ export default function ExerciseCard({
   onUpdateSet,
   onDeleteSet,
   onSwapExercise,
-  onUpdateExerciseTargets,
+  canEditExercise,
   sessionHistory,
 }: ExerciseCardProps) {
   const colorScheme = useColorScheme();
@@ -52,37 +54,6 @@ export default function ExerciseCard({
 
   // Swap modal state
   const [swapModalVisible, setSwapModalVisible] = useState(false);
-
-  // Edit targets modal state
-  const [editTargetsVisible, setEditTargetsVisible] = useState(false);
-  const [draftTargetReps, setDraftTargetReps] = useState('');
-  const [draftTargetRir, setDraftTargetRir] = useState('');
-  const [draftNotes, setDraftNotes] = useState('');
-  const [savingTargets, setSavingTargets] = useState(false);
-
-  const openEditTargets = () => {
-    setDraftTargetReps(exercise.targetRepetitions ?? '');
-    setDraftTargetRir(exercise.targetRepetitionsInReserve ?? '');
-    setDraftNotes(exercise.notes ?? '');
-    setEditTargetsVisible(true);
-  };
-
-  const handleSaveTargets = async () => {
-    if (!onUpdateExerciseTargets || !exercise.id) return;
-    setSavingTargets(true);
-    try {
-      await onUpdateExerciseTargets(exercise.id, {
-        targetRepetitions: draftTargetReps.trim() || null,
-        targetRepetitionsInReserve: draftTargetRir.trim() || null,
-        notes: draftNotes.trim() || null,
-      });
-      setEditTargetsVisible(false);
-    } catch {
-      Alert.alert('Error', 'Failed to save targets');
-    } finally {
-      setSavingTargets(false);
-    }
-  };
 
   const handleSelectSwapExercise = (newExercise: TrainingExercise) => {
     setSwapModalVisible(false);
@@ -239,10 +210,10 @@ export default function ExerciseCard({
               <Ionicons name="swap-horizontal" size={18} color={theme.textSecondary} />
             </TouchableOpacity>
           )}
-          {onUpdateExerciseTargets && (
+          {canEditExercise && exercise.id && (
             <TouchableOpacity
               style={[styles.headerIconButton, { backgroundColor: theme.cardBorder + '60' }]}
-              onPress={openEditTargets}
+              onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
               activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
@@ -329,99 +300,6 @@ export default function ExerciseCard({
           onSelectExercise={handleSelectSwapExercise}
         />
       )}
-
-      {/* Edit Targets Modal */}
-      <Modal
-        visible={editTargetsVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditTargetsVisible(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <Pressable style={styles.modalBackdrop} onPress={() => setEditTargetsVisible(false)} />
-          <View style={[styles.editSheet, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            {/* Handle */}
-            <View style={[styles.sheetHandle, { backgroundColor: theme.cardBorder }]} />
-
-            {/* Title */}
-            <View style={styles.sheetHeader}>
-              <Text style={[styles.sheetTitle, { color: theme.text }]}>Edit Targets</Text>
-              <Text style={[styles.sheetSubtitle, { color: theme.textSecondary }]}>
-                {exercise.name}
-              </Text>
-            </View>
-
-            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              {/* Target Reps */}
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>TARGET REPS</Text>
-                <TextInput
-                  style={[styles.fieldInput, { color: theme.text, backgroundColor: theme.background, borderColor: theme.cardBorder }]}
-                  value={draftTargetReps}
-                  onChangeText={setDraftTargetReps}
-                  placeholder="e.g. 8-12"
-                  placeholderTextColor={theme.textSecondary}
-                  returnKeyType="next"
-                />
-              </View>
-
-              {/* Target RIR */}
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>TARGET RIR</Text>
-                <TextInput
-                  style={[styles.fieldInput, { color: theme.text, backgroundColor: theme.background, borderColor: theme.cardBorder }]}
-                  value={draftTargetRir}
-                  onChangeText={setDraftTargetRir}
-                  placeholder="e.g. 2-3"
-                  placeholderTextColor={theme.textSecondary}
-                  returnKeyType="next"
-                />
-              </View>
-
-              {/* Notes */}
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>NOTES</Text>
-                <TextInput
-                  style={[styles.fieldInput, styles.notesInput, { color: theme.text, backgroundColor: theme.background, borderColor: theme.cardBorder }]}
-                  value={draftNotes}
-                  onChangeText={setDraftNotes}
-                  placeholder="Cues, setup tips…"
-                  placeholderTextColor={theme.textSecondary}
-                  multiline
-                  returnKeyType="done"
-                  blurOnSubmit
-                />
-              </View>
-            </ScrollView>
-
-            {/* Actions */}
-            <View style={styles.sheetActions}>
-              <TouchableOpacity
-                style={[styles.sheetCancelBtn, { borderColor: theme.cardBorder }]}
-                onPress={() => setEditTargetsVisible(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.sheetCancelText, { color: theme.textSecondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.sheetSaveBtn,
-                  { backgroundColor: customColors.primaryButton, opacity: (pressed || savingTargets) ? 0.7 : 1 },
-                ]}
-                onPress={handleSaveTargets}
-                disabled={savingTargets}
-              >
-                <Text style={[styles.sheetSaveText, { color: customColors.primaryButtonText }]}>
-                  {savingTargets ? 'Saving…' : 'Save'}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </View>
   );
 }
@@ -541,92 +419,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
-  },
-
-  // Edit Targets Modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  editSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    paddingHorizontal: 20,
-    paddingBottom: 36,
-    maxHeight: '85%',
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  sheetHeader: {
-    marginBottom: 20,
-  },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    marginBottom: 2,
-  },
-  sheetSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  },
-  fieldInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  notesInput: {
-    minHeight: 72,
-    textAlignVertical: 'top',
-  },
-  sheetActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  sheetCancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  sheetCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sheetSaveBtn: {
-    flex: 2,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  sheetSaveText: {
-    fontSize: 16,
-    fontWeight: '700',
   },
 });
