@@ -41,3 +41,4 @@ export async function clearActiveProgramId(userId: string): Promise<void> {
   const key = getUserKey(userId, USER_DATA_KEYS.ACTIVE_PROGRAM_ID);
   await storageClient.remove(key);
 }
+

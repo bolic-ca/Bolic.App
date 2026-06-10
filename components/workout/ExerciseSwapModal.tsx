@@ -24,12 +24,16 @@ import { MuscleCategory } from '@/types/training';
 import {
   muscleCategoryColorsTailwind as muscleCategoryColors,
 } from '@/constants/muscle-categories';
+import type { WorkoutSession } from '@/services/storage/session-storage';
+import { getPreviousPerformance } from '@/utils/workout-helpers';
+import { displayWeight } from '@/utils/weight';
 
 const muscleCategories = Object.values(MuscleCategory);
 
 interface ExerciseSwapModalProps {
   visible: boolean;
   currentExerciseId?: string;
+  sessionHistory?: WorkoutSession[];
   onClose: () => void;
   onSelectExercise: (exercise: TrainingExercise) => void;
 }
@@ -37,12 +41,13 @@ interface ExerciseSwapModalProps {
 export default function ExerciseSwapModal({
   visible,
   currentExerciseId,
+  sessionHistory = [],
   onClose,
   onSelectExercise,
 }: ExerciseSwapModalProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
   const { allExercises } = useExercises();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,6 +204,9 @@ export default function ExerciseSwapModal({
                 const categoryColor = exercise.muscleCategory
                   ? muscleCategoryColors[exercise.muscleCategory as MuscleCategory]
                   : palette.textMuted;
+                const prevPerf = exercise.id
+                  ? getPreviousPerformance(exercise.id, sessionHistory)
+                  : null;
 
                 return (
                   <TouchableOpacity
@@ -232,6 +240,18 @@ export default function ExerciseSwapModal({
                           </Text>
                         )}
                       </View>
+                      {prevPerf ? (
+                        <Text style={[styles.historyHint, { color: palette.textMuted }]}>
+                          Last: {displayWeight(prevPerf.weight, preferences.weightUnit)}{preferences.weightUnit} × {prevPerf.reps}
+                          {prevPerf.rir !== undefined && (
+                            prevPerf.rir === 'F' ? ' (F)' :
+                            prevPerf.rir === 'P' ? ' (P)' :
+                            ` @${prevPerf.rir}RIR`
+                          )}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.historyHint, { color: palette.textMuted }]}>No history</Text>
+                      )}
                     </View>
                     {isCurrent ? (
                       <View style={[styles.currentBadge, { backgroundColor: hexToRgba(palette.accent, 0.15) }]}>
@@ -306,6 +326,7 @@ const styles = StyleSheet.create({
   muscleBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   muscleBadgeText: { fontSize: 11, fontWeight: '600' },
   exerciseEquipment: { fontSize: 12 },
+  historyHint: { fontSize: 11, fontWeight: '500', fontStyle: 'italic', marginTop: 3 },
   currentBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   currentBadgeText: { fontSize: 12, fontWeight: '600' },
 });

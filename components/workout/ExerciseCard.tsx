@@ -6,16 +6,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import type { TrainingExercise } from '@/types/training';
-import type { SessionExercise, SessionSet } from '@/services/storage/session-storage';
+import type { SessionExercise, SessionSet, WorkoutSession } from '@/services/storage/session-storage';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 import PreviousPerformance from './PreviousPerformance';
 import SetEditor from './SetEditor';
 import SetListItem from './SetListItem';
 import ExerciseSwapModal from './ExerciseSwapModal';
 import { displayWeight } from '@/utils/weight';
+import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
 
 interface ExerciseCardProps {
   exercise: TrainingExercise;
@@ -27,9 +29,10 @@ interface ExerciseCardProps {
   onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
   onDeleteSet?: (exerciseId: string, setIndex: number) => void;
   onSwapExercise?: (originalExerciseId: string, newExercise: TrainingExercise) => void;
+  /** When true, shows the edit button which opens exercise-form in edit mode. */
+  canEditExercise?: boolean;
+  sessionHistory?: WorkoutSession[];
 }
-
-import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
 
 export default function ExerciseCard({
   exercise,
@@ -40,6 +43,8 @@ export default function ExerciseCard({
   onUpdateSet,
   onDeleteSet,
   onSwapExercise,
+  canEditExercise,
+  sessionHistory,
 }: ExerciseCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -197,12 +202,22 @@ export default function ExerciseCard({
         <View style={styles.headerActions}>
           {onSwapExercise && (
             <TouchableOpacity
-              style={[styles.swapButton, { backgroundColor: theme.cardBorder + '60' }]}
+              style={[styles.headerIconButton, { backgroundColor: theme.cardBorder + '60' }]}
               onPress={() => setSwapModalVisible(true)}
               activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
               <Ionicons name="swap-horizontal" size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
+          {canEditExercise && exercise.id && (
+            <TouchableOpacity
+              style={[styles.headerIconButton, { backgroundColor: theme.cardBorder + '60' }]}
+              onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            >
+              <Ionicons name="pencil" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -224,7 +239,12 @@ export default function ExerciseCard({
         <View style={styles.expandedContent}>
           {/* Previous Performance */}
           <View style={styles.previousPerformanceContainer}>
-            <PreviousPerformance data={previousPerformance} />
+            <PreviousPerformance
+              data={previousPerformance}
+              exerciseId={exercise.id}
+              exerciseName={exercise.name}
+              sessionHistory={sessionHistory}
+            />
           </View>
 
           {/* Add Set Button */}
@@ -275,6 +295,7 @@ export default function ExerciseCard({
         <ExerciseSwapModal
           visible={swapModalVisible}
           currentExerciseId={exercise.id}
+          sessionHistory={sessionHistory}
           onClose={() => setSwapModalVisible(false)}
           onSelectExercise={handleSelectSwapExercise}
         />
@@ -309,7 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  swapButton: {
+  headerIconButton: {
     width: 32,
     height: 32,
     borderRadius: 8,

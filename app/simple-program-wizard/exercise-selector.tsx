@@ -80,10 +80,10 @@ export default function ExerciseSelectorScreen() {
   const handleSelectExercise = (exercise: TrainingExercise) => {
     if (dayIndex === null) return;
 
-    // Create a copy of the exercise for this training day with a unique ID
+    // Use the library exercise ID directly so workout sessions can resolve
+    // live data (name, muscle, equipment) from the library at display time.
     const exerciseCopy: TrainingExercise = {
       ...exercise,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       trainingDayIds: [],
     };
 

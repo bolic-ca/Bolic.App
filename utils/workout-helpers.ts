@@ -41,6 +41,47 @@ export function getPreviousPerformance(
   return null;
 }
 
+export interface HistoricalSession {
+  sessionId: string;
+  sessionName?: string;
+  date: string;
+  performance: PreviousPerformance;
+}
+
+/**
+ * Get all past performances for an exercise across all sessions, newest first
+ */
+export function getAllPreviousPerformances(
+  exerciseId: string,
+  sessionHistory: WorkoutSession[]
+): HistoricalSession[] {
+  const results: HistoricalSession[] = [];
+
+  for (const session of sessionHistory) {
+    // Skip active (incomplete) sessions
+    if (!session.completedAt) continue;
+
+    const exercise = session.exercises.find(ex => ex.exerciseId === exerciseId);
+    if (exercise && exercise.sets.length > 0) {
+      const lastSet = exercise.sets[exercise.sets.length - 1];
+      results.push({
+        sessionId: session.id,
+        sessionName: session.name,
+        date: session.startedAt,
+        performance: {
+          sets: exercise.sets,
+          weight: lastSet.weight,
+          reps: lastSet.reps,
+          rir: lastSet.rir,
+          rpe: lastSet.rpe,
+        },
+      });
+    }
+  }
+
+  return results;
+}
+
 /**
  * Check if an exercise has reached its target number of sets
  * @param sessionExercise - Exercise from the active session

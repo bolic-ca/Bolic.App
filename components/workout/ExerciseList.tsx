@@ -42,12 +42,18 @@ export default function ExerciseList({
         const originalExerciseId = exercise.id!;
         const override = session.exerciseOverrides?.[originalExerciseId];
 
+        // Resolve all fields from the library exercise (including targets).
+        // Falls back to the embedded data for old programs whose IDs predate
+        // the library-reference model (timestamp-based IDs won't match).
+        const libraryExercise = allExercises.find(ex => ex.id === exercise.id);
+        const resolvedExercise: TrainingExercise = libraryExercise ?? exercise;
+
         // If the exercise was swapped, resolve the replacement from the library
-        let displayExercise = exercise;
+        let displayExercise = resolvedExercise;
         if (override) {
           const found = allExercises.find(ex => ex.id === override.exerciseId);
           // Fallback: keep template fields but update id/name if not found in library
-          displayExercise = found ?? { ...exercise, id: override.exerciseId, name: override.exerciseName };
+          displayExercise = found ?? { ...resolvedExercise, id: override.exerciseId, name: override.exerciseName };
         }
 
         // Find logged sets using the effective exerciseId
@@ -72,6 +78,8 @@ export default function ExerciseList({
             onUpdateSet={onUpdateSet}
             onDeleteSet={onDeleteSet}
             onSwapExercise={onSwapExercise}
+            canEditExercise={!!libraryExercise}
+            sessionHistory={sessionHistory}
           />
         );
       })}
