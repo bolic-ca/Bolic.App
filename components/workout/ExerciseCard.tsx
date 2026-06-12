@@ -195,6 +195,16 @@ export default function ExerciseCard({
                 </Text>
               )}
             </Text>
+
+            {/* Notes indicator (collapsed state) */}
+            {exercise.notes && !isExpanded && (
+              <View style={styles.notesIndicator}>
+                <Ionicons name="document-text-outline" size={12} color={theme.textSecondary} />
+                <Text style={[styles.notesIndicatorText, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {exercise.notes}
+                </Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
 
@@ -237,6 +247,17 @@ export default function ExerciseCard({
       {/* Expanded Content */}
       {isExpanded && (
         <View style={styles.expandedContent}>
+          {/* Exercise Notes */}
+          {exercise.notes && (
+            <View style={[styles.notesCard, { backgroundColor: theme.cardBorder + '30', borderColor: theme.cardBorder }]}>
+              <View style={styles.notesCardHeader}>
+                <Ionicons name="document-text-outline" size={14} color={theme.textSecondary} />
+                <Text style={[styles.notesCardLabel, { color: theme.textSecondary }]}>Notes</Text>
+              </View>
+              <Text style={[styles.notesCardText, { color: theme.text }]}>{exercise.notes}</Text>
+            </View>
+          )}
+
           {/* Previous Performance */}
           <View style={styles.previousPerformanceContainer}>
             <PreviousPerformance
@@ -393,6 +414,39 @@ const styles = StyleSheet.create({
   expandedContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  notesIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  notesIndicatorText: {
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1,
+  },
+  notesCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+  },
+  notesCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  notesCardLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  notesCardText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   previousPerformanceContainer: {
     marginBottom: 12,
