@@ -29,6 +29,8 @@ interface ExerciseCardProps {
   onUpdateSet?: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => void;
   onDeleteSet?: (exerciseId: string, setIndex: number) => void;
   onSwapExercise?: (originalExerciseId: string, newExercise: TrainingExercise) => void;
+  /** Called when user removes this exercise from the session. */
+  onRemoveExercise?: () => void;
   /** When true, shows the edit button which opens exercise-form in edit mode. */
   canEditExercise?: boolean;
   sessionHistory?: WorkoutSession[];
@@ -43,6 +45,7 @@ export default function ExerciseCard({
   onUpdateSet,
   onDeleteSet,
   onSwapExercise,
+  onRemoveExercise,
   canEditExercise,
   sessionHistory,
 }: ExerciseCardProps) {
@@ -195,31 +198,21 @@ export default function ExerciseCard({
                 </Text>
               )}
             </Text>
+
+            {/* Notes indicator (collapsed state) */}
+            {exercise.notes && !isExpanded && (
+              <View style={styles.notesIndicator}>
+                <Ionicons name="document-text-outline" size={12} color={theme.textSecondary} />
+                <Text style={[styles.notesIndicatorText, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {exercise.notes}
+                </Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
 
-        {/* Right: action buttons */}
+        {/* Right: chevron only */}
         <View style={styles.headerActions}>
-          {onSwapExercise && (
-            <TouchableOpacity
-              style={[styles.headerIconButton, { backgroundColor: theme.cardBorder + '60' }]}
-              onPress={() => setSwapModalVisible(true)}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Ionicons name="swap-horizontal" size={18} color={theme.textSecondary} />
-            </TouchableOpacity>
-          )}
-          {canEditExercise && exercise.id && (
-            <TouchableOpacity
-              style={[styles.headerIconButton, { backgroundColor: theme.cardBorder + '60' }]}
-              onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Ionicons name="pencil" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-          )}
           <TouchableOpacity
             onPress={() => setIsExpanded(!isExpanded)}
             activeOpacity={0.7}
@@ -237,6 +230,53 @@ export default function ExerciseCard({
       {/* Expanded Content */}
       {isExpanded && (
         <View style={styles.expandedContent}>
+          {/* Action row: swap · edit · delete */}
+          {(onSwapExercise || (canEditExercise && exercise.id) || onRemoveExercise) && (
+            <View style={[styles.actionRow, { borderBottomColor: theme.cardBorder }]}>
+              {onSwapExercise && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setSwapModalVisible(true)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="swap-horizontal" size={18} color={theme.textSecondary} />
+                  <Text style={[styles.actionButtonText, { color: theme.textSecondary }]}>Swap</Text>
+                </TouchableOpacity>
+              )}
+              {canEditExercise && exercise.id && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="pencil" size={16} color={theme.textSecondary} />
+                  <Text style={[styles.actionButtonText, { color: theme.textSecondary }]}>Edit</Text>
+                </TouchableOpacity>
+              )}
+              {onRemoveExercise && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={onRemoveExercise}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                  <Text style={[styles.actionButtonText, { color: '#EF4444' }]}>Remove</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* Exercise Notes */}
+          {exercise.notes && (
+            <View style={[styles.notesCard, { backgroundColor: theme.cardBorder + '30', borderColor: theme.cardBorder }]}>
+              <View style={styles.notesCardHeader}>
+                <Ionicons name="document-text-outline" size={14} color={theme.textSecondary} />
+                <Text style={[styles.notesCardLabel, { color: theme.textSecondary }]}>Notes</Text>
+              </View>
+              <Text style={[styles.notesCardText, { color: theme.text }]}>{exercise.notes}</Text>
+            </View>
+          )}
+
           {/* Previous Performance */}
           <View style={styles.previousPerformanceContainer}>
             <PreviousPerformance
@@ -393,6 +433,58 @@ const styles = StyleSheet.create({
   expandedContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    marginBottom: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    gap: 4,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  notesIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  notesIndicatorText: {
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1,
+  },
+  notesCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+  },
+  notesCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  notesCardLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  notesCardText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   previousPerformanceContainer: {
     marginBottom: 12,

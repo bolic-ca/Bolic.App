@@ -8,6 +8,7 @@ import { useStorage } from '@/contexts/StorageContext';
 import {
   WorkoutSession,
   SessionSet,
+  SessionExercisePlan,
   getActiveSession,
   setActiveSession,
   clearActiveSession,
@@ -15,6 +16,7 @@ import {
   getSessionHistory,
 } from '@/services/storage/session-storage';
 import { StorageItem } from '@/types/storage';
+import { TrainingExercise } from '@/types/training';
 import { generateId, getCurrentTimestamp } from '@/utils/storage-helpers';
 
 interface WorkoutSessionContextType {
@@ -22,11 +24,14 @@ interface WorkoutSessionContextType {
   sessionHistory: WorkoutSession[];
   loading: boolean;
   error: Error | null;
-  startSession: (programId: string, trainingDayId: string, name?: string) => Promise<void>;
+  startSession: (programId: string, trainingDayId: string, name?: string, planOverride?: SessionExercisePlan[]) => Promise<void>;
   addSet: (exerciseId: string, exerciseName: string, set: Omit<SessionSet, 'completedAt'>) => Promise<void>;
   updateSet: (exerciseId: string, setIndex: number, set: Omit<SessionSet, 'completedAt'>) => Promise<void>;
   deleteSet: (exerciseId: string, setIndex: number) => Promise<void>;
   swapExercise: (originalExerciseId: string, newExerciseId: string, newExerciseName: string) => Promise<void>;
+  addExerciseToSession: (exercise: TrainingExercise) => Promise<void>;
+  removeExerciseFromSession: (exerciseId: string) => Promise<void>;
+  reorderExercises: (orderedIds: string[]) => Promise<void>;
   completeSession: (notes?: string) => Promise<void>;
   cancelSession: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -80,7 +85,7 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, isInitialized, fetchActiveSession, fetchSessionHistory]);
 
-  const startSession = useCallback(async (programId: string, trainingDayId: string, name?: string): Promise<void> => {
+  const startSession = useCallback(async (programId: string, trainingDayId: string, name?: string, planOverride?: SessionExercisePlan[]): Promise<void> => {
     if (!userId) {
       throw new Error('User not initialized');
     }
@@ -94,6 +99,7 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
         startedAt: getCurrentTimestamp(),
         completedAt: null,
         exercises: [],
+        exercisePlan: planOverride ?? [],
       };
 
       const sessionItem: StorageItem<WorkoutSession> = {
@@ -312,10 +318,18 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
         [originalExerciseId]: { exerciseId: newExerciseId, exerciseName: newExerciseName },
       };
 
+      // Also update exercisePlan so the swap is reflected in the ordered plan
+      const updatedPlan = (session.exercisePlan ?? []).map(entry =>
+        entry.exerciseId === originalExerciseId
+          ? { exerciseId: newExerciseId, exerciseName: newExerciseName }
+          : entry
+      );
+
       const updatedSession: WorkoutSession = {
         ...session,
         exercises: updatedExercises,
         exerciseOverrides: updatedOverrides,
+        exercisePlan: updatedPlan,
       };
 
       const sessionItem: StorageItem<WorkoutSession> = {
@@ -330,6 +344,97 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
       setSession(updatedSession);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to swap exercise');
+      setError(error);
+      throw error;
+    }
+  }, [session, userId]);
+
+  const addExerciseToSession = useCallback(async (exercise: TrainingExercise): Promise<void> => {
+    if (!session) throw new Error('No active session');
+    if (!userId) throw new Error('User not initialized');
+
+    try {
+      const alreadyInPlan = (session.exercisePlan ?? []).some(e => e.exerciseId === exercise.id);
+      if (alreadyInPlan) return;
+
+      const updatedPlan: SessionExercisePlan[] = [
+        ...(session.exercisePlan ?? []),
+        { exerciseId: exercise.id!, exerciseName: exercise.name! },
+      ];
+
+      const updatedSession: WorkoutSession = { ...session, exercisePlan: updatedPlan };
+      const sessionItem: StorageItem<WorkoutSession> = {
+        id: session.id,
+        userId,
+        data: updatedSession,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      };
+
+      await setActiveSession(userId, sessionItem);
+      setSession(updatedSession);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to add exercise');
+      setError(error);
+      throw error;
+    }
+  }, [session, userId]);
+
+  const removeExerciseFromSession = useCallback(async (exerciseId: string): Promise<void> => {
+    if (!session) throw new Error('No active session');
+    if (!userId) throw new Error('User not initialized');
+
+    try {
+      const updatedPlan = (session.exercisePlan ?? []).filter(e => e.exerciseId !== exerciseId);
+      // Remove any already-logged sets for this exercise
+      const updatedExercises = session.exercises.filter(ex => ex.exerciseId !== exerciseId);
+
+      const updatedSession: WorkoutSession = {
+        ...session,
+        exercisePlan: updatedPlan,
+        exercises: updatedExercises,
+      };
+
+      const sessionItem: StorageItem<WorkoutSession> = {
+        id: session.id,
+        userId,
+        data: updatedSession,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      };
+
+      await setActiveSession(userId, sessionItem);
+      setSession(updatedSession);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to remove exercise');
+      setError(error);
+      throw error;
+    }
+  }, [session, userId]);
+
+  const reorderExercises = useCallback(async (orderedIds: string[]): Promise<void> => {
+    if (!session) throw new Error('No active session');
+    if (!userId) throw new Error('User not initialized');
+
+    try {
+      const planMap = new Map((session.exercisePlan ?? []).map(e => [e.exerciseId, e]));
+      const updatedPlan: SessionExercisePlan[] = orderedIds
+        .map(id => planMap.get(id))
+        .filter((e): e is SessionExercisePlan => e !== undefined);
+
+      const updatedSession: WorkoutSession = { ...session, exercisePlan: updatedPlan };
+      const sessionItem: StorageItem<WorkoutSession> = {
+        id: session.id,
+        userId,
+        data: updatedSession,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+      };
+
+      await setActiveSession(userId, sessionItem);
+      setSession(updatedSession);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to reorder exercises');
       setError(error);
       throw error;
     }
@@ -395,6 +500,9 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
         updateSet,
         deleteSet,
         swapExercise,
+        addExerciseToSession,
+        removeExerciseFromSession,
+        reorderExercises,
         completeSession,
         cancelSession,
         refetch: fetchActiveSession,
