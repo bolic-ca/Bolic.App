@@ -139,20 +139,10 @@ export default function ExerciseList({
               onUpdateSet={onUpdateSet}
               onDeleteSet={onDeleteSet}
               onSwapExercise={onSwapExercise}
+              onRemoveExercise={onRemoveExercise ? () => onRemoveExercise(exercise.id!) : undefined}
               canEditExercise={!!libraryExercise}
               sessionHistory={sessionHistory}
             />
-            {/* Remove button — overlaid bottom-right of card */}
-            {onRemoveExercise && (
-              <TouchableOpacity
-                style={[styles.removeButton, { backgroundColor: theme.background, borderColor: theme.cardBorder }]}
-                onPress={() => onRemoveExercise(exercise.id!)}
-                activeOpacity={0.7}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Ionicons name="remove-circle-outline" size={18} color="#EF4444" />
-              </TouchableOpacity>
-            )}
           </View>
         );
       })}
@@ -221,18 +211,6 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     position: 'relative',
-  },
-  removeButton: {
-    position: 'absolute',
-    bottom: 24,
-    right: 4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
   },
   addExerciseButton: {
     flexDirection: 'row',
