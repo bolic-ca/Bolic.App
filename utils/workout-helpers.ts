@@ -160,22 +160,53 @@ export function getWorkoutProgress(
     }
   }
 
+  // exercisePlan is source of truth for new sessions; legacy sessions fall back to template
+  const hasPlan = session.exercisePlan != null;
+  const totalExercises = hasPlan
+    ? session.exercisePlan!.length
+    : (trainingDay?.exercises?.length || 0);
+
   let completedExercises = 0;
-  if (trainingDay?.exercises) {
-    for (const templateExercise of trainingDay.exercises) {
-      // Respect any mid-workout swap override
-      const override = session.exerciseOverrides?.[templateExercise.id!];
-      const effectiveId = override ? override.exerciseId : templateExercise.id;
-      const sessionExercise = session.exercises.find(ex => ex.exerciseId === effectiveId);
-      if (isExerciseComplete(sessionExercise, templateExercise.targetNumberOfSets)) {
-        completedExercises++;
+
+  if (hasPlan) {
+    // Build a targetNumberOfSets lookup from the template (keyed by exercise ID)
+    const targetMap = new Map<string, number | null | undefined>(
+      (trainingDay?.exercises ?? []).map(ex => [ex.id!, ex.targetNumberOfSets])
+    );
+
+    for (const planEntry of session.exercisePlan!) {
+      const sessionExercise = session.exercises.find(ex => ex.exerciseId === planEntry.exerciseId);
+      const targetSets = targetMap.get(planEntry.exerciseId);
+
+      if (targetSets) {
+        // Has a target — complete when sets logged >= target
+        if (isExerciseComplete(sessionExercise, targetSets)) {
+          completedExercises++;
+        }
+      } else {
+        // No target set — count as done once at least one set is logged
+        if (sessionExercise && sessionExercise.sets.length > 0) {
+          completedExercises++;
+        }
+      }
+    }
+  } else {
+    // Legacy sessions: iterate template exercises + respect swap overrides
+    if (trainingDay?.exercises) {
+      for (const templateExercise of trainingDay.exercises) {
+        const override = session.exerciseOverrides?.[templateExercise.id!];
+        const effectiveId = override ? override.exerciseId : templateExercise.id;
+        const sessionExercise = session.exercises.find(ex => ex.exerciseId === effectiveId);
+        if (isExerciseComplete(sessionExercise, templateExercise.targetNumberOfSets)) {
+          completedExercises++;
+        }
       }
     }
   }
 
   return {
     completedExercises,
-    totalExercises: trainingDay?.exercises?.length || 0,
+    totalExercises,
     totalSets,
     totalVolume,
   };

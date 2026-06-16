@@ -491,14 +491,16 @@ function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange, weigh
                 <Text style={[styles.setDetails, { color: palette.text }]}>
                   {displayWeight(set.weight, weightUnit)} {weightUnit} × {set.reps} reps
                 </Text>
-                {(set.rir !== undefined || set.rpe !== undefined) && (
+                {(set.numberOfPartials !== undefined || set.rir !== undefined || set.rpe !== undefined) && (
                   <Text style={[styles.setMetrics, { color: palette.textMuted }]}>
+                    {set.numberOfPartials !== undefined && `+${set.numberOfPartials}P`}
+                    {set.numberOfPartials !== undefined && set.rir !== undefined && ' · '}
                     {set.rir !== undefined && (
                       set.rir === 'F' ? 'Failure' :
                       set.rir === 'P' ? 'Partials' :
                       `RIR ${formatRirShort(set.rir)}`
                     )}
-                    {set.rir !== undefined && set.rpe !== undefined && ' · '}
+                    {(set.numberOfPartials !== undefined || set.rir !== undefined) && set.rpe !== undefined && ' · '}
                     {set.rpe !== undefined && `RPE ${set.rpe}`}
                   </Text>
                 )}

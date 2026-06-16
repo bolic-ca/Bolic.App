@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, useColorScheme, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
@@ -11,9 +12,16 @@ import { displayWeight } from '@/utils/weight';
 export default function StatsPage() {
   const colorScheme = useColorScheme();
   const { customColors, preferences } = useThemeCustomization();
-  const { stats: userStats, prs, loading: statsLoading } = useStats();
+  const { stats: userStats, prs, loading: statsLoading, refetch } = useStats();
   const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
   const isDark = colorScheme === 'dark';
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   const loading = statsLoading || sessionLoading;
 
