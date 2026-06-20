@@ -3,8 +3,9 @@
  * Renders list of exercises for the active workout
  */
 
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { TrainingDay, TrainingExercise } from '@/types/training';
 import type { WorkoutSession, SessionSet } from '@/services/storage/session-storage';
 import { getPreviousPerformance } from '@/utils/workout-helpers';
@@ -30,7 +31,18 @@ export default function ExerciseList({
   onDeleteSet,
   onSwapExercise,
 }: ExerciseListProps) {
-  const { allExercises } = useExercises();
+  const { allExercises, refetch } = useExercises();
+
+  // Refresh exercise library when the screen regains focus (e.g. after editing
+  // an exercise in the exercise-form modal) so edits apply without reopening
+  // the session. Ref keeps the focus effect stable to avoid refetch loops.
+  const refetchRef = useRef(refetch);
+  refetchRef.current = refetch;
+  useFocusEffect(
+    useCallback(() => {
+      refetchRef.current();
+    }, [])
+  );
 
   if (!trainingDay.exercises || trainingDay.exercises.length === 0) {
     return null;
