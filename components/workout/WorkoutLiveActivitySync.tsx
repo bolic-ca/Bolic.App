@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useStorage } from '@/contexts/StorageContext';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import { trainingDayStorage } from '@/services/storage/training-day-storage';
+import { programStorage } from '@/services/storage/program-storage';
 import type { TrainingDay } from '@/types/training';
 import { buildWorkoutActivityState } from '@/utils/live-activity-helpers';
 import {
@@ -21,6 +21,35 @@ import {
 // How often to refresh the elapsed-time text while a workout is active.
 const TIME_REFRESH_MS = 30_000;
 
+/**
+ * Training days live inside the program (simple: program.trainingDays;
+ * periodized: nested in mesocycles -> microcycles), not as standalone entities,
+ * so resolve the active day from the program structure.
+ */
+function findTrainingDayInProgram(program: any, trainingDayId: string): TrainingDay | null {
+  if (!program) return null;
+
+  if (program.type === 'simple' && Array.isArray(program.trainingDays)) {
+    return program.trainingDays.find((td: TrainingDay) => td.id === trainingDayId) ?? null;
+  }
+
+  if (program.type === 'periodized' && Array.isArray(program.mesocycles)) {
+    for (const meso of program.mesocycles) {
+      for (const micro of meso.microcycles ?? []) {
+        const found = (micro.trainingDays ?? []).find((td: TrainingDay) => td.id === trainingDayId);
+        if (found) return found;
+      }
+    }
+  }
+
+  // Fallback for shapes without an explicit type field.
+  if (Array.isArray(program.trainingDays)) {
+    return program.trainingDays.find((td: TrainingDay) => td.id === trainingDayId) ?? null;
+  }
+
+  return null;
+}
+
 export default function WorkoutLiveActivitySync() {
   const { userId, isInitialized } = useStorage();
   const { session, sessionHistory } = useWorkoutSession();
@@ -28,20 +57,23 @@ export default function WorkoutLiveActivitySync() {
 
   const [trainingDay, setTrainingDay] = useState<TrainingDay | null>(null);
 
-  // Load the training day template for the active session.
+  // Load the training day for the active session from its program.
   useEffect(() => {
     let cancelled = false;
+    const programId = session?.programId;
     const trainingDayId = session?.trainingDayId;
 
-    if (!isInitialized || !userId || !trainingDayId) {
+    if (!isInitialized || !userId || !programId || !trainingDayId) {
       setTrainingDay(null);
       return;
     }
 
-    trainingDayStorage
-      .getById(userId, trainingDayId)
+    programStorage
+      .getById(userId, programId)
       .then(item => {
-        if (!cancelled) setTrainingDay(item?.data ?? null);
+        if (!cancelled) {
+          setTrainingDay(findTrainingDayInProgram(item?.data, trainingDayId));
+        }
       })
       .catch(() => {
         if (!cancelled) setTrainingDay(null);
@@ -50,7 +82,7 @@ export default function WorkoutLiveActivitySync() {
     return () => {
       cancelled = true;
     };
-  }, [userId, isInitialized, session?.trainingDayId]);
+  }, [userId, isInitialized, session?.programId, session?.trainingDayId]);
 
   // Keep a ref to the latest sync routine so the interval always runs fresh data.
   const syncRef = useRef<() => void>(() => {});
