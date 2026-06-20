@@ -8,6 +8,7 @@ import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { StorageProvider } from '@/contexts/StorageContext';
 import { WorkoutUIProvider } from '@/contexts/WorkoutUIContext';
 import { WorkoutSessionProvider } from '@/contexts/WorkoutSessionContext';
+import WorkoutLiveActivitySync from '@/components/workout/WorkoutLiveActivitySync';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -84,6 +85,7 @@ export default function RootLayout() {
               }}
             />
             </Stack>
+            <WorkoutLiveActivitySync />
             <StatusBar style="auto" />
           </ThemeProvider>
         </WorkoutUIProvider>
