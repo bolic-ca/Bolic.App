@@ -27,9 +27,19 @@ export interface WorkoutActivityConfig {
 
 let activityId: string | undefined;
 let lastSignature: string | undefined;
+let warned = false;
 
 function isSupported(): boolean {
   return Platform.OS === 'ios';
+}
+
+function warnOnce(err: unknown): void {
+  if (warned) return;
+  warned = true;
+  console.warn(
+    '[live-activity] Native module unavailable — rebuild the dev client/app after adding the expo-live-activity plugin.',
+    err,
+  );
 }
 
 function toNativeState(state: WorkoutActivityState): LiveActivity.LiveActivityState {
@@ -65,8 +75,15 @@ export function startWorkoutActivity(
     progressViewTint: config?.accentColor,
   };
 
-  activityId = LiveActivity.startActivity(toNativeState(state), nativeConfig) ?? undefined;
-  lastSignature = activityId ? signatureOf(state) : undefined;
+  try {
+    activityId = LiveActivity.startActivity(toNativeState(state), nativeConfig) ?? undefined;
+    lastSignature = activityId ? signatureOf(state) : undefined;
+  } catch (err) {
+    // Native module missing (e.g. dev build predates the plugin) — fail quietly.
+    warnOnce(err);
+    activityId = undefined;
+    lastSignature = undefined;
+  }
   return activityId;
 }
 
@@ -79,8 +96,12 @@ export function updateWorkoutActivity(state: WorkoutActivityState): void {
   const signature = signatureOf(state);
   if (signature === lastSignature) return;
 
-  LiveActivity.updateActivity(activityId, toNativeState(state));
-  lastSignature = signature;
+  try {
+    LiveActivity.updateActivity(activityId, toNativeState(state));
+    lastSignature = signature;
+  } catch (err) {
+    warnOnce(err);
+  }
 }
 
 /**
@@ -90,7 +111,11 @@ export function stopWorkoutActivity(finalState?: WorkoutActivityState): void {
   if (!isSupported() || !activityId) return;
 
   const state = finalState ?? { title: 'Workout complete', subtitle: '' };
-  LiveActivity.stopActivity(activityId, toNativeState(state));
+  try {
+    LiveActivity.stopActivity(activityId, toNativeState(state));
+  } catch (err) {
+    warnOnce(err);
+  }
   activityId = undefined;
   lastSignature = undefined;
 }
