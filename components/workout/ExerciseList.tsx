@@ -7,8 +7,9 @@
  * fall back to trainingDay.exercises + exerciseOverrides.
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import type { TrainingDay, TrainingExercise } from '@/types/training';
 import type { WorkoutSession, SessionSet, SessionExercisePlan } from '@/services/storage/session-storage';
@@ -45,10 +46,21 @@ export default function ExerciseList({
   onRemoveExercise,
   onReorderExercises,
 }: ExerciseListProps) {
-  const { allExercises } = useExercises();
+  const { allExercises, refetch } = useExercises();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
+
+  // Refresh exercise library when the screen regains focus (e.g. after editing
+  // an exercise in the exercise-form modal) so edits apply without reopening
+  // the session. Ref keeps the focus effect stable to avoid refetch loops.
+  const refetchRef = useRef(refetch);
+  refetchRef.current = refetch;
+  useFocusEffect(
+    useCallback(() => {
+      refetchRef.current();
+    }, [])
+  );
 
   const [addExerciseVisible, setAddExerciseVisible] = useState(false);
   const [reorderVisible, setReorderVisible] = useState(false);
