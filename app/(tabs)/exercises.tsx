@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -7,8 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useExercises } from '@/hooks/useExercises';
 import { router } from 'expo-router';
+import { MuscleCategory } from '@/types/training';
 
 import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
+
+const CATEGORY_OPTIONS = Object.values(MuscleCategory);
 
 export default function ExercisesPage() {
   const colorScheme = useColorScheme();
@@ -41,6 +44,36 @@ export default function ExercisesPage() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<MuscleCategory | null>(null);
+
+  const filteredExercises = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return exercises.filter((exercise) => {
+      if (selectedCategory && exercise.muscleCategory !== selectedCategory) {
+        return false;
+      }
+      if (!query) return true;
+      const haystack = [
+        exercise.name,
+        exercise.muscleCategory,
+        exercise.muscleSubcategory,
+        exercise.equipment,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [exercises, searchQuery, selectedCategory]);
+
+  const isFiltering = searchQuery.trim().length > 0 || selectedCategory !== null;
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory(null);
+  };
 
   const handleDelete = (exerciseId: string, exerciseName: string) => {
     Alert.alert(
@@ -118,12 +151,109 @@ export default function ExercisesPage() {
           </View>
         ) : (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: palette.text }]}>All Exercises</Text>
+            {/* Search bar */}
+            <View style={[styles.searchBar, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+              <Ionicons name="search" size={18} color={palette.textMuted} />
+              <TextInput
+                style={[styles.searchInput, { color: palette.text }]}
+                placeholder="Search name, muscle, equipment"
+                placeholderTextColor={palette.textMuted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="search"
+                clearButtonMode="while-editing"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery('')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close-circle" size={18} color={palette.textMuted} />
+                </TouchableOpacity>
+              )}
             </View>
 
+            {/* Category filter chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipsRow}
+              contentContainerStyle={styles.chipsContent}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: selectedCategory === null ? palette.accent : palette.cardBg,
+                    borderColor: selectedCategory === null ? palette.accent : palette.cardBorder,
+                  },
+                ]}
+                onPress={() => setSelectedCategory(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.chipText, { color: selectedCategory === null ? '#FFF' : palette.textMuted }]}>
+                  All
+                </Text>
+              </TouchableOpacity>
+              {CATEGORY_OPTIONS.map((category) => {
+                const isActive = selectedCategory === category;
+                const categoryColor = muscleCategoryColors[category];
+                return (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: isActive ? categoryColor : palette.cardBg,
+                        borderColor: isActive ? categoryColor : palette.cardBorder,
+                      },
+                    ]}
+                    onPress={() => setSelectedCategory(isActive ? null : category)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={muscleCategoryIcons[category] || 'fitness'}
+                      size={13}
+                      color={isActive ? '#FFF' : categoryColor}
+                    />
+                    <Text style={[styles.chipText, { color: isActive ? '#FFF' : palette.textMuted }]}>
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: palette.text }]}>
+                {isFiltering ? 'Results' : 'All Exercises'}
+              </Text>
+              <Text style={[styles.resultCount, { color: palette.textMuted }]}>
+                {filteredExercises.length}
+              </Text>
+            </View>
+
+            {filteredExercises.length === 0 ? (
+              <View style={[styles.emptyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+                <View style={[styles.emptyIconContainer, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
+                  <Ionicons name="search-outline" size={32} color={palette.textMuted} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: palette.text }]}>No Matches</Text>
+                <Text style={[styles.emptyDescription, { color: palette.textMuted }]}>
+                  No exercises match your search or filter
+                </Text>
+                <TouchableOpacity
+                  style={[styles.emptyAction, { backgroundColor: palette.accentGlow }]}
+                  onPress={clearFilters}
+                >
+                  <Text style={[styles.emptyActionText, { color: palette.accent }]}>Clear filters</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
             <View style={styles.exercisesList}>
-              {exercises.map((exercise) => {
+              {filteredExercises.map((exercise) => {
                 const categoryColor = exercise.muscleCategory
                   ? muscleCategoryColors[exercise.muscleCategory]
                   : palette.accent;
@@ -191,6 +321,7 @@ export default function ExercisesPage() {
                 );
               })}
             </View>
+            )}
           </View>
         )}
 
@@ -267,10 +398,43 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3, marginBottom: 6 },
   emptyDescription: { fontSize: 14, textAlign: 'center' },
 
+  // Search
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    padding: 0,
+  },
+  chipsRow: { marginBottom: 16, marginHorizontal: -20 },
+  chipsContent: { paddingHorizontal: 20, gap: 8 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: { fontSize: 13, fontWeight: '600' },
+
   // Section
   section: { marginBottom: 24 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
+  resultCount: { fontSize: 14, fontWeight: '600' },
+  emptyAction: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, marginTop: 16 },
+  emptyActionText: { fontSize: 14, fontWeight: '600' },
 
   // Exercise List
   exercisesList: { gap: 10 },
