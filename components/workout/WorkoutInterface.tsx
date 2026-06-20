@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
-import type { WorkoutSession, SessionSet } from '@/services/storage/session-storage';
+import type { WorkoutSession, SessionSet, SessionExercisePlan } from '@/services/storage/session-storage';
 import type { TrainingDay, TrainingExercise } from '@/types/training';
 import { getWorkoutProgress } from '@/utils/workout-helpers';
 import WorkoutHeader from './WorkoutHeader';
@@ -39,7 +39,7 @@ export default function WorkoutInterface({
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
-  const { addSet, updateSet, deleteSet, swapExercise, sessionHistory } = useWorkoutSession();
+  const { addSet, updateSet, deleteSet, swapExercise, addExerciseToSession, removeExerciseFromSession, reorderExercises, sessionHistory } = useWorkoutSession();
   const [completionModalVisible, setCompletionModalVisible] = useState(false);
 
   // Calculate workout progress
@@ -78,6 +78,33 @@ export default function WorkoutInterface({
       await swapExercise(originalExerciseId, newExercise.id!, newExercise.name!);
     } catch (err) {
       console.error('Error swapping exercise:', err);
+    }
+  };
+
+  // Handle adding an exercise to the session
+  const handleAddExercise = async (exercise: TrainingExercise) => {
+    try {
+      await addExerciseToSession(exercise);
+    } catch (err) {
+      console.error('Error adding exercise to session:', err);
+    }
+  };
+
+  // Handle removing an exercise from the session
+  const handleRemoveExercise = async (exerciseId: string) => {
+    try {
+      await removeExerciseFromSession(exerciseId);
+    } catch (err) {
+      console.error('Error removing exercise from session:', err);
+    }
+  };
+
+  // Handle reordering exercises
+  const handleReorderExercises = async (newOrder: SessionExercisePlan[]) => {
+    try {
+      await reorderExercises(newOrder.map(e => e.exerciseId));
+    } catch (err) {
+      console.error('Error reordering exercises:', err);
     }
   };
 
@@ -169,6 +196,9 @@ export default function WorkoutInterface({
           onUpdateSet={handleUpdateSet}
           onDeleteSet={handleDeleteSet}
           onSwapExercise={handleSwapExercise}
+          onAddExercise={handleAddExercise}
+          onRemoveExercise={handleRemoveExercise}
+          onReorderExercises={handleReorderExercises}
         />
       </ScrollView>
 

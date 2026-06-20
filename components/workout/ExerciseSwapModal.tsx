@@ -34,6 +34,8 @@ const muscleCategories = Object.values(MuscleCategory);
 interface ExerciseSwapModalProps {
   visible: boolean;
   currentExerciseId?: string;
+  /** Label shown above the title in the modal header. Defaults to 'SWAP'. */
+  headerLabel?: string;
   sessionHistory?: WorkoutSession[];
   onClose: () => void;
   onSelectExercise: (exercise: TrainingExercise) => void;
@@ -42,6 +44,7 @@ interface ExerciseSwapModalProps {
 export default function ExerciseSwapModal({
   visible,
   currentExerciseId,
+  headerLabel = 'SWAP',
   sessionHistory = [],
   onClose,
   onSelectExercise,
@@ -119,7 +122,7 @@ export default function ExerciseSwapModal({
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: palette.cardBorder }]}>
           <View>
-            <Text style={[styles.headerLabel, { color: palette.textMuted }]}>SWAP</Text>
+            <Text style={[styles.headerLabel, { color: palette.textMuted }]}>{headerLabel}</Text>
             <Text style={[styles.headerTitle, { color: palette.text }]}>Choose Exercise</Text>
           </View>
           <View style={styles.headerRight}>

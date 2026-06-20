@@ -9,6 +9,16 @@ import * as storageClient from './storage-client';
 import { StorageItem } from '@/types/storage';
 
 /**
+ * A single entry in the ordered exercise plan for a session.
+ * The array order is the canonical display/execution order.
+ * NOTE: Flagged for addition to OpenAPI spec in Phase B.
+ */
+export interface SessionExercisePlan {
+  exerciseId: string;
+  exerciseName: string;
+}
+
+/**
  * Workout session
  */
 export interface WorkoutSession {
@@ -20,8 +30,16 @@ export interface WorkoutSession {
   completedAt: string | null;
   exercises: SessionExercise[];
   /**
+   * Ordered list of exercises for this session (source of truth for display order
+   * and which exercises are included). Absent on sessions created before this field
+   * existed — those fall back to the training day template + exerciseOverrides.
+   * NOTE: Flagged for addition to OpenAPI spec in Phase B.
+   */
+  exercisePlan?: SessionExercisePlan[];
+  /**
    * Maps originalExerciseId (from training day template) -> replacement exercise.
    * Recorded when user swaps an exercise mid-workout.
+   * Kept for backward-compat; new sessions also reflect swaps in exercisePlan.
    * NOTE: Flagged for addition to OpenAPI spec in Phase B.
    */
   exerciseOverrides?: Record<string, { exerciseId: string; exerciseName: string }>;
@@ -204,6 +222,23 @@ export async function getSessionHistory(
   return sessions
     .sort((a, b) => new Date(b.data.startedAt).getTime() - new Date(a.data.startedAt).getTime())
     .slice(0, limit);
+}
+
+/**
+ * Get the exercisePlan from the most recent completed session for a given training day.
+ * Returns null when no prior session exists or the prior session has no exercisePlan.
+ * @param userId - User ID
+ * @param trainingDayId - Training day ID to match
+ */
+export async function getLastSessionPlanForDay(
+  userId: string,
+  trainingDayId: string
+): Promise<SessionExercisePlan[] | null> {
+  const history = await getSessionHistory(userId, 50);
+  const match = history.find(
+    item => item.data.trainingDayId === trainingDayId && item.data.completedAt !== null
+  );
+  return match?.data.exercisePlan ?? null;
 }
 
 /**

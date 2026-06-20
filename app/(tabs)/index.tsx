@@ -5,20 +5,82 @@ import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { WorkoutSession } from '@/services/storage/session-storage';
-import type { TrainingDay } from '@/types/training';
+import { WorkoutSession, SessionExercisePlan, getLastSessionPlanForDay } from '@/services/storage/session-storage';
+import type { TrainingDay, TrainingExercise } from '@/types/training';
 import { useActiveProgram } from '@/hooks/useActiveProgram';
 import { useWorkoutSession } from '@/contexts/WorkoutSessionContext';
+import { useStorage } from '@/contexts/StorageContext';
 import { useStats } from '@/hooks/useStats';
 import { useWorkoutUI } from '@/contexts/WorkoutUIContext';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { programStorage } from '@/services/storage/program-storage';
+import { exerciseStorage } from '@/services/storage/exercise-storage';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
+import SessionStartOptions, { SessionStartChoice } from '@/components/workout/SessionStartOptions';
 import { consumePendingDayOverride } from '@/utils/day-override-store';
+
+/** Returns true when two exercise plans have the same ordered IDs. */
+function plansEqual(a: SessionExercisePlan[], b: SessionExercisePlan[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((entry, i) => entry.exerciseId === b[i].exerciseId);
+}
+
+/**
+ * Saves a new exercise plan back to the training day template embedded in the program.
+ * Handles both simple and periodized program structures.
+ */
+async function saveExercisePlanToTemplate(
+  userId: string,
+  programId: string,
+  trainingDayId: string,
+  plan: SessionExercisePlan[]
+): Promise<void> {
+  const item = await programStorage.getById(userId, programId);
+  if (!item) return;
+
+  const program = { ...item.data, id: item.id } as any;
+
+  // Build a lookup for exercises from the library
+  const libraryItems = await exerciseStorage.getAll(userId);
+  const libraryMap = new Map(libraryItems.map(i => [i.id, { ...i.data, id: i.id }]));
+
+  const remapDay = (day: any): any => {
+    if (day.id !== trainingDayId) return day;
+    // Build new exercises array in plan order, merging in library data for added exercises
+    const templateMap = new Map((day.exercises ?? []).map((e: any) => [e.id, e]));
+    const newExercises = plan
+      .map(entry => {
+        const templateEx = templateMap.get(entry.exerciseId);
+        if (templateEx) return templateEx;
+        // Exercise was added mid-session — pull from library
+        const libraryEx = libraryMap.get(entry.exerciseId);
+        return libraryEx ?? { id: entry.exerciseId, name: entry.exerciseName };
+      })
+      .filter(Boolean);
+    return { ...day, exercises: newExercises };
+  };
+
+  let updatedProgram = { ...program };
+  if (program.type === 'simple' && program.trainingDays) {
+    updatedProgram.trainingDays = program.trainingDays.map(remapDay);
+  } else if (program.type === 'periodized' && program.mesocycles) {
+    updatedProgram.mesocycles = program.mesocycles.map((meso: any) => ({
+      ...meso,
+      microcycles: (meso.microcycles ?? []).map((micro: any) => ({
+        ...micro,
+        trainingDays: (micro.trainingDays ?? []).map(remapDay),
+      })),
+    }));
+  }
+
+  await programStorage.save(userId, updatedProgram, programId);
+}
 
 export default function HomePage() {
   const colorScheme = useColorScheme();
   const { isExpanded, expand, minimize } = useWorkoutUI();
   const { customColors } = useThemeCustomization();
+  const { userId } = useStorage();
   // Fetch data from storage
   const { program: activeProgram, loading: programLoading, refetch: refetchActiveProgram } = useActiveProgram();
   const { session, sessionHistory, startSession, completeSession, cancelSession, loading: sessionLoading } = useWorkoutSession();
@@ -26,6 +88,11 @@ export default function HomePage() {
 
   // Track user-selected day override (cleared once a session starts with it)
   const [selectedDayOverride, setSelectedDayOverride] = React.useState<string | null>(null);
+
+  // SessionStartOptions state
+  const [sessionStartVisible, setSessionStartVisible] = React.useState(false);
+  const [pendingLastPlan, setPendingLastPlan] = React.useState<SessionExercisePlan[] | null>(null);
+  const [pendingTemplatePlan, setPendingTemplatePlan] = React.useState<SessionExercisePlan[]>([]);
 
   // Refetch active program and consume any pending day override when screen comes into focus
   useFocusEffect(
@@ -176,8 +243,55 @@ export default function HomePage() {
       return;
     }
 
+    const templatePlan: SessionExercisePlan[] = (effectiveNextDay.exercises ?? []).map((e: TrainingExercise) => ({
+      exerciseId: e.id!,
+      exerciseName: e.name!,
+    }));
+
+    // Check if last session for this day had a different layout
     try {
-      await startSession(activeProgram.id, effectiveNextDay.id, effectiveNextDay.name ?? undefined);
+      const lastPlan = userId
+        ? await getLastSessionPlanForDay(userId, effectiveNextDay.id)
+        : null;
+
+      if (lastPlan && !plansEqual(lastPlan, templatePlan)) {
+        // Differences found — let user choose
+        setPendingLastPlan(lastPlan);
+        setPendingTemplatePlan(templatePlan);
+        setSessionStartVisible(true);
+        return;
+      }
+    } catch {
+      // If lookup fails, just proceed with template
+    }
+
+    // No difference (or first ever session) — start with template plan
+    try {
+      await startSession(activeProgram.id, effectiveNextDay.id, effectiveNextDay.name ?? undefined, templatePlan);
+      setSelectedDayOverride(null);
+      expand();
+    } catch (err) {
+      Alert.alert('Error', 'Failed to start workout session');
+      console.error('Error starting workout:', err);
+    }
+  };
+
+  const handleSessionStartChoice = async (choice: SessionStartChoice) => {
+    setSessionStartVisible(false);
+    if (!activeProgram || !effectiveNextDay?.id) return;
+
+    const planToUse = choice === 'template' ? pendingTemplatePlan : (pendingLastPlan ?? pendingTemplatePlan);
+
+    if (choice === 'lastAndSave' && pendingLastPlan && userId) {
+      try {
+        await saveExercisePlanToTemplate(userId, activeProgram.id, effectiveNextDay.id, pendingLastPlan);
+      } catch (err) {
+        console.error('Failed to save plan to template:', err);
+      }
+    }
+
+    try {
+      await startSession(activeProgram.id, effectiveNextDay.id, effectiveNextDay.name ?? undefined, planToUse);
       setSelectedDayOverride(null);
       expand();
     } catch (err) {
@@ -266,6 +380,15 @@ export default function HomePage() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
+      {sessionStartVisible && effectiveNextDay && pendingLastPlan && (
+        <SessionStartOptions
+          visible={sessionStartVisible}
+          trainingDay={effectiveNextDay}
+          lastPlan={pendingLastPlan}
+          onChoose={handleSessionStartChoice}
+          onDismiss={() => setSessionStartVisible(false)}
+        />
+      )}
       {session && isExpanded ? (
         <WorkoutInterface
           session={session}
