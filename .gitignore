@@ -1,5 +1,13 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# ai
+.claude/
+.agents/
+.cursor/
+
+# backups
+bolic-backup-*
+
 # dependencies
 node_modules/
 
@@ -32,7 +40,8 @@ yarn-error.*
 
 # local env files
 .env*.local
-
+.claude/settings.local.json
+.vscode
 # typescript
 *.tsbuildinfo
 
@@ -41,3 +50,5 @@ app-example
 # generated native folders
 /ios
 /android
+hypertrophy_program.pdf
+my_workouts.json
