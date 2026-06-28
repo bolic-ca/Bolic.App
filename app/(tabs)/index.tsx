@@ -18,6 +18,7 @@ import { exerciseStorage } from '@/services/storage/exercise-storage';
 import WorkoutInterface from '@/components/workout/WorkoutInterface';
 import SessionStartOptions, { SessionStartChoice } from '@/components/workout/SessionStartOptions';
 import { consumePendingDayOverride } from '@/utils/day-override-store';
+import { calculateWorkoutDuration } from '@/utils/workout-helpers';
 
 /** Returns true when two exercise plans have the same ordered IDs. */
 function plansEqual(a: SessionExercisePlan[], b: SessionExercisePlan[]): boolean {
@@ -302,10 +303,13 @@ export default function HomePage() {
 
   const handleCompleteWorkout = async (notes?: string) => {
     try {
+      // Capture duration before completeSession clears the active session
+      const durationSeconds = session ? calculateWorkoutDuration(session.startedAt) : 0;
+
       await completeSession(notes);
 
-      // Update stats
-      await incrementWorkouts();
+      // Update stats (workouts, streak, and active time)
+      await incrementWorkouts(durationSeconds);
 
       Alert.alert('Workout Complete!', 'Great job! Your progress has been saved.');
     } catch (err) {

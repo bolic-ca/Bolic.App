@@ -41,7 +41,7 @@ export function useStats() {
     }
   }, [userId, isInitialized]);
 
-  async function incrementWorkouts(): Promise<void> {
+  async function incrementWorkouts(durationSeconds = 0): Promise<void> {
     if (!stats) return;
 
     try {
@@ -73,11 +73,14 @@ export function useStats() {
         newStreak = 1;
       }
 
+      const durationHours = durationSeconds > 0 ? durationSeconds / 3600 : 0;
+
       const updatedStats: UserStats = {
         ...stats,
         totalWorkouts: stats.totalWorkouts + 1,
         currentStreak: newStreak,
         longestStreak: Math.max(stats.longestStreak, newStreak),
+        activeTime: Math.round((stats.activeTime + durationHours) * 10) / 10,
         lastWorkoutDate: new Date().toISOString(),
       };
 

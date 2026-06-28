@@ -131,7 +131,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && { backgroundColor: `${customColors.primaryButton}15` }]}>
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'settings' : 'settings-outline'} size={24} color={color} />
             </View>
           ),
         }}

@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as WebBrowser from 'expo-web-browser';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import { useStats } from '@/hooks/useStats';
 import { exportToFile, importFromFile, getStorageStats } from '@/services/storage/storage-export';
 
 interface MenuItem {
@@ -16,15 +16,19 @@ interface MenuItem {
   color?: string;
 }
 
-const profileMenuItems: MenuItem[] = [
-  { icon: 'person-outline', title: 'Edit Profile', subtitle: 'Update your personal information' },
-  { icon: 'settings-outline', title: 'Settings', subtitle: 'App preferences and configuration' },
-  { icon: 'notifications-outline', title: 'Notifications', subtitle: 'Manage notification settings' },
-  { icon: 'shield-checkmark-outline', title: 'Privacy & Security', subtitle: 'Manage your privacy settings' },
-];
-
 const supportMenuItems: MenuItem[] = [
-  { icon: 'help-circle-outline', title: 'Help Center', subtitle: 'Get help and support' },
+  {
+    icon: 'help-circle-outline',
+    title: 'Help Center',
+    subtitle: 'Get help and support',
+    onPress: () => WebBrowser.openBrowserAsync('https://bolic.ca/support'),
+  },
+  {
+    icon: 'shield-checkmark-outline',
+    title: 'Privacy Policy',
+    subtitle: 'How your data is handled',
+    onPress: () => WebBrowser.openBrowserAsync('https://bolic.ca/privacy-policy'),
+  },
   { icon: 'star-outline', title: 'Rate App', subtitle: 'Share your feedback' },
   { icon: 'information-circle-outline', title: 'About', subtitle: 'Version 1.0.0' },
 ];
@@ -32,7 +36,6 @@ const supportMenuItems: MenuItem[] = [
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
   const { customColors, setCustomColors, presetColors, preferences, setWeightUnit, setShowRir, setShowRpe, setShowNotes } = useThemeCustomization();
-  const { stats } = useStats();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
   const [storageStats, setStorageStats] = useState<{ totalKeys: number; totalSize: number } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -194,47 +197,8 @@ export default function ProfilePage() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>SETTINGS</Text>
-          <Text style={[styles.headerTitle, { color: palette.text }]}>Profile</Text>
-        </View>
-
-        {/* Profile Card */}
-        <View style={[styles.profileCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-          <View style={[styles.avatarContainer, { backgroundColor: palette.accent }]}>
-            <Ionicons name="person" size={36} color="#FFF" />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={[styles.profileName, { color: palette.text }]}>John Doe</Text>
-            <Text style={[styles.profileEmail, { color: palette.textMuted }]}>johndoe@example.com</Text>
-          </View>
-          <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: palette.accentGlow }]}>
-            <Ionicons name="create-outline" size={18} color={palette.accent} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick Stats */}
-        <View style={styles.quickStats}>
-          <View style={[styles.quickStatCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-            <View style={[styles.quickStatIcon, { backgroundColor: 'rgba(78, 205, 196, 0.12)' }]}>
-              <Ionicons name="fitness" size={18} color="#4ecdc4" />
-            </View>
-            <Text style={[styles.quickStatValue, { color: palette.text }]}>{stats?.totalWorkouts || 0}</Text>
-            <Text style={[styles.quickStatLabel, { color: palette.textMuted }]}>Workouts</Text>
-          </View>
-          <View style={[styles.quickStatCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-            <View style={[styles.quickStatIcon, { backgroundColor: 'rgba(255, 107, 107, 0.12)' }]}>
-              <Ionicons name="flame" size={18} color="#ff6b6b" />
-            </View>
-            <Text style={[styles.quickStatValue, { color: palette.text }]}>{stats?.currentStreak || 0}</Text>
-            <Text style={[styles.quickStatLabel, { color: palette.textMuted }]}>Streak</Text>
-          </View>
-          <View style={[styles.quickStatCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-            <View style={[styles.quickStatIcon, { backgroundColor: 'rgba(162, 155, 254, 0.12)' }]}>
-              <Ionicons name="time" size={18} color="#a29bfe" />
-            </View>
-            <Text style={[styles.quickStatValue, { color: palette.text }]}>{stats?.activeTime || 0}</Text>
-            <Text style={[styles.quickStatLabel, { color: palette.textMuted }]}>Hours</Text>
-          </View>
+          <Text style={[styles.headerLabel, { color: palette.textMuted }]}>PREFERENCES</Text>
+          <Text style={[styles.headerTitle, { color: palette.text }]}>Settings</Text>
         </View>
 
         {/* Appearance Section */}
@@ -405,30 +369,6 @@ export default function ProfilePage() {
           </View>
         </View>
 
-        {/* Account Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Account</Text>
-          </View>
-          <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-            {profileMenuItems.map((item, index) => (
-              <React.Fragment key={item.title}>
-                <TouchableOpacity style={styles.menuItem} activeOpacity={0.8}>
-                  <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
-                    <Ionicons name={item.icon} size={20} color={palette.accent} />
-                  </View>
-                  <View style={styles.menuText}>
-                    <Text style={[styles.menuTitle, { color: palette.text }]}>{item.title}</Text>
-                    {item.subtitle && <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>{item.subtitle}</Text>}
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
-                </TouchableOpacity>
-                {index < profileMenuItems.length - 1 && <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-
         {/* Support Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -437,7 +377,7 @@ export default function ProfilePage() {
           <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
             {supportMenuItems.map((item, index) => (
               <React.Fragment key={item.title}>
-                <TouchableOpacity style={styles.menuItem} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.menuItem} activeOpacity={0.8} onPress={item.onPress} disabled={!item.onPress}>
                   <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
                     <Ionicons name={item.icon} size={20} color={palette.accent} />
                   </View>
@@ -546,16 +486,6 @@ export default function ProfilePage() {
           </View>
         </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={[styles.logoutButton, { borderColor: palette.danger }]}
-          onPress={() => console.log('Logout')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="log-out-outline" size={20} color={palette.danger} />
-          <Text style={[styles.logoutText, { color: palette.danger }]}>Logout</Text>
-        </TouchableOpacity>
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -571,47 +501,6 @@ const styles = StyleSheet.create({
   header: { paddingTop: 8, paddingBottom: 24 },
   headerLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4 },
   headerTitle: { fontSize: 32, fontWeight: '800', letterSpacing: -1 },
-
-  // Profile Card
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: 20,
-    gap: 14,
-  },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInfo: { flex: 1 },
-  profileName: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3, marginBottom: 2 },
-  profileEmail: { fontSize: 13, fontWeight: '500' },
-  editProfileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // Quick Stats
-  quickStats: { flexDirection: 'row', gap: 10, marginBottom: 28 },
-  quickStatCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  quickStatIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  quickStatValue: { fontSize: 20, fontWeight: '800', marginBottom: 2 },
-  quickStatLabel: { fontSize: 11, fontWeight: '500' },
 
   // Section
   section: { marginBottom: 24 },
@@ -692,16 +581,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
   },
-
-  // Logout
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-  },
-  logoutText: { fontSize: 16, fontWeight: '600' },
 });
