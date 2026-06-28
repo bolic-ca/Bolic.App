@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, useColorScheme, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
@@ -50,21 +50,6 @@ export default function WorkoutHeader({
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors } = useThemeCustomization();
 
-  const handleCancelPress = () => {
-    Alert.alert(
-      'Cancel Workout?',
-      'Are you sure? Your progress will be lost.',
-      [
-        { text: 'Keep Training', style: 'cancel' },
-        {
-          text: 'Cancel Workout',
-          style: 'destructive',
-          onPress: onCancel,
-        },
-      ]
-    );
-  };
-
   const dateStr = formatDate(startedAt);
   const timeStr = formatTime(startedAt);
 
@@ -90,7 +75,7 @@ export default function WorkoutHeader({
           )}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={handleCancelPress}
+            onPress={onCancel}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="close" size={22} color={theme.textSecondary} />
