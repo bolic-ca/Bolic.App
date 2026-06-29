@@ -12,7 +12,7 @@ import { displayWeight } from '@/utils/weight';
 export default function StatsPage() {
   const colorScheme = useColorScheme();
   const { customColors, preferences } = useThemeCustomization();
-  const { stats: userStats, prs, loading: statsLoading, refetch } = useStats();
+  const { stats: userStats, loading: statsLoading, refetch } = useStats();
   const { sessionHistory, loading: sessionLoading } = useWorkoutSession();
   const isDark = colorScheme === 'dark';
 
@@ -235,49 +235,6 @@ export default function StatsPage() {
           </View>
         )}
 
-        {/* Personal Records */}
-        {!loading && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: palette.text }]}>Personal Records</Text>
-            </View>
-
-            {prs && prs.length > 0 ? (
-              <View style={styles.prList}>
-                {prs.map((record, index) => (
-                  <View key={record.id || index} style={[styles.prCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-                    <View style={[styles.prTrophy, { backgroundColor: 'rgba(255, 215, 0, 0.12)' }]}>
-                      <Ionicons name="trophy" size={20} color="#ffd700" />
-                    </View>
-                    <View style={styles.prInfo}>
-                      <Text style={[styles.prExercise, { color: palette.text }]} numberOfLines={1}>
-                        {record.exerciseName}
-                      </Text>
-                      <Text style={[styles.prDate, { color: palette.textMuted }]}>
-                        {record.achievedAt ? new Date(record.achievedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
-                      </Text>
-                    </View>
-                    <View style={styles.prValue}>
-                      <Text style={[styles.prWeight, { color: palette.accent }]}>{displayWeight(record.weight, preferences.weightUnit)}</Text>
-                      <Text style={[styles.prReps, { color: palette.textMuted }]}>{preferences.weightUnit} × {record.reps}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <View style={[styles.emptyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-                <View style={[styles.emptyIconContainer, { backgroundColor: isDark ? '#1F1F23' : '#F4F4F5' }]}>
-                  <Ionicons name="trophy-outline" size={32} color={palette.textMuted} />
-                </View>
-                <Text style={[styles.emptyTitle, { color: palette.text }]}>No Records Yet</Text>
-                <Text style={[styles.emptyDescription, { color: palette.textMuted }]}>
-                  Start working out to track your PRs
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -372,24 +329,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-
-  // PR Cards
-  prList: { gap: 10 },
-  prCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    gap: 12,
-  },
-  prTrophy: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  prInfo: { flex: 1 },
-  prExercise: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2, marginBottom: 2 },
-  prDate: { fontSize: 12, fontWeight: '500' },
-  prValue: { alignItems: 'flex-end' },
-  prWeight: { fontSize: 18, fontWeight: '800' },
-  prReps: { fontSize: 12, fontWeight: '500' },
 
   // Empty State
   emptyCard: { borderRadius: 20, borderWidth: 1, padding: 32, alignItems: 'center' },
