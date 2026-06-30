@@ -46,8 +46,16 @@ export default function StatsPage() {
     success: '#22C55E',
   };
 
+  // Compute total volume from session history (stored in kg)
+  const totalVolumeKg = useMemo(() => {
+    if (!sessionHistory) return 0;
+    return sessionHistory.reduce((acc, session) =>
+      acc + session.exercises.reduce((eAcc, ex) =>
+        eAcc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight ?? 0) * (s.reps ?? 0), 0), 0), 0);
+  }, [sessionHistory]);
+
   // Build stat cards from real data
-  const totalVolumeConverted = displayWeight(userStats?.totalVolume || 0, preferences.weightUnit);
+  const totalVolumeConverted = displayWeight(totalVolumeKg, preferences.weightUnit);
   const stats = [
     { title: 'Total Workouts', value: userStats?.totalWorkouts || 0, icon: 'fitness' as const, color: '#4ecdc4' },
     { title: 'Current Streak', value: `${userStats?.currentStreak || 0}`, suffix: 'days', icon: 'flame' as const, color: '#ff6b6b' },

@@ -42,6 +42,10 @@ export default function SetListItem({ set, setNumber, onPress }: SetListItemProp
     setText += ` · RPE ${set.rpe}`;
   }
 
+  if (preferences.showQuality && set.quality !== undefined) {
+    setText += ` · Q${set.quality}/5`;
+  }
+
   const isEditable = !!onPress;
 
   return (

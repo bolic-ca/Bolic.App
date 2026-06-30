@@ -5,7 +5,7 @@ import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useStorage } from '@/contexts/StorageContext';
-import { getSessionsByMonth, WorkoutSession } from '@/services/storage/session-storage';
+import { getSessionsByMonth, WorkoutSession, formatRirShort } from '@/services/storage/session-storage';
 import { StorageItem } from '@/types/storage';
 import { displayWeight } from '@/utils/weight';
 
@@ -271,11 +271,21 @@ export default function HistoryPage() {
                                   {ex.exerciseName}
                                 </Text>
                                 <View style={styles.cardSets}>
-                                  {ex.sets.map((s, sIdx) => (
-                                    <Text key={sIdx} style={[styles.cardSetText, { color: palette.textMuted }]}>
-                                      {displayWeight(s.weight, preferences.weightUnit)}{preferences.weightUnit}×{s.reps}
-                                    </Text>
-                                  ))}
+                                  {ex.sets.map((s, sIdx) => {
+                                    let label = `${displayWeight(s.weight, preferences.weightUnit)}${preferences.weightUnit}×${s.reps}`;
+                                    if (s.numberOfPartials !== undefined) {
+                                      label += ` +${s.numberOfPartials}P`;
+                                    } else if (s.rir !== undefined) {
+                                      label += ` ${s.rir === 'F' ? 'F' : `${formatRirShort(s.rir)}RIR`}`;
+                                    }
+                                    if (s.rpe !== undefined) label += ` RPE${s.rpe}`;
+                                    if (s.quality !== undefined) label += ` Q${s.quality}/5`;
+                                    return (
+                                      <Text key={sIdx} style={[styles.cardSetText, { color: palette.textMuted }]}>
+                                        {label}
+                                      </Text>
+                                    );
+                                  })}
                                 </View>
                               </View>
                             ))}

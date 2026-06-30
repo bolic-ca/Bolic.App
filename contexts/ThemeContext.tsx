@@ -16,6 +16,7 @@ interface UserPreferences {
   showRir: boolean;
   showRpe: boolean;
   showNotes: boolean;
+  showQuality: boolean;
 }
 
 interface ThemeContextType {
@@ -27,6 +28,7 @@ interface ThemeContextType {
   setShowRir: (value: boolean) => void;
   setShowRpe: (value: boolean) => void;
   setShowNotes: (value: boolean) => void;
+  setShowQuality: (value: boolean) => void;
   isLoaded: boolean;
 }
 
@@ -40,6 +42,7 @@ const defaultPreferences: UserPreferences = {
   showRir: true,
   showRpe: true,
   showNotes: true,
+  showQuality: false,
 };
 
 export const presetColors = [
@@ -135,6 +138,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setShowQuality = async (value: boolean) => {
+    try {
+      await savePreferences({ ...preferences, showQuality: value });
+    } catch (error) {
+      console.error('Error saving showQuality:', error);
+    }
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -146,6 +157,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setShowRir,
         setShowRpe,
         setShowNotes,
+        setShowQuality,
         isLoaded,
       }}
     >

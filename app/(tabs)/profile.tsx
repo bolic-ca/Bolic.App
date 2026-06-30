@@ -35,7 +35,7 @@ const supportMenuItems: MenuItem[] = [
 
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
-  const { customColors, setCustomColors, presetColors, preferences, setWeightUnit, setShowRir, setShowRpe, setShowNotes } = useThemeCustomization();
+  const { customColors, setCustomColors, presetColors, preferences, setWeightUnit, setShowRir, setShowRpe, setShowNotes, setShowQuality } = useThemeCustomization();
   const [colorPickerExpanded, setColorPickerExpanded] = useState(false);
   const [storageStats, setStorageStats] = useState<{ totalKeys: number; totalSize: number } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -362,6 +362,38 @@ export default function ProfilePage() {
               <Switch
                 value={preferences.showNotes}
                 onValueChange={setShowNotes}
+                trackColor={{ false: palette.cardBorder, true: palette.accent }}
+                thumbColor="#FFF"
+              />
+            </View>
+
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+
+            {/* Show Set Quality Toggle */}
+            <View style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="star-outline" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Show Set Quality</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Rate overall quality per set</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    'Set Quality',
+                    'Track the quality of each set on a 1–5 scale. An improvement in set quality is still a byproduct of progressive overload.',
+                    [{ text: 'Got it' }]
+                  )
+                }
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{ marginRight: 8 }}
+              >
+                <Ionicons name="information-circle-outline" size={20} color={palette.textMuted} />
+              </TouchableOpacity>
+              <Switch
+                value={preferences.showQuality}
+                onValueChange={setShowQuality}
                 trackColor={{ false: palette.cardBorder, true: palette.accent }}
                 thumbColor="#FFF"
               />
