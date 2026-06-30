@@ -16,6 +16,7 @@ export interface PreviousPerformance {
   reps: number;
   rir?: RirValue;
   rpe?: number;
+  quality?: number;
 }
 
 /**
@@ -35,6 +36,7 @@ export function getPreviousPerformance(
         reps: lastSet.reps,
         rir: lastSet.rir,
         rpe: lastSet.rpe,
+        quality: lastSet.quality,
       };
     }
   }

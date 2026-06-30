@@ -255,7 +255,7 @@ export default function ExercisesPage() {
             <View style={styles.exercisesList}>
               {filteredExercises.map((exercise) => {
                 const categoryColor = exercise.muscleCategory
-                  ? muscleCategoryColors[exercise.muscleCategory]
+                  ? muscleCategoryColors[exercise.muscleCategory as MuscleCategory]
                   : palette.accent;
 
                 return (

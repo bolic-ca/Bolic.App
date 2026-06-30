@@ -8,19 +8,22 @@ import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
+import { displayWeight } from '@/utils/weight';
+import type { WeightUnit } from '@/utils/weight';
 
 interface WorkoutProgressBarProps {
   completedExercises: number;
   totalExercises: number;
   totalSets: number;
-  totalVolume?: number; // weight × reps sum
+  totalVolume?: number; // weight × reps sum (stored in kg)
 }
 
-function formatVolume(volume: number): string {
-  if (volume >= 1000) {
-    return `${(volume / 1000).toFixed(1)}k`;
+function formatVolume(volumeInKg: number, weightUnit: WeightUnit): string {
+  const converted = displayWeight(volumeInKg, weightUnit);
+  if (converted >= 1000) {
+    return `${(converted / 1000).toFixed(1)}k`;
   }
-  return volume.toLocaleString();
+  return converted.toLocaleString();
 }
 
 export default function WorkoutProgressBar({
@@ -31,7 +34,7 @@ export default function WorkoutProgressBar({
 }: WorkoutProgressBarProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
-  const { customColors } = useThemeCustomization();
+  const { customColors, preferences } = useThemeCustomization();
 
   const progress = totalExercises > 0 ? completedExercises / totalExercises : 0;
   const progressPercent = Math.round(progress * 100);
@@ -76,9 +79,9 @@ export default function WorkoutProgressBar({
         <View style={styles.statItem}>
           <Ionicons name="barbell-outline" size={16} color={theme.textSecondary} />
           <Text style={[styles.statValue, { color: theme.text }]}>
-            {formatVolume(totalVolume)}
+            {formatVolume(totalVolume, preferences.weightUnit)}
           </Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>kg volume</Text>
+          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{preferences.weightUnit} volume</Text>
         </View>
       </View>
     </View>

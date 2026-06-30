@@ -46,13 +46,32 @@ export default function StatsPage() {
     success: '#22C55E',
   };
 
+  // Compute total volume from session history (stored in kg)
+  const totalVolumeKg = useMemo(() => {
+    if (!sessionHistory) return 0;
+    return sessionHistory.reduce((acc, session) =>
+      acc + session.exercises.reduce((eAcc, ex) =>
+        eAcc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight ?? 0) * (s.reps ?? 0), 0), 0), 0);
+  }, [sessionHistory]);
+
+  // Compute active time from session history (completedAt - startedAt in hours)
+  const totalActiveHours = useMemo(() => {
+    if (!sessionHistory) return 0;
+    const raw = sessionHistory.reduce((acc, session) => {
+      if (!session.completedAt) return acc;
+      const ms = new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime();
+      return acc + ms / (1000 * 3600);
+    }, 0);
+    return Math.round(raw * 10) / 10;
+  }, [sessionHistory]);
+
   // Build stat cards from real data
-  const totalVolumeConverted = displayWeight(userStats?.totalVolume || 0, preferences.weightUnit);
+  const totalVolumeConverted = displayWeight(totalVolumeKg, preferences.weightUnit);
   const stats = [
     { title: 'Total Workouts', value: userStats?.totalWorkouts || 0, icon: 'fitness' as const, color: '#4ecdc4' },
     { title: 'Current Streak', value: `${userStats?.currentStreak || 0}`, suffix: 'days', icon: 'flame' as const, color: '#ff6b6b' },
     { title: 'Total Volume', value: `${(totalVolumeConverted / 1000).toFixed(1)}k`, suffix: preferences.weightUnit, icon: 'barbell' as const, color: '#ffd93d' },
-    { title: 'Active Time', value: userStats?.activeTime || 0, suffix: 'hrs', icon: 'time' as const, color: '#a29bfe' },
+    { title: 'Active Time', value: totalActiveHours, suffix: 'hrs', icon: 'time' as const, color: '#a29bfe' },
   ];
 
   // Calculate real weekly activity from session history
@@ -64,12 +83,17 @@ export default function StatsPage() {
       return date;
     });
 
+    const toLocalDateKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     return last7Days.map(date => {
       const dayStr = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
-      const dateKey = date.toISOString().split('T')[0];
-      const completed = sessionHistory?.some(session =>
-        session.completedAt?.startsWith(dateKey)
-      ) || false;
+      const dateKey = toLocalDateKey(date);
+      const completed = sessionHistory?.some(session => {
+        if (!session.completedAt) return false;
+        // completedAt is stored as UTC; convert to local date at display time
+        return toLocalDateKey(new Date(session.completedAt)) === dateKey;
+      }) || false;
       return { day: dayStr, completed };
     });
   }, [sessionHistory]);

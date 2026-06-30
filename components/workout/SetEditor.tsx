@@ -48,6 +48,24 @@ const RIR_OPTIONS: { value: RirValue; label: string; description?: string }[] = 
   { value: 'F', label: 'F', description: 'Failure' },
 ];
 
+const QUALITY_OPTIONS = [1, 2, 3, 4, 5];
+
+function qualityLabel(value: number): string {
+  const labels: Record<number, string> = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Great', 5: 'Elite' };
+  return labels[value] ?? String(value);
+}
+
+function qualityColor(value: number): string {
+  const colors: Record<number, string> = {
+    1: '#ef4444',
+    2: '#fb923c',
+    3: '#facc15',
+    4: '#a3e635',
+    5: '#4ade80',
+  };
+  return colors[value] ?? '#fb923c';
+}
+
 interface SetEditorProps {
   visible: boolean;
   onClose: () => void;
@@ -61,6 +79,7 @@ interface SetEditorProps {
     rir?: RirValue;
     rpe?: number;
     numberOfPartials?: number;
+    quality?: number;
     notes?: string;
   };
 }
@@ -86,6 +105,7 @@ export default function SetEditor({
   const [partialsInput, setPartialsInput] = useState('');
   const [rpe, setRpe] = useState<number | null>(null);
   const [rpeInput, setRpeInput] = useState('');
+  const [quality, setQuality] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
 
   // Reset form when modal opens/closes or initial data changes
@@ -106,6 +126,7 @@ export default function SetEditor({
       const initRpe = initialData?.rpe ?? null;
       setRpe(initRpe);
       setRpeInput(initRpe !== null ? String(initRpe) : '');
+      setQuality(initialData?.quality ?? null);
       setNotes(initialData?.notes ?? '');
     }
   }, [visible, initialData, preferences.weightUnit]);
@@ -142,6 +163,10 @@ export default function SetEditor({
 
     if (numberOfPartials !== null) {
       setData.numberOfPartials = numberOfPartials;
+    }
+
+    if (quality !== null) {
+      setData.quality = quality;
     }
 
     if (notes.trim() !== '') {
@@ -420,6 +445,41 @@ export default function SetEditor({
                 </View>
               </View>}
 
+              {/* Set Quality */}
+              {preferences.showQuality && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Set Quality <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(optional)</Text>
+                  </Text>
+                  <View style={styles.rirOptionsRow}>
+                    {QUALITY_OPTIONS.map((val) => {
+                      const isSelected = quality === val;
+                      const chipColor = qualityColor(val);
+                      return (
+                        <TouchableOpacity
+                          key={val}
+                          style={[
+                            styles.qualityOption,
+                            {
+                              backgroundColor: isSelected ? chipColor : theme.card,
+                              borderColor: isSelected ? chipColor : theme.cardBorder,
+                            },
+                          ]}
+                          onPress={() => setQuality(isSelected ? null : val)}
+                        >
+                          <Text style={[styles.qualityOptionNumber, { color: isSelected ? '#000' : theme.text }]}>
+                            {val}
+                          </Text>
+                          <Text style={[styles.qualityOptionLabel, { color: isSelected ? '#000' : theme.textSecondary }]}>
+                            {qualityLabel(val)}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
               {/* Notes */}
               {preferences.showNotes && (
                 <View style={styles.inputGroup}>
@@ -607,5 +667,24 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  qualityOption: {
+    flex: 1,
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  qualityOptionNumber: {
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  qualityOptionLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 13,
   },
 });
