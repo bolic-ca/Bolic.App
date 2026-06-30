@@ -185,7 +185,7 @@ export default function WorkoutInterface({
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        delayContentTouches={false}
+
         keyboardShouldPersistTaps="handled"
       >
         <ExerciseList

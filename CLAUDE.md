@@ -171,26 +171,25 @@ The app uses `expo-blur` BlurView for glassmorphism effects:
 
 ## Data Storage & Management
 
-### OpenAPI Spec as Source of Truth
-**IMPORTANT**: The `openapi.yaml` file is the single source of truth for all data models. When creating or modifying TypeScript interfaces:
-- All type definitions must align with the schemas defined in `openapi.yaml`
-- Field names must match exactly (e.g., use `name` not `trainingDayName`)
-- If a new field is needed, flag it for addition to the OpenAPI spec first
-- This ensures consistency between the app and future API integration (Phase B)
-
 ### Type System
-TypeScript types defined in `types/training.ts` based on OpenAPI spec (openapi.yaml):
+TypeScript types defined in `types/training.ts`:
 - **TrainingSet** - Individual set tracking (weight, reps, RIR, RPE, quality)
 - **TrainingExercise** - Exercise details with muscle targeting, equipment, target rep ranges
 - **TrainingDay** - Training day with exercises array
 - **Program** - Training program (simple or periodized)
-- **MuscleCategory** enum - Quads, Glutes, Hamstrings, Calves, Abs, Chest, Delts, Back
-- **MuscleSubcategory** types - Chest (Upper/Middle/Lower), Delts (Front/Lateral/Rear), Back (various trap/lat positions)
+- **MuscleCategory** enum - Chest, Delts, Back, Arms, Legs, Core
+- **MuscleSubcategory** types:
+  - Chest → Upper / Middle / Lower
+  - Delts → Front / Lateral / Rear
+  - Back → Lats / Mid Back / Upper Traps / Lower Back
+  - Arms → Biceps / Triceps / Forearms
+  - Legs → Quads / Hamstrings / Glutes / Calves / Adductors
+  - Core → Abs / Obliques
 
 Additional storage types in `types/storage.ts`:
 - **StorageItem** - Wrapper for stored data with metadata
 - **StorageConfig** - App configuration and user ID
-- **WorkoutSession** - Active and completed workout sessions (fields must match OpenAPI spec)
+- **WorkoutSession** - Active and completed workout sessions
 
 ### Local Storage System (Phase A - Implemented)
 The app uses `@react-native-async-storage/async-storage` for offline-first data persistence.

@@ -25,8 +25,10 @@ const muscleCategoryOptions = Object.values(MuscleCategory);
 const muscleSubcategories: Record<string, string[]> = {
   Chest: ['Upper', 'Middle', 'Lower'],
   Delts: ['Front', 'Lateral', 'Rear'],
-  Back: ['Upper Traps', 'Mid Traps', 'Lower Traps', 'Upper Lats', 'Mid Lats', 'Lower Lats'],
+  Back: ['Lats', 'Mid Back', 'Upper Traps', 'Lower Back'],
   Arms: ['Biceps', 'Triceps', 'Forearms'],
+  Legs: ['Quads', 'Hamstrings', 'Glutes', 'Calves', 'Adductors'],
+  Core: ['Abs', 'Obliques'],
 };
 
 const targetPositions = ['Lengthened', 'Shortened', 'Neutral'];

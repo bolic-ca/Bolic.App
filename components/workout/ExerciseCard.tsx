@@ -148,13 +148,13 @@ export default function ExerciseCard({
             <View
               style={[
                 styles.muscleIconContainer,
-                { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory]}20` },
+                { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}20` },
               ]}
             >
               <Ionicons
-                name={muscleCategoryIcons[exercise.muscleCategory] || 'fitness'}
+                name={muscleCategoryIcons[exercise.muscleCategory as MuscleCategory] || 'fitness'}
                 size={24}
-                color={muscleCategoryColors[exercise.muscleCategory]}
+                color={muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}
               />
             </View>
           )}
@@ -282,7 +282,7 @@ export default function ExerciseCard({
             <PreviousPerformance
               data={previousPerformance}
               exerciseId={exercise.id}
-              exerciseName={exercise.name}
+              exerciseName={exercise.name ?? undefined}
               sessionHistory={sessionHistory}
             />
           </View>
