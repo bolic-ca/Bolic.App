@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -17,7 +17,7 @@ import SetEditor from './SetEditor';
 import SetListItem from './SetListItem';
 import ExerciseSwapModal from './ExerciseSwapModal';
 import { displayWeight } from '@/utils/weight';
-import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
+import { muscleCategoryIcons, muscleCategoryColors, getMuscleBodyImage } from '@/constants/muscle-categories';
 
 interface ExerciseCardProps {
   exercise: TrainingExercise;
@@ -151,11 +151,19 @@ export default function ExerciseCard({
                 { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}20` },
               ]}
             >
-              <Ionicons
-                name={muscleCategoryIcons[exercise.muscleCategory as MuscleCategory] || 'fitness'}
-                size={24}
-                color={muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}
-              />
+              {getMuscleBodyImage(exercise.muscleCategory as MuscleCategory, exercise.muscleSubcategory) ? (
+                <Image
+                  source={getMuscleBodyImage(exercise.muscleCategory as MuscleCategory, exercise.muscleSubcategory)!}
+                  style={styles.muscleBodyImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Ionicons
+                  name={muscleCategoryIcons[exercise.muscleCategory as MuscleCategory] || 'fitness'}
+                  size={24}
+                  color={muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}
+                />
+              )}
             </View>
           )}
 
@@ -378,11 +386,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   muscleIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  muscleBodyImage: {
+    width: 46,
+    height: 46,
   },
   headerInfo: {
     flex: 1,

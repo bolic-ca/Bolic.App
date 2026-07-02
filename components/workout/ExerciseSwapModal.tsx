@@ -14,6 +14,7 @@ import {
   TextInput,
   useColorScheme,
   StatusBar,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ import { MuscleCategory } from '@/types/training';
 import {
   muscleCategoryColorsTailwind as muscleCategoryColors,
   muscleCategoryIcons,
+  getMuscleBodyImage,
 } from '@/constants/muscle-categories';
 import type { WorkoutSession } from '@/services/storage/session-storage';
 import { getPreviousPerformance } from '@/utils/workout-helpers';
@@ -196,12 +198,7 @@ export default function ExerciseSwapModal({
                 onPress={() => setSelectedCategory(isActive ? null : category)}
                 activeOpacity={0.8}
               >
-                <Ionicons
-                  name={muscleCategoryIcons[category] || 'fitness'}
-                  size={13}
-                  color={isActive ? '#FFFFFF' : categoryColor}
-                />
-                <Text style={[styles.categoryChipText, { color: isActive ? '#FFFFFF' : palette.textMuted }]}>
+                <Text style={[styles.categoryChipText, { color: isActive ? '#FFFFFF' : categoryColor }]}>
                   {category}
                 </Text>
               </TouchableOpacity>
@@ -257,7 +254,15 @@ export default function ExerciseSwapModal({
                     activeOpacity={0.8}
                   >
                     <View style={[styles.exerciseIconContainer, { backgroundColor: hexToRgba(categoryColor, 0.15) }]}>
-                      <Ionicons name="barbell" size={22} color={categoryColor} />
+                      {getMuscleBodyImage(exercise.muscleCategory as MuscleCategory | null, exercise.muscleSubcategory) ? (
+                        <Image
+                          source={getMuscleBodyImage(exercise.muscleCategory as MuscleCategory | null, exercise.muscleSubcategory)!}
+                          style={styles.muscleBodyImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Ionicons name="barbell" size={22} color={categoryColor} />
+                      )}
                     </View>
                     <View style={styles.exerciseInfo}>
                       <Text style={[styles.exerciseName, { color: palette.text }]} numberOfLines={1}>
@@ -337,18 +342,18 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 16 },
 
-  categoriesScroll: { maxHeight: 60 },
-  categoriesContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
+  categoriesScroll: { maxHeight: 52 },
+  categoriesContainer: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 6, gap: 6 },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
   },
-  categoryChipText: { fontSize: 14, fontWeight: '600' },
+  categoryChipText: { fontSize: 13, fontWeight: '600' },
 
   scrollView: { flex: 1 },
   contentContainer: { padding: 20 },
@@ -368,7 +373,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
   },
-  exerciseIconContainer: { width: 46, height: 46, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  exerciseIconContainer: { width: 54, height: 54, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  muscleBodyImage: { width: 44, height: 44 },
   exerciseInfo: { flex: 1 },
   exerciseName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
   exerciseMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
