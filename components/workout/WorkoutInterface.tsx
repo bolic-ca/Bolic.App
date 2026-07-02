@@ -260,6 +260,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingVertical: 16,
-    paddingBottom: 100,
+    paddingBottom: 160,
   },
 });
