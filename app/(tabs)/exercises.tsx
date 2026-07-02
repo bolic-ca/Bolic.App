@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, useColorScheme, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, useColorScheme, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -9,7 +9,7 @@ import { useExercises } from '@/hooks/useExercises';
 import { router } from 'expo-router';
 import { MuscleCategory } from '@/types/training';
 
-import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
+import { muscleCategoryIcons, muscleCategoryColors, getMuscleBodyImage } from '@/constants/muscle-categories';
 
 const CATEGORY_OPTIONS = Object.values(MuscleCategory);
 
@@ -213,12 +213,7 @@ export default function ExercisesPage() {
                     onPress={() => setSelectedCategory(isActive ? null : category)}
                     activeOpacity={0.8}
                   >
-                    <Ionicons
-                      name={muscleCategoryIcons[category] || 'fitness'}
-                      size={13}
-                      color={isActive ? '#FFF' : categoryColor}
-                    />
-                    <Text style={[styles.chipText, { color: isActive ? '#FFF' : palette.textMuted }]}>
+                    <Text style={[styles.chipText, { color: isActive ? '#FFF' : categoryColor }]}>
                       {category}
                     </Text>
                   </TouchableOpacity>
@@ -266,11 +261,19 @@ export default function ExercisesPage() {
                     onPress={() => router.push({ pathname: '/exercise-form', params: { exerciseId: exercise.id } })}
                   >
                     <View style={[styles.exerciseIcon, { backgroundColor: `${categoryColor}15` }]}>
-                      <Ionicons
-                        name={exercise.muscleCategory ? muscleCategoryIcons[exercise.muscleCategory] || 'fitness' : 'fitness'}
-                        size={22}
-                        color={categoryColor}
-                      />
+                      {getMuscleBodyImage(exercise.muscleCategory as MuscleCategory | null, exercise.muscleSubcategory) ? (
+                        <Image
+                          source={getMuscleBodyImage(exercise.muscleCategory as MuscleCategory | null, exercise.muscleSubcategory)!}
+                          style={styles.exerciseBodyImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Ionicons
+                          name={exercise.muscleCategory ? muscleCategoryIcons[exercise.muscleCategory] || 'fitness' : 'fitness'}
+                          size={22}
+                          color={categoryColor}
+                        />
+                      )}
                     </View>
                     <View style={styles.exerciseInfo}>
                       <Text style={[styles.exerciseName, { color: palette.text }]} numberOfLines={1}>
@@ -452,6 +455,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  exerciseBodyImage: {
+    width: 38,
+    height: 38,
   },
   exerciseInfo: { flex: 1 },
   exerciseName: { fontSize: 16, fontWeight: '700', letterSpacing: -0.2, marginBottom: 4 },
