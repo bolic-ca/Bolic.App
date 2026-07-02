@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useSimpleProgramWizard } from '@/contexts/SimpleProgramWizardContext';
 import { useExercises } from '@/hooks/useExercises';
@@ -24,7 +25,13 @@ export default function ExerciseSelectorScreen() {
   const isDark = colorScheme === 'dark';
   const { customColors } = useThemeCustomization();
   const { state, addExercise } = useSimpleProgramWizard();
-  const { allExercises } = useExercises();
+  const { allExercises, refetch } = useExercises();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [])
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<MuscleCategory | null>(null);
