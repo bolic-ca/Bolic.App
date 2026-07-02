@@ -16,7 +16,7 @@ import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useSimpleProgramWizard } from '@/contexts/SimpleProgramWizardContext';
 import { useExercises } from '@/hooks/useExercises';
 import { MuscleCategory, TrainingExercise } from '@/types/training';
-import { muscleCategoryColorsTailwind as muscleCategoryColors } from '@/constants/muscle-categories';
+import { muscleCategoryColors } from '@/constants/muscle-categories';
 
 const muscleCategories = Object.values(MuscleCategory);
 
@@ -161,30 +161,34 @@ export default function ExerciseSelectorScreen() {
         <TouchableOpacity
           style={[
             styles.categoryChip,
-            { backgroundColor: !selectedCategory ? palette.accent : palette.cardBg, borderColor: palette.cardBorder },
+            { backgroundColor: !selectedCategory ? palette.accent : palette.cardBg, borderColor: !selectedCategory ? palette.accent : palette.cardBorder },
           ]}
           onPress={() => setSelectedCategory(null)}
           activeOpacity={0.8}
         >
-          <Text style={[styles.categoryChipText, { color: !selectedCategory ? '#FFFFFF' : palette.text }]}>
+          <Text style={[styles.categoryChipText, { color: !selectedCategory ? '#FFFFFF' : palette.textMuted }]}>
             All
           </Text>
         </TouchableOpacity>
-        {muscleCategories.map(category => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryChip,
-              { backgroundColor: selectedCategory === category ? muscleCategoryColors[category] : palette.cardBg, borderColor: palette.cardBorder },
-            ]}
-            onPress={() => setSelectedCategory(category)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.categoryChipText, { color: selectedCategory === category ? '#FFFFFF' : palette.text }]}>
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {muscleCategories.map(category => {
+          const isActive = selectedCategory === category;
+          const categoryColor = muscleCategoryColors[category];
+          return (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryChip,
+                { backgroundColor: isActive ? categoryColor : palette.cardBg, borderColor: isActive ? categoryColor : palette.cardBorder },
+              ]}
+              onPress={() => setSelectedCategory(isActive ? null : category)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.categoryChipText, { color: isActive ? '#FFFFFF' : categoryColor }]}>
+                {category}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -279,7 +283,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 16 },
 
   categoriesScroll: { maxHeight: 60 },
-  categoriesContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
+  categoriesContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 13, gap: 8 },
   categoryChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   categoryChipText: { fontSize: 14, fontWeight: '600' },
 
