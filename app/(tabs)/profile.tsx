@@ -29,8 +29,6 @@ const supportMenuItems: MenuItem[] = [
     subtitle: 'How your data is handled',
     onPress: () => WebBrowser.openBrowserAsync('https://bolic.ca/privacy-policy'),
   },
-  { icon: 'star-outline', title: 'Rate App', subtitle: 'Share your feedback' },
-  { icon: 'information-circle-outline', title: 'About', subtitle: 'Version 1.0.0' },
 ];
 
 export default function ProfilePage() {

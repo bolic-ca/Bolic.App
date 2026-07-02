@@ -33,7 +33,7 @@ interface ThemeContextType {
 }
 
 const defaultColors: ThemeCustomization = {
-  primaryButton: '#F97316', // Vibrant orange (matching Athletic design)
+  primaryButton: '#dc2626',
   primaryButtonText: '#fff',
 };
 
@@ -46,9 +46,9 @@ const defaultPreferences: UserPreferences = {
 };
 
 export const presetColors = [
-  { name: 'Sunset Orange', button: '#F97316', text: '#fff' },
-  { name: 'Ocean Blue', button: '#0a7ea4', text: '#fff' },
   { name: 'Crimson Red', button: '#dc2626', text: '#fff' },
+  { name: 'Ocean Blue', button: '#0a7ea4', text: '#fff' },
+  { name: 'Sunset Orange', button: '#F97316', text: '#fff' },
   { name: 'Forest Green', button: '#059669', text: '#fff' },
   { name: 'Royal Purple', button: '#7c3aed', text: '#fff' },
   { name: 'Pink Pop', button: '#db2777', text: '#fff' },
