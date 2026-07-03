@@ -32,6 +32,7 @@ export const muscleBodyImages: Record<string, ImageSourcePropType> = {
   // Subcategories — Arms
   Biceps: require('@/muscle-bodies/muscle-bodies-arms-biceps.png'),
   Triceps: require('@/muscle-bodies/muscle-bodies-arms-triceps.png'),
+  Forearms: require('@/muscle-bodies/muscle-bodies-arms-forearms.png'),
   // Subcategories — Back
   Lats: require('@/muscle-bodies/muscle-bodies-back-lats-lower.png'),
   'Lower Back': require('@/muscle-bodies/muscle-bodies-back-lats-lower.png'),

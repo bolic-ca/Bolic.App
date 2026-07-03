@@ -201,9 +201,12 @@ export function SimpleProgramWizardProvider({ children }: { children: React.Reac
   const addExercise = useCallback((dayIndex: number, exercise: TrainingExercise) => {
     setState(prev => {
       const updated = [...prev.trainingDays];
+      const day = updated[dayIndex];
+      const alreadyAdded = day.exercises.some(ex => ex.id === exercise.id);
+      if (alreadyAdded) return prev;
       updated[dayIndex] = {
-        ...updated[dayIndex],
-        exercises: [...updated[dayIndex].exercises, exercise],
+        ...day,
+        exercises: [...day.exercises, exercise],
       };
       return { ...prev, trainingDays: updated };
     });

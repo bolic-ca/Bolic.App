@@ -304,6 +304,13 @@ export function WorkoutSessionProvider({ children }: { children: ReactNode }) {
     if (!session) throw new Error('No active session');
     if (!userId) throw new Error('User not initialized');
 
+    if (newExerciseId === originalExerciseId) return;
+
+    const alreadyInPlan = (session.exercisePlan ?? []).some(
+      e => e.exerciseId === newExerciseId && e.exerciseId !== originalExerciseId
+    );
+    if (alreadyInPlan) throw new Error('Exercise already in session');
+
     try {
       // Migrate any already-logged sets to the new exercise
       const updatedExercises = session.exercises.map(ex => {
