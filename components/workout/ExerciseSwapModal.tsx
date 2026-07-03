@@ -24,7 +24,6 @@ import type { TrainingExercise } from '@/types/training';
 import { MuscleCategory } from '@/types/training';
 import {
   muscleCategoryColorsTailwind as muscleCategoryColors,
-  muscleCategoryIcons,
   getMuscleBodyImage,
 } from '@/constants/muscle-categories';
 import type { WorkoutSession } from '@/services/storage/session-storage';

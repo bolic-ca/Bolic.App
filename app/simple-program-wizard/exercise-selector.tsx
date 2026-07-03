@@ -10,8 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { useSimpleProgramWizard } from '@/contexts/SimpleProgramWizardContext';
 import { useExercises } from '@/hooks/useExercises';
@@ -30,7 +29,7 @@ export default function ExerciseSelectorScreen() {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [])
+    }, [refetch])
   );
 
   const [searchQuery, setSearchQuery] = useState('');

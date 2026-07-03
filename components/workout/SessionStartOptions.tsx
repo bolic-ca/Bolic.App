@@ -172,9 +172,8 @@ export default function SessionStartOptions({ visible, trainingDay, lastPlan, on
             description="Use the same exercise layout as last time (this session only)"
             onPress={() => onChoose('last')}
             palette={palette}
-            iconColor={palette.accent}
-            borderColor={palette.accent}
-            highlighted
+            iconColor={palette.textMuted}
+            borderColor={palette.cardBorder}
           />
 
           {/* Choice: Repeat last + save */}
