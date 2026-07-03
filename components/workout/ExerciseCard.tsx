@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import type { TrainingExercise } from '@/types/training';
+import type { TrainingExercise, MuscleCategory } from '@/types/training';
 import type { SessionExercise, SessionSet, WorkoutSession } from '@/services/storage/session-storage';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 import PreviousPerformance from './PreviousPerformance';

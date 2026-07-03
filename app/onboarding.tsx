@@ -43,8 +43,8 @@ export default function OnboardingScreen() {
 
   const features = [
     { icon: 'phone-portrait-outline' as const, title: 'Works Offline', description: 'Track workouts without internet' },
-    { icon: 'stats-chart' as const, title: 'Track Progress', description: 'Monitor your PRs and stats' },
-    { icon: 'barbell-outline' as const, title: 'Smart Training', description: 'Science-based programs' },
+    { icon: 'stats-chart' as const, title: 'Track Progress', description: 'History of previous sets' },
+    { icon: 'barbell-outline' as const, title: 'Science-based', description: 'Science-based programming and exercise tracking' },
   ];
 
   return (
@@ -58,7 +58,7 @@ export default function OnboardingScreen() {
           <Text style={[styles.welcomeLabel, { color: palette.textMuted }]}>WELCOME TO</Text>
           <Text style={[styles.title, { color: palette.text }]}>Bolic</Text>
           <Text style={[styles.subtitle, { color: palette.textMuted }]}>
-            Your personal training companion
+            A science-based hypertrophy focused fitness training app.  
           </Text>
         </View>
 

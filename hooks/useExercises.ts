@@ -3,7 +3,7 @@
  * React hook for managing training exercises
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStorage } from '@/contexts/StorageContext';
 import { exerciseStorage } from '@/services/storage/exercise-storage';
 import type { TrainingExercise } from '@/types/training';
@@ -39,7 +39,7 @@ export function useExercises(options?: UseExercisesOptions): UseExercisesResult 
     return allExercises.filter(ex => ex.trainingDayIds?.includes(trainingDayId));
   }, [allExercises, trainingDayId]);
 
-  async function fetchExercises() {
+  const fetchExercises = useCallback(async () => {
     if (!userId || !enabled) {
       setLoading(false);
       return;
@@ -63,13 +63,13 @@ export function useExercises(options?: UseExercisesOptions): UseExercisesResult 
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId, enabled]);
 
   useEffect(() => {
     if (isInitialized && userId && enabled) {
       fetchExercises();
     }
-  }, [userId, isInitialized, enabled]);
+  }, [userId, isInitialized, enabled, fetchExercises]);
 
   async function createExercise(
     exercise: Omit<TrainingExercise, 'id'>
