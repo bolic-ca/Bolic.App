@@ -1,21 +1,6 @@
-# Bolic.App — Mobile Training Platform
+# Bolic.App - Moble UI
 
-**Bolic.App** is the mobile companion to the [Bolic training platform](https://github.com/markus-bcit/Bolic.Backend) — a functionally designed, science-based fitness training app built with **React Native**, **Expo Router**, and **TypeScript**.
-
-The app provides an offline-first training experience with local storage, allowing users to track workouts, manage programs (simple or periodized), and follow science-based training principles without requiring constant connectivity.
-
-> **Backend Repository**: See [Bolic.Backend](https://github.com/markus-bcit/Bolic.Backend) for the Azure Functions backend with functional C# and LanguageExt v5.
-
----
-
-## Philosophy
-
-Bolic is designed for **SBLs (Science Based Lifters)** who want to track their training in the most optimal way. The app implements:
-
-- **Periodization models** (mesocycles, microcycles, training days)
-- **Science-based metrics** (RIR, RPE, target positions)
-- **Progressive overload tracking** with real-time feedback
-- **Offline-first architecture** for uninterrupted training sessions
+Mobile UI for the Bolic training platform, a science-based hypertrophy focused fitness training app
 
 ---
 
@@ -33,33 +18,6 @@ npm run ios        # iOS simulator
 npm run android    # Android emulator
 npm run web        # Web browser
 ```
-
----
-
-## Architecture Overview
-
-### Phase A: Local Storage (Current)
-The app runs **100% offline** using AsyncStorage for data persistence.
-
-**Key Components:**
-- `services/storage/` — CRUD operations for all entities
-- `contexts/StorageContext.tsx` — Anonymous user ID and storage initialization
-- `contexts/WorkoutSessionContext.tsx` — Shared workout session state across all components
-- `contexts/WorkoutUIContext.tsx` — Expanded/minimized state for the workout interface
-- `contexts/ThemeContext.tsx` — Accent color customization and user preferences
-- `hooks/` — React hooks for programs, training days, and stats
-
-**Features:**
-- Anonymous user accounts (no signup required)
-- Onboarding flow with storage initialization
-- Program templates (Upper/Lower Split, Periodized Full Body)
-- Workout session tracking with set-by-set logging
-- Exercise swap during active sessions
-- Personal records and statistics
-- Data import/export (JSON)
-- Custom accent color themes
-- Weight unit preference (kg/lbs)
-- Per-session day override (start a different day than auto-calculated next)
 
 ---
 
@@ -177,32 +135,7 @@ data/
 
 ## Type System
 
-The app uses a comprehensive type system based on `openapi.yaml` as the source of truth:
-
-```typescript
-// Core training structures
-Program → Mesocycle → Microcycle → TrainingDay → TrainingExercise → TrainingSet
-
-// Storage wrappers
-StorageItem<T> {
-  id: string;
-  userId: string;
-  data: T;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Session tracking
-WorkoutSession {
-  programId: string;
-  trainingDayId: string;
-  exercises: SessionExercise[];
-  startedAt: string;
-  completedAt: string | null;
-}
-```
-
-See [`types/training.ts`](types/training.ts) for complete type definitions.
+The app uses a type system based on `openapi.yaml` as the source of truth, a majority of objects aren't used, i.e. perodized programming (the whole meso, macrocycle stuff). Most of the objects used started off as backend records.
 
 ---
 
@@ -221,17 +154,6 @@ See [`types/training.ts`](types/training.ts) for complete type definitions.
 
 ## Building for Production
 
-### EAS Build (Recommended)
-
-```bash
-# Build for TestFlight (triggered automatically on tag push)
-git tag 1.0.5
-git push origin 1.0.5
-
-# Manual build
-eas build --platform ios --profile production
-```
-
 The app uses GitHub Actions for CI/CD. See [`.github/workflows/build.yml`](.github/workflows/build.yml).
 
 **Version Management:**
@@ -243,12 +165,5 @@ The app uses GitHub Actions for CI/CD. See [`.github/workflows/build.yml`](.gith
 
 ## Roadmap
 
-See [`ROADMAP.md`](ROADMAP.md) for the active task list and known issues.
+See [Issues](https://github.com/bolic-ca/Bolic.App/issues) for the active task list and known issues.
 
-## In the future
-
-Cloud sync and authentication via [Bolic.Backend](https://github.com/markus-bcit/Bolic.Backend).
-
----
-
-**Built for Science Based Lifters**
