@@ -3,7 +3,7 @@
  * Unified modal for adding and editing sets during a workout
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
@@ -48,6 +49,24 @@ const RIR_OPTIONS: { value: RirValue; label: string; description?: string }[] = 
   { value: 'F', label: 'F', description: 'Failure' },
 ];
 
+const QUALITY_OPTIONS = [1, 2, 3, 4, 5];
+
+function qualityLabel(value: number): string {
+  const labels: Record<number, string> = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Great', 5: 'Elite' };
+  return labels[value] ?? String(value);
+}
+
+function qualityColor(value: number): string {
+  const colors: Record<number, string> = {
+    1: '#ef4444',
+    2: '#fb923c',
+    3: '#facc15',
+    4: '#a3e635',
+    5: '#4ade80',
+  };
+  return colors[value] ?? '#fb923c';
+}
+
 interface SetEditorProps {
   visible: boolean;
   onClose: () => void;
@@ -61,6 +80,7 @@ interface SetEditorProps {
     rir?: RirValue;
     rpe?: number;
     numberOfPartials?: number;
+    quality?: number;
     notes?: string;
   };
 }
@@ -77,6 +97,10 @@ export default function SetEditor({
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { customColors, preferences } = useThemeCustomization();
+  const { width } = useWindowDimensions();
+  // Scale relative to 390px (iPhone 14 base), clamped so tiny/huge screens don't break layout
+  const scale = Math.min(Math.max(width / 390, 0.82), 1.2);
+  const s = (n: number) => Math.round(n * scale);
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -86,7 +110,9 @@ export default function SetEditor({
   const [partialsInput, setPartialsInput] = useState('');
   const [rpe, setRpe] = useState<number | null>(null);
   const [rpeInput, setRpeInput] = useState('');
+  const [quality, setQuality] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Reset form when modal opens/closes or initial data changes
   useEffect(() => {
@@ -106,6 +132,7 @@ export default function SetEditor({
       const initRpe = initialData?.rpe ?? null;
       setRpe(initRpe);
       setRpeInput(initRpe !== null ? String(initRpe) : '');
+      setQuality(initialData?.quality ?? null);
       setNotes(initialData?.notes ?? '');
     }
   }, [visible, initialData, preferences.weightUnit]);
@@ -142,6 +169,10 @@ export default function SetEditor({
 
     if (numberOfPartials !== null) {
       setData.numberOfPartials = numberOfPartials;
+    }
+
+    if (quality !== null) {
+      setData.quality = quality;
     }
 
     if (notes.trim() !== '') {
@@ -188,26 +219,26 @@ export default function SetEditor({
         <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>{title}</Text>
+              <Text style={[styles.modalTitle, { color: theme.text, fontSize: s(22) }]}>{title}</Text>
               <TouchableOpacity
                 onPress={onClose}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="close" size={28} color={theme.textSecondary} />
+                <Ionicons name="close" size={s(28)} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+            <ScrollView ref={scrollViewRef} style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               {/* Weight and Reps Row */}
               <View style={styles.inputRow}>
                 <View style={styles.inputGroupLarge}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                  <Text style={[styles.inputLabel, { color: theme.text, fontSize: s(15) }]}>
                     Weight ({preferences.weightUnit}) <Text style={styles.requiredStar}>*</Text>
                   </Text>
                   <TextInput
                     style={[
                       styles.inputLarge,
-                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder },
+                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder, fontSize: s(20), padding: s(16) },
                     ]}
                     value={weight}
                     onChangeText={setWeight}
@@ -218,13 +249,13 @@ export default function SetEditor({
                   />
                 </View>
                 <View style={styles.inputGroupLarge}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                  <Text style={[styles.inputLabel, { color: theme.text, fontSize: s(15) }]}>
                     Reps <Text style={styles.requiredStar}>*</Text>
                   </Text>
                   <TextInput
                     style={[
                       styles.inputLarge,
-                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder },
+                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder, fontSize: s(20), padding: s(16) },
                     ]}
                     value={reps}
                     onChangeText={setReps}
@@ -238,7 +269,7 @@ export default function SetEditor({
 
               {/* RIR */}
               {preferences.showRir && <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: theme.text }]}>
+                <Text style={[styles.inputLabel, { color: theme.text, fontSize: s(15) }]}>
                   RIR <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(Reps in Reserve)</Text>
                 </Text>
                 <View style={styles.rirOptionsRow}>
@@ -252,6 +283,7 @@ export default function SetEditor({
                         borderColor: rir !== null && typeof rir === 'number'
                           ? customColors.primaryButton
                           : theme.cardBorder,
+                        width: s(52), height: s(44), fontSize: s(15),
                       },
                     ]}
                     value={rirInput}
@@ -290,6 +322,7 @@ export default function SetEditor({
                             borderColor: isSelected
                               ? (isFail ? '#ff6b6b' : customColors.primaryButton)
                               : theme.cardBorder,
+                            flex: 1, minWidth: undefined, height: s(44),
                           },
                         ]}
                         onPress={() => {
@@ -305,7 +338,7 @@ export default function SetEditor({
                           }
                         }}
                       >
-                        <Text style={[styles.rirOptionText, { color: isSelected ? '#fff' : theme.text }]}>
+                        <Text style={[styles.rirOptionText, { color: isSelected ? '#fff' : theme.text, fontSize: s(16) }]}>
                           {option.label}
                         </Text>
                       </TouchableOpacity>
@@ -319,6 +352,7 @@ export default function SetEditor({
                         backgroundColor: numberOfPartials !== null ? '#ffd93d' : theme.card,
                         color: numberOfPartials !== null ? '#000' : theme.text,
                         borderColor: numberOfPartials !== null ? '#ffd93d' : theme.cardBorder,
+                        width: s(52), height: s(44), fontSize: s(15),
                       },
                     ]}
                     value={partialsInput}
@@ -351,7 +385,7 @@ export default function SetEditor({
 
               {/* RPE */}
               {preferences.showRpe && <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: theme.text }]}>
+                <Text style={[styles.inputLabel, { color: theme.text, fontSize: s(15) }]}>
                   RPE <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(Rate of Perceived Exertion)</Text>
                 </Text>
                 <View style={styles.rirOptionsRow}>
@@ -365,6 +399,7 @@ export default function SetEditor({
                         borderColor: rpe !== null && !RPE_QUICK.includes(rpe)
                           ? rpeColor(rpe)
                           : theme.cardBorder,
+                        width: s(52), height: s(44), fontSize: s(15),
                       },
                     ]}
                     value={rpeInput}
@@ -394,6 +429,7 @@ export default function SetEditor({
                           {
                             backgroundColor: isSelected ? chipColor : theme.card,
                             borderColor: isSelected ? chipColor : theme.cardBorder,
+                            flex: 1, minWidth: undefined, height: s(44),
                           },
                         ]}
                         onPress={() => {
@@ -409,7 +445,7 @@ export default function SetEditor({
                         <Text
                           style={[
                             styles.rirOptionText,
-                            { color: isSelected ? '#000' : theme.text },
+                            { color: isSelected ? '#000' : theme.text, fontSize: s(16) },
                           ]}
                         >
                           {val}
@@ -420,16 +456,52 @@ export default function SetEditor({
                 </View>
               </View>}
 
+              {/* Set Quality */}
+              {preferences.showQuality && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: theme.text, fontSize: s(15) }]}>
+                    Set Quality <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(optional)</Text>
+                  </Text>
+                  <View style={styles.rirOptionsRow}>
+                    {QUALITY_OPTIONS.map((val) => {
+                      const isSelected = quality === val;
+                      const chipColor = qualityColor(val);
+                      return (
+                        <TouchableOpacity
+                          key={val}
+                          style={[
+                            styles.qualityOption,
+                            {
+                              backgroundColor: isSelected ? chipColor : theme.card,
+                              borderColor: isSelected ? chipColor : theme.cardBorder,
+                              height: s(52),
+                            },
+                          ]}
+                          onPress={() => setQuality(isSelected ? null : val)}
+                        >
+                          <Text style={[styles.qualityOptionNumber, { color: isSelected ? '#000' : theme.text, fontSize: s(15) }]}>
+                            {val}
+                          </Text>
+                          <Text style={[styles.qualityOptionLabel, { color: isSelected ? '#000' : theme.textSecondary, fontSize: s(10) }]}>
+                            {qualityLabel(val)}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
               {/* Notes */}
               {preferences.showNotes && (
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                  <Text style={[styles.inputLabel, { color: theme.text, fontSize: s(15) }]}>
                     Notes <Text style={[styles.optionalText, { color: theme.textSecondary }]}>(optional)</Text>
                   </Text>
                   <TextInput
                     style={[
                       styles.inputMultiline,
-                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder },
+                      { backgroundColor: theme.card, color: theme.text, borderColor: theme.cardBorder, fontSize: s(15), padding: s(16) },
                     ]}
                     value={notes}
                     onChangeText={setNotes}
@@ -438,6 +510,7 @@ export default function SetEditor({
                     multiline
                     numberOfLines={3}
                     textAlignVertical="top"
+                    onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100)}
                   />
                 </View>
               )}
@@ -447,20 +520,20 @@ export default function SetEditor({
             <View style={styles.modalActions}>
               {mode === 'edit' && onDelete && (
                 <TouchableOpacity
-                  style={[styles.deleteButton, { borderColor: '#ff6b6b' }]}
+                  style={[styles.deleteButton, { borderColor: '#ff6b6b', width: s(52), height: s(52) }]}
                   onPress={handleDelete}
                 >
-                  <Ionicons name="trash-outline" size={20} color="#ff6b6b" />
+                  <Ionicons name="trash-outline" size={s(20)} color="#ff6b6b" />
                 </TouchableOpacity>
               )}
               <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: customColors.primaryButton }]}
+                style={[styles.submitButton, { backgroundColor: customColors.primaryButton, height: s(52) }]}
                 onPress={handleSubmit}
               >
                 {mode === 'add' && (
-                  <Ionicons name="add-circle" size={20} color={customColors.primaryButtonText} />
+                  <Ionicons name="add-circle" size={s(20)} color={customColors.primaryButtonText} />
                 )}
-                <Text style={[styles.submitButtonText, { color: customColors.primaryButtonText }]}>
+                <Text style={[styles.submitButtonText, { color: customColors.primaryButtonText, fontSize: s(16) }]}>
                   {submitText}
                 </Text>
               </TouchableOpacity>
@@ -484,7 +557,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    paddingBottom: 24,
     paddingHorizontal: 20,
     maxHeight: '85%',
   },
@@ -607,5 +680,24 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  qualityOption: {
+    flex: 1,
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  qualityOptionNumber: {
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  qualityOptionLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 13,
   },
 });

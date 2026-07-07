@@ -16,6 +16,7 @@ interface UserPreferences {
   showRir: boolean;
   showRpe: boolean;
   showNotes: boolean;
+  showQuality: boolean;
 }
 
 interface ThemeContextType {
@@ -27,11 +28,12 @@ interface ThemeContextType {
   setShowRir: (value: boolean) => void;
   setShowRpe: (value: boolean) => void;
   setShowNotes: (value: boolean) => void;
+  setShowQuality: (value: boolean) => void;
   isLoaded: boolean;
 }
 
 const defaultColors: ThemeCustomization = {
-  primaryButton: '#F97316', // Vibrant orange (matching Athletic design)
+  primaryButton: '#dc2626',
   primaryButtonText: '#fff',
 };
 
@@ -40,12 +42,13 @@ const defaultPreferences: UserPreferences = {
   showRir: true,
   showRpe: true,
   showNotes: true,
+  showQuality: false,
 };
 
 export const presetColors = [
-  { name: 'Sunset Orange', button: '#F97316', text: '#fff' },
-  { name: 'Ocean Blue', button: '#0a7ea4', text: '#fff' },
   { name: 'Crimson Red', button: '#dc2626', text: '#fff' },
+  { name: 'Ocean Blue', button: '#0a7ea4', text: '#fff' },
+  { name: 'Sunset Orange', button: '#F97316', text: '#fff' },
   { name: 'Forest Green', button: '#059669', text: '#fff' },
   { name: 'Royal Purple', button: '#7c3aed', text: '#fff' },
   { name: 'Pink Pop', button: '#db2777', text: '#fff' },
@@ -135,6 +138,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setShowQuality = async (value: boolean) => {
+    try {
+      await savePreferences({ ...preferences, showQuality: value });
+    } catch (error) {
+      console.error('Error saving showQuality:', error);
+    }
+  };
+
   return (
     <ThemeContext.Provider
       value={{
@@ -146,6 +157,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setShowRir,
         setShowRpe,
         setShowNotes,
+        setShowQuality,
         isLoaded,
       }}
     >

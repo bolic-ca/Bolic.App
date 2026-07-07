@@ -3,7 +3,7 @@
  * First-time user experience
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,8 +43,8 @@ export default function OnboardingScreen() {
 
   const features = [
     { icon: 'phone-portrait-outline' as const, title: 'Works Offline', description: 'Track workouts without internet' },
-    { icon: 'stats-chart' as const, title: 'Track Progress', description: 'Monitor your PRs and stats' },
-    { icon: 'barbell-outline' as const, title: 'Smart Training', description: 'Science-based programs' },
+    { icon: 'stats-chart' as const, title: 'Track Progress', description: 'History of previous sets' },
+    { icon: 'barbell-outline' as const, title: 'Science-based', description: 'Science-based programming and exercise tracking' },
   ];
 
   return (
@@ -53,12 +53,12 @@ export default function OnboardingScreen() {
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={[styles.logoContainer, { backgroundColor: palette.accentGlow }]}>
-            <Ionicons name="fitness" size={48} color={palette.accent} />
+            <Image source={require('@/assets/images/icon.png')} style={styles.logoImage} />
           </View>
           <Text style={[styles.welcomeLabel, { color: palette.textMuted }]}>WELCOME TO</Text>
           <Text style={[styles.title, { color: palette.text }]}>Bolic</Text>
           <Text style={[styles.subtitle, { color: palette.textMuted }]}>
-            Your personal training companion
+            A science-based hypertrophy focused fitness training app.  
           </Text>
         </View>
 
@@ -127,6 +127,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 28,
   },
   welcomeLabel: {
     fontSize: 12,

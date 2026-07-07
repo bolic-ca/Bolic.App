@@ -102,12 +102,17 @@ export default function SessionDetailModal() {
           return set; // Invalid input, don't change
         }
 
+        // Handle string fields (notes)
+        if (field === 'notes') {
+          return { ...set, notes: value === '' ? undefined : value };
+        }
+
         // Handle numeric conversion for other fields
         const numValue = parseFloat(value);
         if (isNaN(numValue) && value !== '') return set; // Prevent non-numeric inputs
 
         // For required fields (weight, reps), fallback to 0 if empty
-        // For optional fields (rpe), allow undefined if empty
+        // For optional fields (rpe, quality), allow undefined if empty
         let newValue: number | undefined = numValue;
         if (value === '') {
           if (field === 'weight' || field === 'reps') {
@@ -430,81 +435,108 @@ function ExerciseCard({ exercise, palette, isDark, isEditing, onSetChange, weigh
       <View style={styles.setsContainer}>
         {exercise.sets.map((set, index) => (
           <View key={index} style={[styles.setRow, { backgroundColor: isDark ? '#1F1F23' : '#F9F9F8' }]}>
-            <View style={[styles.setNumberBadge, { backgroundColor: palette.accentGlow }]}>
-              <Text style={[styles.setNumber, { color: palette.accent }]}>{index + 1}</Text>
-            </View>
-            
-            {isEditing ? (
-              <View style={styles.editSetContainer}>
-                <View style={styles.editInputGroup}>
-                  <TextInput
-                    style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
-                    value={displayWeight(set.weight, weightUnit).toString()}
-                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'weight', val)}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor={palette.textMuted}
-                  />
-                  <Text style={[styles.editUnit, { color: palette.textMuted }]}>{weightUnit}</Text>
-                </View>
-                <Text style={{ color: palette.textMuted }}>×</Text>
-                <View style={styles.editInputGroup}>
-                  <TextInput
-                    style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
-                    value={set.reps.toString()}
-                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'reps', val)}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor={palette.textMuted}
-                  />
-                  <Text style={[styles.editUnit, { color: palette.textMuted }]}>reps</Text>
-                </View>
-
-                {/* RIR Input */}
-                <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
-                  <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RIR</Text>
-                  <TextInput
-                    style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
-                    value={set.rir !== undefined ? formatRirShort(set.rir) : ''}
-                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rir', val)}
-                    autoCapitalize="characters"
-                    placeholder="-"
-                    placeholderTextColor={palette.textMuted}
-                  />
-                </View>
-
-                {/* RPE Input */}
-                <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
-                  <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RPE</Text>
-                  <TextInput
-                    style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
-                    value={set.rpe?.toString() ?? ''}
-                    onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rpe', val)}
-                    keyboardType="numeric"
-                    placeholder="-"
-                    placeholderTextColor={palette.textMuted}
-                  />
-                </View>
+            <View style={styles.setRowMain}>
+              <View style={[styles.setNumberBadge, { backgroundColor: palette.accentGlow }]}>
+                <Text style={[styles.setNumber, { color: palette.accent }]}>{index + 1}</Text>
               </View>
-            ) : (
-              <>
-                <Text style={[styles.setDetails, { color: palette.text }]}>
-                  {displayWeight(set.weight, weightUnit)} {weightUnit} × {set.reps} reps
-                </Text>
-                {(set.numberOfPartials !== undefined || set.rir !== undefined || set.rpe !== undefined) && (
-                  <Text style={[styles.setMetrics, { color: palette.textMuted }]}>
-                    {set.numberOfPartials !== undefined && `+${set.numberOfPartials}P`}
-                    {set.numberOfPartials !== undefined && set.rir !== undefined && ' · '}
-                    {set.rir !== undefined && (
-                      set.rir === 'F' ? 'Failure' :
-                      set.rir === 'P' ? 'Partials' :
-                      `RIR ${formatRirShort(set.rir)}`
-                    )}
-                    {(set.numberOfPartials !== undefined || set.rir !== undefined) && set.rpe !== undefined && ' · '}
-                    {set.rpe !== undefined && `RPE ${set.rpe}`}
+
+              {isEditing ? (
+                <View style={styles.editSetContainer}>
+                  <View style={styles.editInputGroup}>
+                    <TextInput
+                      style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
+                      value={displayWeight(set.weight, weightUnit).toString()}
+                      onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'weight', val)}
+                      keyboardType="numeric"
+                      placeholder="0"
+                      placeholderTextColor={palette.textMuted}
+                    />
+                    <Text style={[styles.editUnit, { color: palette.textMuted }]}>{weightUnit}</Text>
+                  </View>
+                  <Text style={{ color: palette.textMuted }}>×</Text>
+                  <View style={styles.editInputGroup}>
+                    <TextInput
+                      style={[styles.editInput, { color: palette.text, backgroundColor: palette.bg }]}
+                      value={set.reps.toString()}
+                      onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'reps', val)}
+                      keyboardType="numeric"
+                      placeholder="0"
+                      placeholderTextColor={palette.textMuted}
+                    />
+                    <Text style={[styles.editUnit, { color: palette.textMuted }]}>reps</Text>
+                  </View>
+                  <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
+                    <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RIR</Text>
+                    <TextInput
+                      style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
+                      value={set.rir !== undefined ? formatRirShort(set.rir) : ''}
+                      onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rir', val)}
+                      autoCapitalize="characters"
+                      placeholder="-"
+                      placeholderTextColor={palette.textMuted}
+                    />
+                  </View>
+                  <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
+                    <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>RPE</Text>
+                    <TextInput
+                      style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
+                      value={set.rpe?.toString() ?? ''}
+                      onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'rpe', val)}
+                      keyboardType="numeric"
+                      placeholder="-"
+                      placeholderTextColor={palette.textMuted}
+                    />
+                  </View>
+                  <View style={[styles.editInputGroup, { marginLeft: 8 }]}>
+                    <Text style={[styles.editUnit, { color: palette.textMuted, marginRight: 4 }]}>Q</Text>
+                    <TextInput
+                      style={[styles.editInput, { width: 40, color: palette.text, backgroundColor: palette.bg }]}
+                      value={set.quality?.toString() ?? ''}
+                      onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'quality', val)}
+                      keyboardType="numeric"
+                      placeholder="-"
+                      placeholderTextColor={palette.textMuted}
+                    />
+                    <Text style={[styles.editUnit, { color: palette.textMuted }]}>/5</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.setViewContent}>
+                  <Text style={[styles.setDetails, { color: palette.text }]}>
+                    {displayWeight(set.weight, weightUnit)} {weightUnit} × {set.reps} reps
                   </Text>
-                )}
-              </>
+                  {(set.numberOfPartials !== undefined || set.rir !== undefined || set.rpe !== undefined || set.quality !== undefined) && (
+                    <Text style={[styles.setMetrics, { color: palette.textMuted }]}>
+                      {set.numberOfPartials !== undefined && `+${set.numberOfPartials}P`}
+                      {set.numberOfPartials !== undefined && set.rir !== undefined && ' · '}
+                      {set.rir !== undefined && (
+                        set.rir === 'F' ? 'Failure' :
+                        set.rir === 'P' ? 'Partials' :
+                        `RIR ${formatRirShort(set.rir)}`
+                      )}
+                      {(set.numberOfPartials !== undefined || set.rir !== undefined) && set.rpe !== undefined && ' · '}
+                      {set.rpe !== undefined && `RPE ${set.rpe}`}
+                      {(set.numberOfPartials !== undefined || set.rir !== undefined || set.rpe !== undefined) && set.quality !== undefined && ' · '}
+                      {set.quality !== undefined && `Q${set.quality}/5`}
+                    </Text>
+                  )}
+                  {set.notes && (
+                    <Text style={[styles.setNotes, { color: palette.textMuted }]} numberOfLines={2}>
+                      {set.notes}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+
+            {isEditing && (
+              <TextInput
+                style={[styles.editNotesInput, { color: palette.text, backgroundColor: palette.bg }]}
+                value={set.notes ?? ''}
+                onChangeText={(val) => onSetChange?.(exercise.exerciseId, index, 'notes', val)}
+                placeholder="Set notes..."
+                placeholderTextColor={palette.textMuted}
+              />
             )}
           </View>
         ))}
@@ -652,12 +684,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   setRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
+    gap: 6,
+  },
+  setRowMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   setNumberBadge: {
     width: 28,
@@ -670,14 +705,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  setViewContent: {
+    flex: 1,
+    gap: 4,
+  },
   setDetails: {
     fontSize: 15,
     fontWeight: '600',
-    flex: 1,
   },
   setMetrics: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  setNotes: {
+    fontSize: 12,
+    fontStyle: 'italic',
   },
   editSetContainer: {
     flex: 1,
@@ -702,6 +744,14 @@ const styles = StyleSheet.create({
   editUnit: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  editNotesInput: {
+    marginTop: 6,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 13,
+    fontWeight: '400',
   },
   notesSection: {
     marginBottom: 24,

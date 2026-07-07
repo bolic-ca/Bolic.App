@@ -115,6 +115,11 @@ export default function PreviousPerformance({
                   RPE{set.rpe}
                 </Text>
               )}
+              {preferences.showQuality && set.quality !== undefined && (
+                <Text style={[styles.setMeta, { color: theme.textSecondary }]}>
+                  Q{set.quality}/5
+                </Text>
+              )}
               {preferences.showNotes && set.notes && (
                 <Pressable onPress={() => setNotePopup(set.notes!)} style={styles.notesChip}>
                   <Ionicons name="document-text-outline" size={11} color={theme.textSecondary} />
@@ -229,6 +234,11 @@ export default function PreviousPerformance({
                         {set.rpe !== undefined && (
                           <Text style={[styles.historySetMeta, { color: theme.textSecondary }]}>
                             RPE {set.rpe}
+                          </Text>
+                        )}
+                        {preferences.showQuality && set.quality !== undefined && (
+                          <Text style={[styles.historySetMeta, { color: theme.textSecondary }]}>
+                            Q{set.quality}/5
                           </Text>
                         )}
                       </View>

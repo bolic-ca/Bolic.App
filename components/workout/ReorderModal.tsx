@@ -158,7 +158,7 @@ const DragItem = React.memo(function DragItem({
         ]}
       >
         {/* Drag handle affordance — no extra gesture needed; the whole item drags */}
-        <View style={styles.handle} pointerEvents="none">
+        <View style={[styles.handle, { pointerEvents: 'none' }]}>
           <Ionicons
             name="reorder-three-outline"
             size={28}

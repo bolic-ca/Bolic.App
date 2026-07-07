@@ -4,12 +4,12 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet, useColorScheme, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
-import type { TrainingExercise } from '@/types/training';
+import type { TrainingExercise, MuscleCategory } from '@/types/training';
 import type { SessionExercise, SessionSet, WorkoutSession } from '@/services/storage/session-storage';
 import type { PreviousPerformance as PreviousPerformanceData } from '@/utils/workout-helpers';
 import PreviousPerformance from './PreviousPerformance';
@@ -17,7 +17,7 @@ import SetEditor from './SetEditor';
 import SetListItem from './SetListItem';
 import ExerciseSwapModal from './ExerciseSwapModal';
 import { displayWeight } from '@/utils/weight';
-import { muscleCategoryIcons, muscleCategoryColors } from '@/constants/muscle-categories';
+import { muscleCategoryIcons, muscleCategoryColors, getMuscleBodyImage } from '@/constants/muscle-categories';
 
 interface ExerciseCardProps {
   exercise: TrainingExercise;
@@ -148,14 +148,22 @@ export default function ExerciseCard({
             <View
               style={[
                 styles.muscleIconContainer,
-                { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory]}20` },
+                { backgroundColor: `${muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}20` },
               ]}
             >
-              <Ionicons
-                name={muscleCategoryIcons[exercise.muscleCategory] || 'fitness'}
-                size={24}
-                color={muscleCategoryColors[exercise.muscleCategory]}
-              />
+              {getMuscleBodyImage(exercise.muscleCategory as MuscleCategory, exercise.muscleSubcategory) ? (
+                <Image
+                  source={getMuscleBodyImage(exercise.muscleCategory as MuscleCategory, exercise.muscleSubcategory)!}
+                  style={styles.muscleBodyImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Ionicons
+                  name={muscleCategoryIcons[exercise.muscleCategory as MuscleCategory] || 'fitness'}
+                  size={24}
+                  color={muscleCategoryColors[exercise.muscleCategory as MuscleCategory]}
+                />
+              )}
             </View>
           )}
 
@@ -282,7 +290,7 @@ export default function ExerciseCard({
             <PreviousPerformance
               data={previousPerformance}
               exerciseId={exercise.id}
-              exerciseName={exercise.name}
+              exerciseName={exercise.name ?? undefined}
               sessionHistory={sessionHistory}
             />
           </View>
@@ -378,11 +386,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   muscleIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  muscleBodyImage: {
+    width: 46,
+    height: 46,
   },
   headerInfo: {
     flex: 1,

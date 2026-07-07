@@ -234,6 +234,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderStyle: 'dashed',
     marginTop: 4,
+    marginBottom: 16,
   },
   addExerciseText: {
     fontSize: 16,

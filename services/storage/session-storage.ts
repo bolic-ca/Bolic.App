@@ -72,6 +72,7 @@ export interface SessionSet {
   rir?: RirValue;
   rpe?: number;
   numberOfPartials?: number;
+  quality?: number;
   notes?: string;
   completedAt: string;
 }

@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, ActivityIndicator, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Text, TouchableOpacity, StyleSheet, useColorScheme, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
@@ -77,7 +77,12 @@ export default function WorkoutInterface({
     try {
       await swapExercise(originalExerciseId, newExercise.id!, newExercise.name!);
     } catch (err) {
-      console.error('Error swapping exercise:', err);
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'Exercise already in session') {
+        Alert.alert('Already Added', 'This exercise is already in your session.');
+      } else {
+        console.error('Error swapping exercise:', err);
+      }
     }
   };
 
@@ -185,7 +190,7 @@ export default function WorkoutInterface({
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        delayContentTouches={false}
+
         keyboardShouldPersistTaps="handled"
       >
         <ExerciseList
@@ -260,6 +265,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingVertical: 16,
-    paddingBottom: 100,
+    paddingBottom: 160,
   },
 });
