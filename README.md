@@ -2,21 +2,31 @@
 
 Mobile UI for the Bolic training platform, a science-based hypertrophy focused fitness training app
 
+<table
+  <tr>
+    <td><img src="http://raw.githubusercontent.com/bolic-ca/bolic.ca/refs/heads/main/public/screenshots/home-dark.PNG" width="300" /></td>
+    <td><img src="http://raw.githubusercontent.com/bolic-ca/bolic.ca/refs/heads/main/public/screenshots/training-session-dark.PNG" width="300" /></td>
+    <td><img src="http://raw.githubusercontent.com/bolic-ca/bolic.ca/refs/heads/main/public/screenshots/exercises-dark.PNG" width="300" /></td>
+  </tr>
+</table>
+
+The goal here is to create a simple, easy to use, yet in-depth and metric rich fitness tracking app. Create exercises with metrics down to target muscle positions, include specific rep and RIR ranges as well as any notes to help aid in your training. Set your active program and rotate through your custom training days, or select a specific one.  
+
+Quickly view the previous sets performed in the previous session, or click-in and view the entire history. Swap out your exercises on the fly, either perform the same sequence of exercises, the original day, or keep it as the new training day.
+
+All records/types were created in the [Bolic.Backend](https://github.com/bolic-ca/Bolic.Backend), which I used and intend on using as the root of all flows/records. I'll be shifting most of my focus there for the forseable future aside from maintence/minor features here.
+
 ---
 
 ## Quick Start
 
 ```bash
 # Install dependencies
-npm install
+npm i
 
-# Start development server
-npm start
-
-# Run on specific platform
-npm run ios        # iOS simulator
-npm run android    # Android emulator
-npm run web        # Web browser
+# Start development server, 
+# Note: Runs with --tunnel
+npm run start
 ```
 
 ---
@@ -95,62 +105,10 @@ utils/
 types/
 ├── training.ts              # Core training types (aligned with openapi.yaml)
 └── storage.ts               # Storage wrapper types
-
-data/
-└── program-templates.ts     # Pre-built program templates
 ```
 
 ---
 
-## Features
-
-### Program Management
-- **Simple Programs**: Rotating training days (e.g., Upper/Lower split)
-- **Periodized Programs**: Full mesocycle/microcycle structure
-- **Templates**: Pre-built programs to get started quickly
-- **Program Wizard**: Multi-step creation flow for simple programs
-
-### Workout Tracking
-- Set-by-set logging with weight, reps, RIR, RPE, and quality score
-- Real-time session timer
-- Exercise swap mid-session
-- Previous performance shown per exercise during session
-- "Choose a different day" override before starting
-- Look Back section shows last session and previous instance of today's training day
-
-### Progress Tracking
-- Personal records with automatic detection
-- Weekly activity grid (last 7 days)
-- Total workouts and current streak
-- Session history with full set details
-
-### Customization
-- Accent color picker (preset and custom hex)
-- Weight unit toggle (kg / lbs)
-- Toggle RIR, RPE, and notes display per set
-- Data export to JSON file
-- Data import from JSON file
-
----
-
-## Type System
-
-The app uses a type system based on `openapi.yaml` as the source of truth, a majority of objects aren't used, i.e. perodized programming (the whole meso, macrocycle stuff). Most of the objects used started off as backend records.
-
----
-
-## Tech Stack
-
-- **Framework**: React Native (Expo SDK 54)
-- **Routing**: Expo Router (file-based)
-- **Storage**: @react-native-async-storage/async-storage
-- **State**: React Context + Hooks
-- **Styling**: StyleSheet with theme system + LinearGradient
-- **Icons**: Ionicons (via @expo/vector-icons)
-- **Build**: EAS Build
-- **CI/CD**: GitHub Actions
-
----
 
 ## Building for Production
 
@@ -159,7 +117,9 @@ The app uses GitHub Actions for CI/CD. See [`.github/workflows/build.yml`](.gith
 **Version Management:**
 - App version syncs from git tags via `app.config.js`
 - Build numbers auto-increment via EAS
-- Format: Version 1.0.5 (Build 3)
+- Format: `1.0.5`  
+- Deployed to testflight first, then build is manually selected for app store review. 
+- No android deployment yet
 
 ---
 
