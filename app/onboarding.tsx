@@ -3,7 +3,7 @@
  * First-time user experience
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,7 +53,7 @@ export default function OnboardingScreen() {
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={[styles.logoContainer, { backgroundColor: palette.accentGlow }]}>
-            <Ionicons name="fitness" size={48} color={palette.accent} />
+            <Image source={require('@/assets/images/icon.png')} style={styles.logoImage} />
           </View>
           <Text style={[styles.welcomeLabel, { color: palette.textMuted }]}>WELCOME TO</Text>
           <Text style={[styles.title, { color: palette.text }]}>Bolic</Text>
@@ -127,6 +127,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 28,
   },
   welcomeLabel: {
     fontSize: 12,
