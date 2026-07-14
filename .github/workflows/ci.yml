@@ -1,10 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches: [main, prep]
   pull_request:
-    branches: [main, prep]
 
 jobs:
   lint-and-typecheck:
