@@ -1,29 +1,25 @@
 name: Build and Deploy iOS
-
 on:
   push:
     tags:
-      - '*.*.*' # Triggers on version tags like 1.0.0, 1.0.1, etc.
-  workflow_dispatch: # Manual trigger
+      - '*.*.*'
 
 jobs:
-  build-ios-dev:
-    name: Build and Submit iOS to TestFlight
+  build-develop:
+    name: Build 1.x.x → TestFlight
     runs-on: ubuntu-latest
     environment: develop
+    if: startsWith(github.ref_name, '1.') && github.event.base_ref == 'refs/heads/develop'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Set version
         uses: jacobtomlinson/gha-find-replace@v3
         with:
@@ -31,15 +27,45 @@ jobs:
           replace: ${{ github.ref_name }}
           include: "app.json"
           regex: false
-        
       - name: Setup EAS CLI
         run: npm install -g eas-cli
-
-      - name: Build iOS (App Store Distribution)
+      - name: Build iOS
         run: eas build --platform ios --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Submit to TestFlight
+        run: eas submit --platform ios --latest --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+  build-sync:
+    name: Build 2.x.x → TestFlight
+    runs-on: ubuntu-latest
+    environment: develop
+    if: startsWith(github.ref_name, '2.') && github.event.base_ref == 'refs/heads/sync'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Set version
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "APP_VERSION"
+          replace: ${{ github.ref_name }}
+          include: "app.json"
+          regex: false
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+      - name: Build iOS
+        run: eas build --platform ios --profile production --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       - name: Submit to TestFlight
         run: eas submit --platform ios --latest --non-interactive
         env:
