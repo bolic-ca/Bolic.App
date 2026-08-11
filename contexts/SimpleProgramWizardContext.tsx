@@ -5,11 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TrainingExercise, Program, TrainingDay } from '@/types/training';
 import { usePrograms } from '@/hooks/usePrograms';
 import { useStorage } from '@/contexts/StorageContext';
+import { generateId } from '@/utils/storage-helpers';
 
 const SIMPLE_WIZARD_DRAFT_KEY = 'simple_program_wizard_draft';
-
-// Generate unique IDs
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 export interface WizardTrainingDay {
   tempId: string;
