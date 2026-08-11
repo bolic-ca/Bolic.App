@@ -124,6 +124,12 @@ The app uses GitHub Actions for CI/CD. See [`.github/workflows/build.yml`](.gith
 - Deployed to testflight first, then build is manually selected for app store review. 
 - No android deployment yet
 
+### Sync 
+Since I want to have the sync features usable in testflight, deployment is set up to include the `feature/sync` branch. This branch should only have `2.x` deployment tags, for version 2 (sync and cloud connections). Version `1.x` is still going to have deployments, but not include any of the sync logic, keeping in the zero data collection policy for the App Store. 
+
+develop          → 1.x  → App Store eligible
+feature/sync  → 2.x  → TestFlight only
+
 ---
 
 ## Roadmap
