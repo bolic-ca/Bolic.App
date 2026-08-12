@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as WebBrowser from 'expo-web-browser';
+import { router } from 'expo-router';
+import { useAuth, useUser, useClerk } from '@clerk/expo';
 import { useThemeCustomization } from '@/contexts/ThemeContext';
 import { exportToFile, importFromFile, getStorageStats } from '@/services/storage/storage-export';
 
@@ -30,6 +32,91 @@ const supportMenuItems: MenuItem[] = [
     onPress: () => WebBrowser.openBrowserAsync('https://bolic.ca/privacy-policy'),
   },
 ];
+
+interface AccountPalette {
+  cardBg: string;
+  cardBorder: string;
+  text: string;
+  textMuted: string;
+  accent: string;
+  accentGlow: string;
+  danger: string;
+}
+
+function AccountSection({ palette }: { palette: AccountPalette }) {
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
+    ]);
+  };
+
+  if (!isLoaded) return null;
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>Account</Text>
+      </View>
+      <View style={[styles.menuCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+        {isSignedIn ? (
+          <>
+            <View style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="person-circle-outline" size={22} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]} numberOfLines={1}>
+                  {user?.primaryEmailAddress?.emailAddress ?? user?.username ?? 'Signed in'}
+                </Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Your account is synced</Text>
+              </View>
+            </View>
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.8} onPress={handleSignOut}>
+              <View style={[styles.menuIcon, { backgroundColor: `${palette.danger}12` }]}>
+                <Ionicons name="log-out-outline" size={20} color={palette.danger} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.danger }]}>Sign Out</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Sign out of your account</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.8} onPress={() => router.push('/auth')}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="log-in-outline" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Sign In</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Access your account</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+            </TouchableOpacity>
+            <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.8} onPress={() => router.push('/auth')}>
+              <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
+                <Ionicons name="person-add-outline" size={20} color={palette.accent} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={[styles.menuTitle, { color: palette.text }]}>Create Account</Text>
+                <Text style={[styles.menuSubtitle, { color: palette.textMuted }]}>Sync your training across devices</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
 
 export default function ProfilePage() {
   const colorScheme = useColorScheme();
@@ -198,6 +285,9 @@ export default function ProfilePage() {
           <Text style={[styles.headerLabel, { color: palette.textMuted }]}>PREFERENCES</Text>
           <Text style={[styles.headerTitle, { color: palette.text }]}>Settings</Text>
         </View>
+
+        {/* Account Section */}
+        <AccountSection palette={palette} />
 
         {/* Appearance Section */}
         <View style={styles.section}>
