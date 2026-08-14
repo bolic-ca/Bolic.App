@@ -17,6 +17,9 @@ Quickly view the previous sets performed in the previous session, or click-in an
 All records/types were created in the [Bolic.Backend](https://github.com/bolic-ca/Bolic.Backend), which I used and intend on using as the root of all flows/records. I'll be shifting most of my focus there for the forseable future aside from maintence/minor features here.
 
 ---
+## Sync
+
+To help in development of the sync features (cloud storage/deep analytics), `sync` branch has deployment set up and will be treated as it's own deployment branch for `2.x.x` deployments to testflight. Develop will remain the default branch for `1.x.x` version, these versions won't contain any sync/API calls. Main will hold the current version in the app store.
 
 ## Quick Start
 
