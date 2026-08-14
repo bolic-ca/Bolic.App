@@ -101,7 +101,7 @@ function AccountSection({ palette }: { palette: AccountPalette }) {
               <Ionicons name="chevron-forward" size={18} color={palette.textMuted} />
             </TouchableOpacity>
             <View style={[styles.menuDivider, { backgroundColor: palette.cardBorder }]} />
-            <TouchableOpacity style={styles.menuItem} activeOpacity={0.8} onPress={() => router.push('/auth')}>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.8} onPress={() => router.push({ pathname: '/auth', params: { mode: 'sign-up' } })}>
               <View style={[styles.menuIcon, { backgroundColor: palette.accentGlow }]}>
                 <Ionicons name="person-add-outline" size={20} color={palette.accent} />
               </View>
