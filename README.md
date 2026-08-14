@@ -17,9 +17,12 @@ Quickly view the previous sets performed in the previous session, or click-in an
 All records/types were created in the [Bolic.Backend](https://github.com/bolic-ca/Bolic.Backend), which I used and intend on using as the root of all flows/records. I'll be shifting most of my focus there for the forseable future aside from maintence/minor features here.
 
 ---
-## Sync
+## Sync 
 
 To help in development of the sync features (cloud storage/deep analytics), `sync` branch has deployment set up and will be treated as it's own deployment branch for `2.x.x` deployments to testflight. Develop will remain the default branch for `1.x.x` version, these versions won't contain any sync/API calls. Main will hold the current version in the app store.
+
+`develop`          → 1.x  → App Store eligible  
+`sync`  → 2.x  → TestFlight only  
 
 ## Quick Start
 
@@ -123,12 +126,6 @@ The app uses GitHub Actions for CI/CD. See [`.github/workflows/build.yml`](.gith
 - Format: `1.0.5`  
 - Deployed to testflight first, then build is manually selected for app store review. 
 - No android deployment yet
-
-### Sync 
-Since I want to have the sync features usable in testflight, deployment is set up to include the `feature/sync` branch. This branch should only have `2.x` deployment tags, for version 2 (sync and cloud connections). Version `1.x` is still going to have deployments, but not include any of the sync logic, keeping in the zero data collection policy for the App Store. 
-
-develop          → 1.x  → App Store eligible
-feature/sync  → 2.x  → TestFlight only
 
 ---
 
